@@ -2,8 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Resources\Areas\AreaResource;
-use App\Filament\Resources\Locations\LocationResource;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Pages\Dashboard;
@@ -14,10 +12,13 @@ use Filament\Navigation\NavigationItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Widgets\FilamentInfoWidget;
 use Filament\Http\Middleware\Authenticate;
+use App\Filament\Resources\Areas\AreaResource;
+use App\Filament\Resources\Items\ItemResource;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Filament\Http\Middleware\AuthenticateSession;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use App\Filament\Resources\Locations\LocationResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -61,16 +62,25 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->spa()
-            // ->sidebarCollapsibleOnDesktop()
-            // ->maxContentWidth(Width::Full)
-            ->topNavigation()
+            ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth(Width::Full)
+            // ->topNavigation()
             ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Inventaris')
+                    ->icon('heroicon-o-archive-box')
+                    ->collapsible(),
                 NavigationGroup::make()
                     ->label('Lokasi')
                     ->icon('heroicon-o-map-pin')
                     ->collapsible(),
             ])
             ->navigationItems([
+                NavigationItem::make('Daftar Barang')
+                    ->url(fn(): string => ItemResource::getUrl('index'))
+                    ->group('Inventaris')
+                    ->sort(1)
+                    ->isActiveWhen(fn() => request()->routeIs(ItemResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))
                     ->group('Lokasi')
