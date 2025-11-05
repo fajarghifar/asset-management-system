@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             AreaSeeder::class,
             LocationSeeder::class,
             ItemSeeder::class,
+            FixedItemInstanceSeeder::class,
         ]);
     }
 }

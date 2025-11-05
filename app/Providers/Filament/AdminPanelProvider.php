@@ -24,6 +24,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use App\Filament\Resources\FixedItemInstances\FixedItemInstanceResource;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -81,6 +82,11 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(1)
                     ->isActiveWhen(fn() => request()->routeIs(ItemResource::getRouteBaseName() . '*')),
+                NavigationItem::make('Daftar Barang Tetap')
+                    ->url(fn(): string => FixedItemInstanceResource::getUrl('index'))
+                    ->group('Inventaris')
+                    ->sort(2)
+                    ->isActiveWhen(fn() => request()->routeIs(FixedItemInstanceResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))
                     ->group('Lokasi')
