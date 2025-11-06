@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Models\Item;
 use App\Observers\ItemObserver;
 use App\Models\FixedItemInstance;
+use App\Models\InstalledItemInstance;
 use Illuminate\Support\ServiceProvider;
 use App\Observers\FixedItemInstanceObserver;
+use App\Observers\InstalledItemInstanceObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,5 +27,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Item::observe(ItemObserver::class);
         FixedItemInstance::observe(FixedItemInstanceObserver::class);
+        InstalledItemInstance::observe(InstalledItemInstanceObserver::class);
     }
 }

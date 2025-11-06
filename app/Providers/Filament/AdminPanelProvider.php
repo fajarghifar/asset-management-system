@@ -25,6 +25,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use App\Filament\Resources\FixedItemInstances\FixedItemInstanceResource;
+use App\Filament\Resources\InstalledItemInstances\InstalledItemInstanceResource;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -87,6 +88,11 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(2)
                     ->isActiveWhen(fn() => request()->routeIs(FixedItemInstanceResource::getRouteBaseName() . '*')),
+                NavigationItem::make('Daftar Barang Terpasang')
+                    ->url(fn(): string => InstalledItemInstanceResource::getUrl('index'))
+                    ->group('Inventaris')
+                    ->sort(3)
+                    ->isActiveWhen(fn() => request()->routeIs(InstalledItemInstanceResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))
                     ->group('Lokasi')
