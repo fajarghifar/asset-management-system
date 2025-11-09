@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('installed_item_location_history', function (Blueprint $table) {
+        Schema::create('installed_item_location_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('instance_id')
                 ->constrained('installed_item_instances')

@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\InstalledItemInstances\Pages;
 
 use App\Filament\Resources\InstalledItemInstances\InstalledItemInstanceResource;
-use Filament\Resources\Pages\ManageRecords;
+use Filament\Resources\Pages\ListRecords;
 
-class ManageInstalledItemInstances extends ManageRecords
+class ListInstalledItemInstances extends ListRecords
 {
     protected static string $resource = InstalledItemInstanceResource::class;
 

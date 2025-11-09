@@ -16,12 +16,22 @@ class InstalledItemInstanceObserver
 
     public function saving(InstalledItemInstance $instance)
     {
-        (new InstalledItemInstanceService())->validate($instance);
+        // Hanya validasi jika ini update (bukan create)
+        if ($instance->exists) {
+            $this->service->validateLocationChange($instance);
+        }
     }
 
     public function saved(InstalledItemInstance $instance)
     {
-        (new InstalledItemInstanceService())->save($instance);
+        // Hanya buat riwayat jika ini create, atau lokasi berubah
+        if (!$instance->wasRecentlyCreated) {
+            if ($instance->isDirty('installed_location_id')) {
+                $this->service->createLocationHistory($instance);
+            }
+        } else {
+            $this->service->createInitialHistory($instance);
+        }
     }
 
     public function restored(InstalledItemInstance $instance)
