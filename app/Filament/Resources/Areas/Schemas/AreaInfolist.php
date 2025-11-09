@@ -48,14 +48,14 @@ class AreaInfolist
                                 TextEntry::make('name'),
                                 TextEntry::make('description')
                             ])
-                            ->visible(fn($record) => $record->locations()->count() > 0)
+                            ->visible(fn($record) => $record->locations_count > 0)
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('Lokasi di Area Ini')
                     ->description('Belum ada lokasi yang dibuat untuk area ini.')
-                    ->visible(fn($record) => $record->locations()->count() === 0)
+                    ->visible(fn($record) => $record->locations_count === 0)
                     ->columnSpanFull(),
             ]);
     }

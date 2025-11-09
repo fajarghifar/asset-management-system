@@ -36,4 +36,19 @@ class Location extends Model
     {
         return $query->where('is_borrowable', true);
     }
+
+    public function fixedItemInstances()
+    {
+        return $this->hasMany(FixedItemInstance::class, 'current_location_id');
+    }
+
+    public function installedItemInstances()
+    {
+        return $this->hasMany(InstalledItemInstance::class, 'installed_location_id');
+    }
+
+    public function itemStocks()
+    {
+        return $this->hasMany(ItemStock::class, 'location_id');
+    }
 }

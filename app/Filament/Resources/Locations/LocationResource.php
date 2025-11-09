@@ -8,6 +8,7 @@ use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
+use App\Services\LocationService;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -17,6 +18,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TernaryFilter;
@@ -121,12 +123,25 @@ class LocationResource extends Resource
                 ActionGroup::make([
                     ViewAction::make()->iconSize('lg'),
                     EditAction::make()->iconSize('lg'),
-                    // DeleteAction::make()->iconSize('lg')
-                    //     ->requiresConfirmation()
-                    //     ->modalHeading('Hapus Lokasi?')
-                    //     ->modalDescription('Lokasi yang tidak digunakan dalam peminjaman bisa dihapus. Pastikan tidak ada data terkait.')
-                    //     ->visible(fn(Location $record) => $record->roomBookings()->count() === 0),
-                ])->dropdownPlacement('left-start'),
+                    DeleteAction::make()
+                        ->action(function (Location $record) {
+                            try {
+                                (new LocationService())->delete($record);
+                                Notification::make()
+                                    ->title('Berhasil')
+                                    ->body("Lokasi {$record->name} berhasil dihapus.")
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Gagal Menghapus Lokasi')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                ])
+                    ->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
                 //
