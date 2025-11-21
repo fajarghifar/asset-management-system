@@ -2,23 +2,39 @@
 
 namespace App\Observers;
 
+use App\Enums\ItemType;
 use App\Models\ItemStock;
-use App\Services\ItemStockService;
+use Illuminate\Validation\ValidationException;
 
 class ItemStockObserver
 {
-    public function saving(ItemStock $stock)
+    /**
+     * Handle the ItemStock "saving" event.
+     */
+    public function saving(ItemStock $stock): void
     {
-        (new ItemStockService())->validate($stock);
+        if ($stock->item && $stock->item->type !== ItemType::Consumable) {
+            throw ValidationException::withMessages([
+                'item_id' => 'Stok hanya bisa ditambahkan untuk Barang Habis Pakai (Consumable).',
+            ]);
+        }
+
+        if ($stock->quantity < 0) {
+            throw ValidationException::withMessages(['quantity' => 'Stok tidak boleh negatif.']);
+        }
     }
 
-    public function restored(ItemStock $stock)
+    /**
+     * Handle the ItemStock "deleting" event.
+     */
+    public function deleting(ItemStock $stock): void
     {
-        (new ItemStockService())->restore($stock);
-    }
-
-    public function forceDeleted(ItemStock $stock)
-    {
-        (new ItemStockService())->forceDelete($stock);
+        if (!$stock->isForceDeleting()) {
+            if ($stock->quantity > 0) {
+                throw ValidationException::withMessages([
+                    'quantity' => "Gagal Hapus: Masih ada sisa stok ({$stock->quantity} unit) di lokasi ini. Nol-kan stok terlebih dahulu.",
+                ]);
+            }
+        }
     }
 }

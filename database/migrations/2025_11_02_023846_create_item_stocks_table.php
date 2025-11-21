@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
             $table->foreignId('location_id')->constrained()->cascadeOnDelete();
-            $table->integer('quantity')->default(0);
-            $table->integer('min_quantity')->default(0);
+            $table->unsignedInteger('quantity')->default(0);
+            $table->unsignedInteger('min_quantity')->default(0);
             $table->softDeletes();
             $table->timestamps();
 

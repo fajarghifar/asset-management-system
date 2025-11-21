@@ -2,33 +2,31 @@
 
 namespace App\Filament\Resources\ItemStocks;
 
-use App\Models\Item;
+use App\Models\Area;
+use App\Enums\ItemType;
 use App\Models\Location;
 use App\Models\ItemStock;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
-use App\Services\ItemStockService;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
-use Filament\Actions\BulkActionGroup;
+use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Select;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreBulkAction;
-use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rules\Unique;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\ForceDeleteBulkAction;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ItemStocks\Pages\ManageItemStocks;
 
@@ -43,42 +41,50 @@ class ItemStockResource extends Resource
         return $schema
             ->components([
                 Select::make('item_id')
-                    ->label('Jenis Barang')
+                    ->label('Barang (Consumable)')
                     ->relationship(
                         name: 'item',
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn(Builder $query) => $query
-                            ->where('type', 'consumable')
-                            ->orderBy('name')
+                        modifyQueryUsing: fn(Builder $query) => $query->where('type', ItemType::Consumable)
                     )
-                    ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->name} ({$record->code})")
+                    ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->code} - {$record->name}")
                     ->searchable(['name', 'code'])
-                    ->required(),
+                    ->preload()
+                    ->optionsLimit(5)
+                    ->required()
+                    ->unique(
+                        table: 'item_stocks',
+                        column: 'item_id',
+                        modifyRuleUsing: function (Unique $rule, callable $get) {
+                            return $rule->where('location_id', $get('location_id'));
+                        },
+                        ignoreRecord: true
+                    )
+                    ->validationMessages([
+                        'unique' => 'Barang ini sudah terdaftar di lokasi yang dipilih.',
+                    ]),
                 Select::make('location_id')
                     ->label('Lokasi')
-                    ->relationship(
-                        name: 'location',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn(Builder $query) => $query->orderBy('name')
-                    )
-                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
+                    ->relationship('location', 'name')
                     ->searchable(['name', 'code'])
-                    ->required()
-                    ->unique(ignoreRecord: true, modifyRuleUsing: fn($rule) => $rule->where('item_id', $this->getRecord()?->item_id)),
+                    ->preload()
+                    ->optionsLimit(5)
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
+                    ->required(),
                 TextInput::make('quantity')
-                    ->label('Jumlah Stok')
+                    ->label('Qty. Stok')
                     ->numeric()
+                    ->default(0)
                     ->minValue(0)
                     ->required(),
                 TextInput::make('min_quantity')
-                    ->label('Stok Minimum')
+                    ->label('Min. Stok')
+                    ->helperText('Warna akan merah jika stok ≤ angka ini.')
                     ->numeric()
+                    ->default(0)
                     ->minValue(0)
-                    ->default(0),
-                Textarea::make('notes')
-                    ->label('Catatan')
-                    ->rows(2)
-                    ->columnSpanFull(),
+                    ->required()
+                    ->columnSpan(1),
             ]);
     }
 
@@ -88,27 +94,41 @@ class ItemStockResource extends Resource
             ->heading('Stok Barang Habis Pakai')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('No.')
-                    ->rowIndex()
-                    ->width('50px'),
+                    ->label('#')
+                    ->rowIndex(),
+                TextColumn::make('item.code')
+                    ->label('Kode')
+                    ->searchable()
+                    ->copyable()
+                    ->badge(),
                 TextColumn::make('item.name')
-                    ->label('Jenis Barang')
+                    ->label('Barang')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('location.name')
                     ->label('Lokasi')
-                    ->searchable()
                     ->sortable(),
+                TextColumn::make('location.area.name')
+                    ->label('Area')
+                    ->badge()
+                    ->color('gray'),
                 TextColumn::make('quantity')
-                    ->label('Stok Tersedia')
+                    ->label('Qty. Stok')
                     ->sortable()
-                    ->color(fn(int $state): string => $state === 0 ? 'danger' : ($state <= 10 ? 'warning' : 'success'))
-                    ->badge(),
+                    ->color(fn(ItemStock $record) => $record->quantity <= $record->min_quantity ? 'danger' : 'success')
+                    ->badge()
+                    ->alignCenter(),
                 TextColumn::make('min_quantity')
-                    ->label('Stok Minimum')
+                    ->label('Min. Stok')
                     ->sortable()
                     ->color(fn(int $state): string => $state > 0 ? 'info' : 'gray')
-                    ->badge(),
+                    ->badge()
+                    ->alignCenter(),
+                TextColumn::make('updated_at')
+                    ->label('Terakhir Diupdate')
+                    ->dateTime()
+                    ->sortable()
+                    ->size('sm'),
                 IconColumn::make('deleted_at')
                     ->label('Status Data')
                     ->state(fn($record) => !is_null($record->deleted_at))
@@ -117,13 +137,29 @@ class ItemStockResource extends Resource
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(ItemStock $record) => $record->deleted_at ? 'Dihapus' : 'Aktif'),
+                    ->tooltip(fn(ItemStock $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->alignCenter(),
             ])->headerActions([
                     CreateAction::make()->label('Tambah Stok'),
                 ])
             ->filters([
+                SelectFilter::make('area')
+                    ->label('Filter Area')
+                    ->options(fn() => Area::pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value'])) {
+                            $query->whereHas('location', fn($q) => $q->where('area_id', $data['value']));
+                        }
+                    })
+                    ->preload()
+                    ->searchable(),
+                SelectFilter::make('location')
+                    ->label('Filter Lokasi')
+                    ->relationship('location', 'name')
+                    ->preload()
+                    ->multiple(),
                 SelectFilter::make('item')
-                    ->label('Jenis Barang')
+                    ->label('Filter Barang')
                     ->relationship(
                         name: 'item',
                         titleAttribute: 'name',
@@ -131,54 +167,41 @@ class ItemStockResource extends Resource
                             ->where('type', 'consumable')
                             ->orderBy('name')
                     )
+                    ->preload()
                     ->multiple(),
-
-                SelectFilter::make('location')
-                    ->label('Lokasi')
-                    ->relationship('location', 'name')
-                    ->multiple(),
-
                 TrashedFilter::make()
                     ->label('Status Data')
                     ->placeholder('Hanya data aktif')
                     ->trueLabel('Tampilkan semua data')
                     ->falseLabel('Hanya data yang dihapus'),
+                Filter::make('critical_stock')
+                    ->label('Stok Menipis / Habis')
+                    ->query(fn(Builder $query) => $query->whereColumn('quantity', '<=', 'min_quantity'))
+                    ->toggle(),
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()->iconSize('lg'),
-                    EditAction::make()->iconSize('lg'),
+                    EditAction::make(),
                     DeleteAction::make()
-                        ->iconSize('lg')
-                        ->requiresConfirmation()
-                        ->modalHeading('Hapus Stok?')
-                        ->modalDescription('Stok akan disembunyikan jika jumlahnya 0.')
                         ->action(function (ItemStock $record) {
                             try {
-                                (new ItemStockService())->delete($record);
+                                $record->delete();
+                                Notification::make()->success()->title('Data stok dihapus')->send();
+                            } catch (ValidationException $e) {
                                 Notification::make()
-                                    ->title('Berhasil')
-                                    ->body("Stok {$record->item->name} di {$record->location->name} berhasil dihapus.")
-                                    ->success()
-                                    ->send();
-                            } catch (\Exception $e) {
-                                Notification::make()
-                                    ->title('Gagal Menghapus')
-                                    ->body($e->getMessage())
                                     ->danger()
+                                    ->title('Gagal Menghapus')
+                                    ->body($e->validator->errors()->first())
                                     ->send();
                             }
                         }),
-                    ForceDeleteAction::make()->iconSize('lg'),
-                    RestoreAction::make()->iconSize('lg'),
+
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
                 ])->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
+                //
             ]);
     }
 
