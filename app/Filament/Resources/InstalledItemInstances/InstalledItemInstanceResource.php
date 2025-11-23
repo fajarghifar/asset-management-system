@@ -15,6 +15,7 @@ use App\Filament\Resources\InstalledItemInstances\Pages\CreateInstalledItemInsta
 use App\Filament\Resources\InstalledItemInstances\Schemas\InstalledItemInstanceForm;
 use App\Filament\Resources\InstalledItemInstances\Tables\InstalledItemInstancesTable;
 use App\Filament\Resources\InstalledItemInstances\Schemas\InstalledItemInstanceInfolist;
+use App\Filament\Resources\InstalledItemInstances\RelationManagers\LocationHistoryRelationManager;
 
 class InstalledItemInstanceResource extends Resource
 {
@@ -40,7 +41,7 @@ class InstalledItemInstanceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            LocationHistoryRelationManager::class,
         ];
     }
 
@@ -57,7 +58,7 @@ class InstalledItemInstanceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['item', 'installedLocation', 'locationHistory.location'])
+            ->with(['item', 'currentLocation'])
             ->withTrashed();
     }
 

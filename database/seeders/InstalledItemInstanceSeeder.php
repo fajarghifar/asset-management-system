@@ -60,7 +60,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'LAP-BT-001',
             'item_id' => $laptopId,
             'serial_number' => 'DL2023L003',
-            'installed_location_id' => $btShop->id,
+            'current_location_id' => $btShop->id,
             'installed_at' => now()->subMonths(3),
             'notes' => 'Untuk demo produk batik digital',
         ]);
@@ -69,7 +69,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'LAP-JMP1-001',
             'item_id' => $laptopId,
             'serial_number' => 'DL2023L001',
-            'installed_location_id' => $jmp1Meeting->id,
+            'current_location_id' => $jmp1Meeting->id,
             'installed_at' => now()->subMonths(3),
             'notes' => 'Laptop cadangan untuk presentasi',
         ]);
@@ -78,7 +78,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'LAP-JMP1-002',
             'item_id' => $laptopId,
             'serial_number' => 'DL2023L002',
-            'installed_location_id' => $btEvent->id,
+            'current_location_id' => $btEvent->id,
             'installed_at' => now()->subMonths(3),
             'notes' => 'Dipinjam tim instalasi untuk proyek BT',
         ]);
@@ -87,7 +87,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'PROJ-JMP1-001',
             'item_id' => $projectorId,
             'serial_number' => 'EP2023P001',
-            'installed_location_id' => $jmp1Meeting->id,
+            'current_location_id' => $jmp1Meeting->id,
             'installed_at' => now()->subMonths(3),
             'notes' => 'Proyektor utama ruang meeting',
         ]);
@@ -97,7 +97,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'PRN-JMP1-001',
             'item_id' => $printerId,
             'serial_number' => 'HP2023M001',
-            'installed_location_id' => $jmp1Server->id, // Misalnya ditempatkan di ruang server
+            'current_location_id' => $jmp1Server->id, // Misalnya ditempatkan di ruang server
             'installed_at' => now()->subWeeks(2),
             'notes' => 'Sedang diperbaiki karena kerusakan kertas',
         ]);
@@ -106,7 +106,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'AP-JMP1-001',
             'item_id' => $wifiApId,
             'serial_number' => 'RJ2023A001',
-            'installed_location_id' => $jmp1Meeting->id,
+            'current_location_id' => $jmp1Meeting->id,
             'installed_at' => now()->subMonths(5),
             'notes' => 'Dipasang untuk support meeting hybrid',
         ]);
@@ -115,7 +115,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'AP-BT-001',
             'item_id' => $wifiApId,
             'serial_number' => 'RJ2023B001',
-            'installed_location_id' => $btEvent->id,
+            'current_location_id' => $btEvent->id,
             'installed_at' => now()->subMonths(3),
             'notes' => 'Dipasang untuk workshop batik',
         ]);
@@ -124,7 +124,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'SW-JMP1-001',
             'item_id' => $switchId,
             'serial_number' => 'TL2023S001',
-            'installed_location_id' => $jmp1Server->id,
+            'current_location_id' => $jmp1Server->id,
             'installed_at' => now()->subMonths(8),
             'notes' => 'Switch utama jaringan kantor',
         ]);
@@ -133,7 +133,7 @@ class InstalledItemInstanceSeeder extends Seeder
             'code' => 'CCTV-BT-001',
             'item_id' => $cctvId,
             'serial_number' => 'HV2023C001',
-            'installed_location_id' => $btShop->id,
+            'current_location_id' => $btShop->id,
             'installed_at' => now()->subMonths(6),
             'notes' => 'Pengawasan area penjualan',
         ]);

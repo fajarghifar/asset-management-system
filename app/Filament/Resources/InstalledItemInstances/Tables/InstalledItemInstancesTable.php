@@ -10,18 +10,12 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use App\Models\InstalledItemInstance;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\ForceDeleteBulkAction;
-use App\Services\InstalledItemInstanceService;
 
 class InstalledItemInstancesTable
 {
@@ -47,12 +41,20 @@ class InstalledItemInstancesTable
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable(),
-                TextColumn::make('installedLocation.name')
+                TextColumn::make('currentLocation.area.name')
+                    ->label('Area')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color(
+                        fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
+                    ),
+                TextColumn::make('currentLocation.name')
                     ->label('Lokasi Pemasangan')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('installed_at')
-                    ->label('Tgl Pemasangan')
+                    ->label('Tgl. Pemasangan')
                     ->date()
                     ->sortable(),
                 IconColumn::make('deleted_at')
@@ -78,6 +80,9 @@ class InstalledItemInstancesTable
                             ->orderBy('name')
                     )
                     ->multiple(),
+                SelectFilter::make('area')
+                    ->label('Area')
+                    ->relationship('currentLocation.area', 'name'),
                 TrashedFilter::make()
                     ->label('Status Data')
                     ->placeholder('Hanya data aktif')
@@ -90,61 +95,16 @@ class InstalledItemInstancesTable
                     EditAction::make()->iconSize('lg'),
                     DeleteAction::make()
                         ->iconSize('lg')
-                        ->requiresConfirmation()
                         ->modalHeading('Hapus Instance?')
-                        ->modalDescription('Instance akan disembunyikan, tapi riwayat lokasi tetap ada.')
-                        ->action(function (InstalledItemInstance $record) {
-                            try {
-                                (new InstalledItemInstanceService())->delete($record);
-                                Notification::make()
-                                    ->title('Berhasil')
-                                    ->body("{$record->code} berhasil dihapus.")
-                                    ->success()
-                                    ->send();
-                            } catch (\Exception $e) {
-                                Notification::make()
-                                    ->title('Gagal Menghapus')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
-                            }
-                        }),
+                        ->modalDescription('Instance akan disembunyikan (Soft Delete), riwayat lokasi tetap tersimpan.'),
+
                     ForceDeleteAction::make()->iconSize('lg'),
                     RestoreAction::make()->iconSize('lg'),
                 ])
-                ->dropdownPlacement('left-start'),
+                    ->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->action(function ($records) {
-                            $deleted = 0;
-                            $errors = [];
-                            foreach ($records as $record) {
-                                try {
-                                    (new InstalledItemInstanceService())->delete($record);
-                                    $deleted++;
-                                } catch (\Exception $e) {
-                                    $errors[] = "{$record->code}: " . $e->getMessage();
-                                }
-                            }
-                            if ($deleted > 0) {
-                                Notification::make()
-                                    ->title("Berhasil menghapus {$deleted} instance")
-                                    ->success()
-                                    ->send();
-                            }
-                            if (!empty($errors)) {
-                                Notification::make()
-                                    ->title('Beberapa instance gagal dihapus')
-                                    ->body(implode('\n', $errors))
-                                    ->danger()
-                                    ->send();
-                            }
-                        }),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
+                //
             ])
             ->striped();
     }

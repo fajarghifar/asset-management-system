@@ -22,7 +22,9 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
+            // Indexes
             $table->index(['instance_id', 'installed_at']);
+            $table->index(['location_id', 'removed_at']);
         });
     }
 

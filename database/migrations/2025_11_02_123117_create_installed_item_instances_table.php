@@ -16,13 +16,15 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
             $table->string('serial_number')->nullable()->unique();
-            $table->foreignId('installed_location_id')->constrained('locations');
+            $table->foreignId('current_location_id')->constrained('locations');
             $table->date('installed_at');
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index('item_id');
+            // Indexes
+            $table->index(['current_location_id', 'deleted_at']);
+            $table->index(['item_id', 'deleted_at']);
         });
     }
 

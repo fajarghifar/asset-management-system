@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Item;
+use App\Models\Location;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\InstalledItemLocationHistory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Observers\InstalledItemInstanceObserver;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy(InstalledItemInstanceObserver::class)]
 class InstalledItemInstance extends Model
 {
     use HasFactory, SoftDeletes;
@@ -14,7 +20,7 @@ class InstalledItemInstance extends Model
         'code',
         'item_id',
         'serial_number',
-        'installed_location_id',
+        'current_location_id',
         'installed_at',
         'notes'
     ];
@@ -23,15 +29,14 @@ class InstalledItemInstance extends Model
         'installed_at' => 'date',
     ];
 
-    // Relasi
     public function item()
     {
         return $this->belongsTo(Item::class)->withTrashed();
     }
 
-    public function installedLocation()
+    public function currentLocation()
     {
-        return $this->belongsTo(Location::class, 'installed_location_id');
+        return $this->belongsTo(Location::class, 'current_location_id');
     }
 
     public function locationHistory()
