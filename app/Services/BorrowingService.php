@@ -2,99 +2,84 @@
 namespace App\Services;
 
 use App\Models\Item;
+use App\Enums\ItemType;
 use App\Models\Borrowing;
 use App\Models\ItemStock;
 use App\Models\BorrowingItem;
+use App\Enums\BorrowingStatus;
+use App\Enums\FixedItemStatus;
 use App\Models\FixedItemInstance;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BorrowingService
 {
-    /**
-     * Tambahkan detail barang ke peminjaman (simpan ke borrowing_items).
-     */
-    public function addItem(array $data): BorrowingItem
+    public function create(array $headerData, array $items): Borrowing
     {
-        $item = Item::withTrashed()->findOrFail($data['item_id']);
-
-        if (!in_array($item->type, ['consumable', 'fixed'])) {
-            throw ValidationException::withMessages([
-                'item_id' => 'Barang ini tidak dapat dipinjam.',
+        return DB::transaction(function () use ($headerData, $items) {
+            // 1. Create Header
+            $borrowing = Borrowing::create([
+                'code' => $this->generateCode(),
+                'user_id' => $headerData['user_id'],
+                'purpose' => $headerData['purpose'],
+                'borrow_date' => $headerData['borrow_date'],
+                'expected_return_date' => $headerData['expected_return_date'],
+                'status' => BorrowingStatus::Pending,
+                'notes' => $headerData['notes'] ?? null,
             ]);
-        }
 
-        return DB::transaction(function () use ($data, $item) {
-            if ($item->type === 'consumable') {
-                return $this->handleConsumable($data, $item);
-            } else {
-                return $this->handleFixed($data, $item);
+            // 2. Process Items
+            foreach ($items as $row) {
+                $this->processItemRow($borrowing, $row);
             }
+
+            return $borrowing;
         });
     }
 
-    private function handleConsumable(array $data, Item $item): BorrowingItem
+    private function processItemRow(Borrowing $borrowing, array $row): void
     {
-        $locationId = $data['location_id'] ?? null;
-        $quantity = $data['quantity'] ?? 1;
+        $item = Item::find($row['item_id']);
 
-        if (!$locationId) {
-            throw ValidationException::withMessages([
-                'location_id' => 'Lokasi asal stok wajib diisi untuk barang habis pakai.',
-            ]);
-        }
-        if ($quantity <= 0) {
-            throw ValidationException::withMessages([
-                'quantity' => 'Jumlah harus lebih dari 0.',
-            ]);
+        if (!$item) {
+            throw ValidationException::withMessages(['items' => "Item ID {$row['item_id']} tidak ditemukan."]);
         }
 
-        // ⚠️ Hanya validasi dasar — stok akan diverifikasi saat approve
-        $stock = ItemStock::where('item_id', $item->id)
-            ->where('location_id', $locationId)
-            ->first();
+        // Validasi stok/ketersediaan (Double check di sisi server)
+        if ($item->type === ItemType::Fixed) {
+            $instance = FixedItemInstance::where('id', $row['fixed_instance_id'])
+                ->where('status', FixedItemStatus::Available)
+                ->first();
 
-        if ($stock && $stock->quantity < $quantity) {
-            throw ValidationException::withMessages([
-                'quantity' => "Stok tidak mencukupi di lokasi ini.",
-            ]);
+            if (!$instance) {
+                throw ValidationException::withMessages(['items' => "Unit {$item->name} yang dipilih tidak tersedia."]);
+            }
+        } elseif ($item->type === ItemType::Consumable) {
+            $stock = ItemStock::where('item_id', $item->id)
+                ->where('location_id', $row['location_id'])
+                ->first();
+
+            if (!$stock || $stock->quantity < $row['quantity']) {
+                throw ValidationException::withMessages(['items' => "Stok {$item->name} tidak mencukupi."]);
+            }
         }
 
-        return BorrowingItem::create([
-            'borrowing_id' => $data['borrowing_id'],
+        // Simpan Item
+        BorrowingItem::create([
+            'borrowing_id' => $borrowing->id,
             'item_id' => $item->id,
-            'quantity' => $quantity,
-            'location_id' => $locationId,
+            'fixed_instance_id' => $row['fixed_instance_id'] ?? null,
+            'location_id' => $row['location_id'] ?? null,
+            'quantity' => $item->type === ItemType::Fixed ? 1 : ($row['quantity'] ?? 1),
+            'status' => 'borrowed',
         ]);
     }
 
-    private function handleFixed(array $data, Item $item): BorrowingItem
+    private function generateCode(): string
     {
-        $instanceId = $data['fixed_instance_id'] ?? null;
-
-        if (!$instanceId) {
-            throw ValidationException::withMessages([
-                'fixed_instance_id' => 'Instance barang tetap wajib dipilih.',
-            ]);
-        }
-
-        $instance = FixedItemInstance::findOrFail($instanceId);
-        if ($instance->item_id !== $item->id) {
-            throw ValidationException::withMessages([
-                'fixed_instance_id' => 'Instance tidak sesuai dengan jenis barang.',
-            ]);
-        }
-        if ($instance->status !== 'available') {
-            throw ValidationException::withMessages([
-                'fixed_instance_id' => "Instance ini sedang {$instance->status}.",
-            ]);
-        }
-
-        return BorrowingItem::create([
-            'borrowing_id' => $data['borrowing_id'],
-            'item_id' => $item->id,
-            'fixed_instance_id' => $instance->id,
-            'quantity' => 1,
-        ]);
+        $prefix = 'BRW-' . date('Ymd') . '-';
+        $last = Borrowing::where('code', 'like', $prefix . '%')->max('code');
+        $num = $last ? (int) substr($last, -4) + 1 : 1;
+        return $prefix . str_pad($num, 4, '0', STR_PAD_LEFT);
     }
 }

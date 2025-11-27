@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BorrowingStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,7 @@ class Borrowing extends Model
         'borrow_date' => 'datetime',
         'expected_return_date' => 'datetime',
         'actual_return_date' => 'datetime',
+        'status' => BorrowingStatus::class,
     ];
 
     public function user()
@@ -35,5 +37,23 @@ class Borrowing extends Model
     public function items()
     {
         return $this->hasMany(BorrowingItem::class);
+    }
+
+    // [UPDATE] Scopes menggunakan Enum
+    public function scopePending($query)
+    {
+        return $query->where('status', BorrowingStatus::Pending);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', BorrowingStatus::Approved);
+    }
+
+    public function scopeOverdue($query)
+    {
+        return $query->whereNull('actual_return_date')
+            ->where('expected_return_date', '<', now())
+            ->where('status', BorrowingStatus::Approved);
     }
 }

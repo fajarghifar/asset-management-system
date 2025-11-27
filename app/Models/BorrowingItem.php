@@ -9,17 +9,11 @@ class BorrowingItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'borrowing_id',
-        'item_id',
-        'fixed_instance_id',
-        'location_id',
-        'quantity',
-        'returned_quantity',
-        'returned_at'
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = ['returned_at' => 'datetime'];
+    protected $casts = [
+        'returned_at' => 'datetime',
+    ];
 
     public function borrowing()
     {

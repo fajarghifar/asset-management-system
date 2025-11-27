@@ -2,75 +2,74 @@
 
 namespace App\Services;
 
+use App\Enums\ItemType;
 use App\Models\Borrowing;
+use App\Models\ItemStock;
 use App\Models\BorrowingItem;
+use App\Enums\BorrowingStatus;
+use App\Enums\FixedItemStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BorrowingReturnService
 {
-    public function returnItem(BorrowingItem $borrowingItem, int $quantity): void
+    public function processReturn(BorrowingItem $borrowingItem, int $returnQty, ?string $conditionNotes = null): void
     {
-        $item = $borrowingItem->item;
-        $borrowing = $borrowingItem->borrowing;
-
-        if ($borrowing->status !== 'approved') {
-            throw ValidationException::withMessages([
-                'borrowing' => 'Peminjaman belum disetujui atau sudah selesai.',
-            ]);
+        if ($returnQty <= 0) {
+            throw ValidationException::withMessages(['quantity' => 'Jumlah kembali harus > 0']);
         }
 
-        if ($item->type === 'fixed') {
-            if ($quantity !== $borrowingItem->quantity) {
-                throw ValidationException::withMessages([
-                    'quantity' => 'Barang tetap hanya bisa dikembalikan secara penuh.',
-                ]);
-            }
-        } elseif ($item->type === 'consumable') {
-            if ($quantity < 0 || $quantity + $borrowingItem->returned_quantity > $borrowingItem->quantity) {
-                $max = $borrowingItem->quantity - $borrowingItem->returned_quantity;
-                throw ValidationException::withMessages([
-                    'quantity' => "Jumlah pengembalian tidak valid. Maksimal: {$max} unit.",
-                ]);
-            }
+        $remaining = $borrowingItem->quantity - $borrowingItem->returned_quantity;
+        if ($returnQty > $remaining) {
+            throw ValidationException::withMessages(['quantity' => "Maksimal pengembalian untuk item ini adalah {$remaining}."]);
         }
 
-        DB::transaction(function () use ($borrowingItem, $quantity, $item) {
-            if ($item->type === 'consumable') {
-                $borrowingItem->returned_quantity += $quantity;
-                $borrowingItem->returned_at = now();
-                $borrowingItem->save();
-            } elseif ($item->type === 'fixed') {
-                $instance = $borrowingItem->fixedInstance;
-                $instance->status = 'available';
-                $instance->save();
-
-                $borrowingItem->returned_quantity = $quantity;
-                $borrowingItem->returned_at = now();
-                $borrowingItem->save();
+        DB::transaction(function () use ($borrowingItem, $returnQty, $conditionNotes) {
+            if ($borrowingItem->item->type === ItemType::Consumable) {
+                $this->restoreStock($borrowingItem, $returnQty);
+            } elseif ($borrowingItem->item->type === ItemType::Fixed) {
+                $this->restoreInstance($borrowingItem, $conditionNotes);
             }
 
-            $this->checkCompletion($borrowingItem->borrowing);
+            $borrowingItem->increment('returned_quantity', $returnQty);
+            $borrowingItem->update(['returned_at' => now()]);
+
+            $this->checkBorrowingCompletion($borrowingItem->borrowing);
         });
     }
 
-    protected function checkCompletion(Borrowing $borrowing): void
+    private function restoreStock(BorrowingItem $borrowingItem, int $qty): void
     {
-        $freshBorrowing = $borrowing->fresh('items.item');
-
-        $allReturned = $freshBorrowing->items->every(
-            function (BorrowingItem $item) {
-                if ($item->item->type === 'consumable') {
-                    return true;
-                }
-                return $item->returned_quantity >= $item->quantity;
-            }
+        $stock = ItemStock::firstOrCreate(
+            ['item_id' => $borrowingItem->item_id, 'location_id' => $borrowingItem->location_id],
+            ['quantity' => 0, 'min_quantity' => 0]
         );
+        $stock->increment('quantity', $qty);
+    }
 
-        if ($allReturned && $freshBorrowing->status !== 'completed') {
-            $freshBorrowing->status = 'completed';
-            $freshBorrowing->actual_return_date = now();
-            $freshBorrowing->save();
+    private function restoreInstance(BorrowingItem $borrowingItem, ?string $notes): void
+    {
+        $status = FixedItemStatus::Available;
+
+        $borrowingItem->fixedInstance()->update([
+            'status' => $status,
+            'notes' => $notes
+        ]);
+    }
+
+    private function checkBorrowingCompletion(Borrowing $borrowing): void
+    {
+        $borrowing->refresh();
+
+        $isAllReturned = $borrowing->items->every(function ($item) {
+            return $item->returned_quantity >= $item->quantity;
+        });
+
+        if ($isAllReturned) {
+            $borrowing->update([
+                'status' => BorrowingStatus::Completed,
+                'actual_return_date' => now()
+            ]);
         }
     }
 }

@@ -16,19 +16,18 @@ return new class extends Migration
             $table->string('code')->unique(); // BRW-2025-001
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('purpose');
-            $table->dateTime('borrow_date');
-            $table->dateTime('expected_return_date');
+            // Indexing tanggal untuk performa filtering/reporting
+            $table->dateTime('borrow_date')->index();
+            $table->dateTime('expected_return_date')->index();
             $table->dateTime('actual_return_date')->nullable();
-            $table->enum('status', ['pending', 'approved', 'rejected', 'completed'])
-                ->default('pending');
+            // Status menggunakan string (yang akan dicasting ke Enum di Model)
+            $table->string('status')->default('pending')->index();
             $table->text('notes')->nullable();
-            $table->json('items_data')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
-            // Indexes
-            $table->index('user_id');
-            $table->index('status');
+            // Composite Index untuk query umum (Status + Tanggal)
+            $table->index(['status', 'borrow_date']);
         });
     }
 

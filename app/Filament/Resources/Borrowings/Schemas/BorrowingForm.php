@@ -3,10 +3,13 @@
 namespace App\Filament\Resources\Borrowings\Schemas;
 
 use App\Models\Item;
+use App\Enums\ItemType;
 use App\Models\Borrowing;
 use App\Models\ItemStock;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
+use App\Enums\BorrowingStatus;
+use App\Enums\FixedItemStatus;
 use App\Models\FixedItemInstance;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Grid;
@@ -15,14 +18,21 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 
 class BorrowingForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $isEditable = fn (?Borrowing $record) => !$record || $record->status === 'pending';
+        // [FIX] Logic ReadOnly yang Aman (Menggunakan $livewire untuk cek Parent Record)
+        $isReadOnly = function ($livewire) {
+            $record = $livewire->getRecord();
+            // Jika record ada (Edit Mode) DAN status bukan Pending -> Read Only
+            return $record instanceof Borrowing && $record->status !== BorrowingStatus::Pending;
+        };
 
         return $schema
             ->components([
@@ -32,34 +42,38 @@ class BorrowingForm
                             ->label('Peminjam')
                             ->relationship('user', 'name')
                             ->searchable()
+                            ->preload()
                             ->required()
-                            ->disabled(fn(?Borrowing $record) => !$isEditable($record)),
+                            ->disabled($isReadOnly) // Aman dipanggil di mana saja
+                            ->columnSpanFull(),
 
                         DateTimePicker::make('borrow_date')
-                            ->label('Tanggal Pinjam')
-                            ->required()
-                            ->native(false)
-                            ->default(now())
-                            ->disabled(fn(?Borrowing $record) => !$isEditable($record)),
+                                ->label('Tgl. Pinjam')
+                                ->default(now())
+                                ->required()
+                                ->native(false)
+                                ->disabled($isReadOnly),
 
                         DateTimePicker::make('expected_return_date')
-                            ->label('Tanggal Rencana Kembali')
+                            ->label('Tgl. Rencana Kembali')
+                            ->default(now()->addDays(1))
                             ->required()
                             ->native(false)
-                            ->disabled(fn(?Borrowing $record) => !$isEditable($record)),
+                            ->afterOrEqual('borrow_date')
+                            ->disabled($isReadOnly),
 
                         Textarea::make('purpose')
                             ->label('Tujuan Peminjaman')
                             ->rows(2)
                             ->required()
                             ->columnSpanFull()
-                            ->disabled(fn(?Borrowing $record) => !$isEditable($record)),
+                            ->disabled($isReadOnly),
 
                         Textarea::make('notes')
                             ->label('Catatan (Opsional)')
                             ->rows(2)
                             ->columnSpanFull()
-                            ->disabled(fn(?Borrowing $record) => !$isEditable($record)),
+                            ->disabled($isReadOnly),
                     ])
                     ->columns(2),
 
@@ -69,91 +83,100 @@ class BorrowingForm
                             ->relationship('items')
                             ->schema([
                                 Grid::make(4)->schema([
+                                    // 1. PILIH BARANG
                                     Select::make('item_id')
-                                        ->label('Barang')
-                                        ->options(function () {
-                                            return Cache::remember('borrowable_items_list', 60, function () {
-                                                return Item::whereIn('type', ['fixed', 'consumable'])
-                                                    ->orderBy('name')
-                                                    ->get()
-                                                    ->mapWithKeys(fn($item) => [
-                                                        $item->id => "{$item->name} ({$item->code}) – " . match ($item->type) {
-                                                            'fixed' => 'Barang Tetap',
-                                                            'consumable' => 'Habis Pakai',
-                                                            default => '–',
-                                                        }
-                                                    ]);
-                                            });
-                                        })
+                                        ->label('Nama Barang')
+                                        ->columnSpan(4)
+                                        ->relationship(
+                                            name: 'item',
+                                            titleAttribute: 'name',
+                                            modifyQueryUsing: fn(Builder $query) => $query->whereIn('type', [ItemType::Fixed, ItemType::Consumable])
+                                        )
+                                        ->getOptionLabelFromRecordUsing(fn(Item $item) => "{$item->name} ({$item->code})")
                                         ->searchable()
-                                        ->live(onBlur: true)
+                                        ->preload()
                                         ->required()
-                                        ->columnSpanFull(),
+                                        ->live()
+                                        ->afterStateUpdated(fn(Set $set) => $set('fixed_instance_id', null) & $set('location_id', null))
+                                        ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
 
+                                    // 2. PILIH UNIT (Khusus Fixed Item)
                                     Select::make('fixed_instance_id')
-                                        ->label('Instance Barang')
-                                        ->options(function (Get $get) {
+                                        ->label('Pilih Unit')
+                                        ->columnSpan(4)
+                                        ->options(function (Get $get, ?string $state) {
                                             $itemId = $get('item_id');
                                             if (!$itemId)
                                                 return [];
 
-                                            return FixedItemInstance::with('location')
+                                            return FixedItemInstance::query()
                                                 ->where('item_id', $itemId)
-                                                ->where('status', 'available')
-                                                ->get()
-                                                // PERBAIKAN: Atasi error '??' di dalam string
-                                                ->mapWithKeys(function ($inst) {
-                                                    $locationName = $inst->location?->name ?? 'N/A';
-                                                    return [$inst->id => "{$inst->code} (Lokasi: {$locationName})"];
-                                                });
+                                                ->where(function ($q) use ($state) {
+                                                    $q->where('status', FixedItemStatus::Available)
+                                                        ->orWhere('id', $state);
+                                                })
+                                                ->pluck('code', 'id');
                                         })
                                         ->searchable()
-                                        ->required()
-                                        ->columnSpan(4)
-                                        ->visible(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === 'fixed'),
+                                        // [FIX] Cek tipe langsung via Item::find (Aman dari error undefined method)
+                                        ->visible(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === ItemType::Fixed)
+                                        ->required(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === ItemType::Fixed)
+                                        ->disabled($isReadOnly),
 
+                                    // 3. PILIH LOKASI (Khusus Consumable Item)
                                     Select::make('location_id')
                                         ->label('Lokasi Stok')
+                                        ->columnSpan(4)
                                         ->options(function (Get $get) {
                                             $itemId = $get('item_id');
                                             if (!$itemId)
                                                 return [];
 
-                                            return ItemStock::with('location')
-                                                ->where('item_id', $itemId)
+                                            return ItemStock::where('item_id', $itemId)
                                                 ->where('quantity', '>', 0)
+                                                ->with('location')
                                                 ->get()
-                                                ->mapWithKeys(fn($stock) => [$stock->location_id => "{$stock->location->name} (Stok: {$stock->quantity})"]);
+                                                ->mapWithKeys(fn($stock) => [
+                                                    $stock->location_id => "{$stock->location->name} (Sisa: {$stock->quantity})"
+                                                ]);
                                         })
                                         ->searchable()
-                                        ->required()
-                                        ->columnSpan(3)
-                                        ->visible(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === 'consumable'),
+                                        // [FIX] Cek tipe langsung
+                                        ->visible(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === ItemType::Consumable)
+                                        ->required(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === ItemType::Consumable)
+                                        ->disabled($isReadOnly),
 
+                                    // 4. INPUT QUANTITY
                                     TextInput::make('quantity')
                                         ->label('Jumlah')
                                         ->numeric()
                                         ->minValue(1)
                                         ->default(1)
-                                        ->disabled(fn(Get $get) => $get('item_id') && Item::find($get('item_id'))?->type === 'fixed')
+                                        ->columnSpan(1)
                                         ->required()
-                                        ->columnSpan(1),
-                                ])
+                                        // Disable jika ReadOnly ATAU Tipe Fixed
+                                        ->disabled(
+                                            fn(Get $get, $livewire) =>
+                                            $isReadOnly($livewire) ||
+                                            ($get('item_id') && Item::find($get('item_id'))?->type === ItemType::Fixed)
+                                        )
+                                        // Paksa nilai jadi 1 jika Fixed
+                                        ->formatStateUsing(
+                                            fn(Get $get, $state) =>
+                                            ($get('item_id') && Item::find($get('item_id'))?->type === ItemType::Fixed) ? 1 : $state
+                                        )
+                                        ->dehydrated(),
+                                ]),
                             ])
                             ->addActionLabel('Tambah Barang')
                             ->itemLabel(fn($state) => $state['item_id'] ? Item::find($state['item_id'])?->name : 'Barang Baru')
                             ->columns(1)
-                            ->disabled(fn(?Borrowing $record) => !$isEditable($record))
-                            ->minItems(1)
-                            // PERBAIKAN: Logika disabled() yang benar untuk actions
-                            ->deleteAction(
-                                fn(Action $action) => $action
-                                    ->disabled(fn(?Borrowing $record) => !$isEditable($record))
-                            )
-                            ->addAction(
-                                fn(Action $action) => $action
-                                    ->disabled(fn(?Borrowing $record) => !$isEditable($record))
-                            ),
+
+                            // [FIX] Logic Deletable/Addable menggunakan negasi dari variable $isReadOnly
+                            ->disabled($isReadOnly)
+                            ->deletable(fn($livewire) => !$isReadOnly($livewire))
+                            ->addable(fn($livewire) => !$isReadOnly($livewire))
+                            ->cloneable(false),
                     ]),
             ]);
     }

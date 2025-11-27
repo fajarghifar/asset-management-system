@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Borrowings\Tables;
 use App\Models\Borrowing;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
+use App\Enums\BorrowingStatus;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\ActionGroup;
@@ -25,94 +26,77 @@ class BorrowingsTable
                 TextColumn::make('code')
                     ->label('Kode')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('bold')
+                    ->color('primary')
+                    ->copyable(),
                 TextColumn::make('user.name')
                     ->label('Peminjam')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('borrow_date')
+                    ->label('Tgl. Pinjam')
+                    ->date('d M Y')
+                    ->sortable(),
+                TextColumn::make('expected_return_date')
+                    ->label('Tgl. Tenggat')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->color(
+                        fn(Borrowing $record) => ($record->status === BorrowingStatus::Approved && now() > $record->expected_return_date) ? 'danger' : 'gray'
+                    ),
                 TextColumn::make('purpose')
                     ->label('Tujuan')
                     ->limit(30),
-                TextColumn::make('borrow_date')
-                    ->label('Pinjam')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('expected_return_date')
-                    ->label('Kembali')
-                    ->date()
-                    ->sortable(),
                 TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'pending' => 'gray',
-                        'approved' => 'success',
-                        'rejected' => 'danger',
-                        'completed' => 'info',
-                        'overdue' => 'warning',
-                    }),
+                    ->sortable(),
             ])
             ->headerActions([
                 CreateAction::make()->label('Ajukan Peminjaman'),
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'approved' => 'Disetujui',
-                        'rejected' => 'Ditolak',
-                        'completed' => 'Selesai',
-                        'overdue' => 'Terlambat',
-                    ]),
+                    ->options(BorrowingStatus::class),
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()->iconSize('lg'),
-                    EditAction::make()->iconSize('lg'),
+                    ViewAction::make(),
+                    EditAction::make()
+                        ->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending),
                     Action::make('approve')
                         ->label('Setujui')
-                        ->color('success')
                         ->icon('heroicon-o-check-circle')
-                        ->visible(fn(Borrowing $record) => $record->status === 'pending')
+                        ->color('success')
                         ->requiresConfirmation()
                         ->modalHeading('Setujui Peminjaman?')
-                        ->modalDescription('Pastikan semua barang tersedia.')
+                        ->modalDescription('Stok akan dikurangi dan status barang berubah menjadi dipinjam.')
+                        ->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending)
                         ->action(function (Borrowing $record) {
                             try {
                                 app(BorrowingApprovalService::class)->approve($record);
-                                Notification::make()
-                                    ->title('Berhasil')
-                                    ->body('Peminjaman disetujui.')
-                                    ->success()
-                                    ->send();
+                                Notification::make()->success()->title('Peminjaman Disetujui')->send();
                             } catch (\Exception $e) {
-                                Notification::make()
-                                    ->title('Gagal Menyetujui')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
+                                Notification::make()->danger()->title('Gagal')->body($e->getMessage())->send();
                             }
                         }),
                     Action::make('reject')
                         ->label('Tolak')
-                        ->color('danger')
                         ->icon('heroicon-o-x-circle')
-                        ->visible(fn(Borrowing $record) => $record->status === 'pending')
+                        ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('Tolak Peminjaman?')
-                        ->modalDescription('Peminjaman akan ditandai sebagai ditolak.')
+                        ->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending)
                         ->action(function (Borrowing $record) {
-                            $record->update(['status' => 'rejected']);
-                            Notification::make()
-                                ->title('Berhasil')
-                                ->body('Peminjaman ditolak.')
-                                ->success()
-                                ->send();
+                            app(BorrowingApprovalService::class)->reject($record, 'Ditolak oleh Admin via Tabel');
+                            Notification::make()->success()->title('Peminjaman Ditolak')->send();
                         }),
+
                     DeleteAction::make()
-                        ->visible(fn(Borrowing $record) => $record->status === 'pending')
-                        ->iconSize('lg'),
+                        ->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending),
                 ])
-                    ->dropdownPlacement('left-start'),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }

@@ -5,22 +5,22 @@ namespace App\Providers\Filament;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Pages\Dashboard;
-use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Navigation\NavigationItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Widgets\FilamentInfoWidget;
 use Filament\Http\Middleware\Authenticate;
+use App\Filament\Pages\CreateBorrowingPage;
 use App\Filament\Resources\Areas\AreaResource;
 use App\Filament\Resources\Items\ItemResource;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Filament\Http\Middleware\AuthenticateSession;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use App\Filament\Resources\Borrowings\BorrowingResource;
 use App\Filament\Resources\Locations\LocationResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Resources\Borrowings\BorrowingResource;
 use App\Filament\Resources\ItemStocks\ItemStockResource;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -67,8 +67,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->spa()
             ->sidebarCollapsibleOnDesktop()
-            ->maxContentWidth(Width::Full)
-            // ->topNavigation()
+            // ->maxContentWidth(Width::Full)
+            ->topNavigation()
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label('Peminjaman')
@@ -104,10 +104,15 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(4)
                     ->isActiveWhen(fn() => request()->routeIs(InstalledItemInstanceResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Peminjaman')
-                    ->url(fn(): string => BorrowingResource::getUrl('index'))
+                NavigationItem::make('Ajukan Peminjaman')
+                    ->url(fn(): string => CreateBorrowingPage::getUrl())
                     ->group('Peminjaman')
                     ->sort(1)
+                    ->isActiveWhen(fn() => request()->routeIs(CreateBorrowingPage::getRouteName())),
+                NavigationItem::make('Daftar Peminjaman')
+                    ->url(fn(): string => BorrowingResource::getUrl('index'))
+                    ->group('Peminjaman')
+                    ->sort(2)
                     ->isActiveWhen(fn() => request()->routeIs(BorrowingResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))
@@ -120,6 +125,7 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(2)
                     ->isActiveWhen(fn() => request()->routeIs(LocationResource::getRouteBaseName() . '*')),
             ])
-            ->breadcrumbs(false);
+            ->breadcrumbs(false)
+            ->viteTheme('resources/css/filament/admin/theme.css');
     }
 }
