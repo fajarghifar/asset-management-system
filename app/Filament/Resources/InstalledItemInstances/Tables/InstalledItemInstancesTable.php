@@ -22,31 +22,36 @@ class InstalledItemInstancesTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->heading('Daftar Barang Terpasang')
+            ->heading('Daftar Aset Terpasang')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('No.')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode Instance')
+                    ->label('Kode Aset')
                     ->searchable()
-                    ->sortable()
-                    ->copyable()->weight('medium')->color('primary'),
+                    ->copyable()
+                    ->weight('medium')
+                    ->color('primary'),
                 TextColumn::make('item.name')
-                    ->label('Jenis Barang')
+                    ->label('Nama Barang')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('serial_number')
-                    ->label('Nomor Seri')->searchable()->placeholder('-')->fontFamily('mono')->toggleable(),
+                    ->label('Nomor Seri')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->fontFamily('mono'),
                 TextColumn::make('currentLocation.area.name')
                     ->label('Area')
                     ->searchable()
                     ->sortable()
-                    ->badge()->color(
+                    ->badge()
+                    ->color(
                         fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
                     ),
                 TextColumn::make('currentLocation.name')
-                    ->label('Lokasi Pemasangan')
+                    ->label('Lokasi')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('installed_at')
@@ -61,10 +66,11 @@ class InstalledItemInstancesTable
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(InstalledItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif'),
+                    ->tooltip(fn(InstalledItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Instance'),
+                CreateAction::make()->label('Tambah Barang'),
             ])
             ->filters([
                 SelectFilter::make('item')

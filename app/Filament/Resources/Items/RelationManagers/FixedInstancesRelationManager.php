@@ -35,7 +35,7 @@ class FixedInstancesRelationManager extends RelationManager
 {
     protected static string $relationship = 'fixedInstances';
 
-    protected static ?string $title = 'Unit Aset Tetap';
+    protected static ?string $title = 'Daftar Aset Tetap';
 
     protected static string|BackedEnum|null $icon = 'heroicon-o-tag';
 
@@ -69,7 +69,7 @@ class FixedInstancesRelationManager extends RelationManager
                     ->required()
                     ->live(),
                 Select::make('location_id')
-                    ->label('Lokasi Saat Ini')
+                    ->label('Lokasi Penyimpanan')
                     ->relationship(
                         name: 'location',
                         titleAttribute: 'name',
@@ -100,7 +100,7 @@ class FixedInstancesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->badge()
+                    ->weight('medium')
                     ->color('primary'),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
@@ -108,10 +108,6 @@ class FixedInstancesRelationManager extends RelationManager
                     ->copyable()
                     ->fontFamily('mono')
                     ->placeholder('-'),
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('location.area.name')
                     ->label('Area')
                     ->sortable()
@@ -119,6 +115,10 @@ class FixedInstancesRelationManager extends RelationManager
                     ->color(
                         fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
                     ),
+                TextColumn::make('location.name')
+                    ->label('Lokasi')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -139,7 +139,7 @@ class FixedInstancesRelationManager extends RelationManager
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label('Registrasi Unit Baru'),
+                CreateAction::make()->label('Tambah Unit'),
             ])
             ->filters([
                 SelectFilter::make('area')

@@ -43,7 +43,7 @@ class FixedItemInstanceResource extends Resource
         return $schema
             ->components([
                 Select::make('item_id')
-                    ->label('Nama Barang')
+                    ->label('Nama Barang (Master)')
                     ->relationship(
                         name: 'item',
                         titleAttribute: 'name',
@@ -52,31 +52,39 @@ class FixedItemInstanceResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->code} - {$record->name}")
                     ->searchable(['name', 'code'])
                     ->preload()
-                    ->required(),
-                TextInput::make('code')
-                    ->label('Kode Instance')
                     ->required()
+                    ->columnSpanFull(),
+                TextInput::make('code')
+                    ->label('Kode Aset')
+                    ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
+                    ->disabled()
+                    ->dehydrated()
                     ->unique(ignoreRecord: true)
                     ->maxLength(30),
                 TextInput::make('serial_number')
-                    ->label('Nomor Seri')
+                    ->label('Nomor Seri (SN)')
                     ->maxLength(100)
                     ->unique(ignoreRecord: true)
                     ->nullable()
-                    ->placeholder('Opsional'),
+                    ->placeholder('Opsional (SN Pabrik)'),
                 Select::make('status')
-                    ->label('Status')
+                    ->label('Status Kondisi')
                     ->options(FixedItemStatus::class)
                     ->default(FixedItemStatus::Available)
                     ->required()
                     ->live(),
                 Select::make('location_id')
-                    ->label('Lokasi Saat Ini')
-                    ->relationship('location', 'name')
-                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
+                    ->label('Lokasi Penyimpanan')
+                    ->relationship(
+                        name: 'location',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query) => $query->with('area')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->area->name})")
                     ->searchable(['name', 'code'])
                     ->preload()
-                    ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value),
+                    ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value)
+                    ->columnSpanFull(),
                 Textarea::make('notes')
                     ->label('Catatan')
                     ->rows(3)
@@ -87,16 +95,16 @@ class FixedItemInstanceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Daftar Barang Tetap')
+            ->heading('Daftar Aset Tetap')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('No.')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode')
+                    ->label('Kode Aset')
                     ->searchable()
                     ->copyable()
-                    ->badge()
+                    ->weight('medium')
                     ->color('primary'),
                 TextColumn::make('item.name')
                     ->label('Nama Barang')
@@ -110,7 +118,9 @@ class FixedItemInstanceResource extends Resource
                     ->label('Area')
                     ->sortable()
                     ->badge()
-                    ->color('gray'),
+                    ->color(
+                        fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
+                    ),
                 TextColumn::make('location.name')
                     ->label('Lokasi')
                     ->sortable(),
@@ -134,7 +144,7 @@ class FixedItemInstanceResource extends Resource
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Instance'),
+                CreateAction::make()->label('Tambah Barang'),
             ])
             ->filters([
                 SelectFilter::make('area')
@@ -181,6 +191,12 @@ class FixedItemInstanceResource extends Resource
                                     ->danger()
                                     ->title('Gagal Menghapus')
                                     ->body($e->validator->errors()->first())
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Terjadi Kesalahan')
+                                    ->body($e->getMessage())
                                     ->send();
                             }
                         }),

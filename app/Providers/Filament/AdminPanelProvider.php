@@ -89,17 +89,17 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(1)
                     ->isActiveWhen(fn() => request()->routeIs(ItemResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Stok Barang Habis Pakai')
+                NavigationItem::make('Barang Habis Pakai')
                     ->url(fn(): string => ItemStockResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(2)
                     ->isActiveWhen(fn() => request()->routeIs(ItemStockResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Instance Barang Tetap')
+                NavigationItem::make('Daftar Aset Tetap')
                     ->url(fn(): string => FixedItemInstanceResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(3)
                     ->isActiveWhen(fn() => request()->routeIs(FixedItemInstanceResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Instance Barang Terpasang')
+                NavigationItem::make('Daftar Aset Terpasang')
                     ->url(fn(): string => InstalledItemInstanceResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(4)

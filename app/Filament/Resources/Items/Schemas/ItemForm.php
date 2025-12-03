@@ -19,7 +19,7 @@ class ItemForm
                     ->columns(2)
                     ->schema([
                         TextInput::make('code')
-                            ->label('Kode Barang (SKU)')
+                            ->label('Kode')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(20)

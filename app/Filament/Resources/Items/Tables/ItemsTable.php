@@ -30,16 +30,17 @@ class ItemsTable
                     ->withCount(['fixedInstances', 'installedInstances'])
                     ->withSum('stocks', 'quantity');
             })
-            ->heading('Daftar Barang')
+            ->heading('Daftar Master Barang')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode SKU')
+                    ->label('Kode')
                     ->searchable()
                     ->copyable()
-                    ->badge(),
+                    ->weight('medium')
+                    ->color('primary'),
                 TextColumn::make('name')
                     ->label('Nama Barang')
                     ->searchable()
@@ -83,10 +84,10 @@ class ItemsTable
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()->iconSize('lg'),
-                    EditAction::make()->iconSize('lg'),
+                    ViewAction::make(),
+                    EditAction::make(),
                     DeleteAction::make()
-                        ->iconSize('lg')
+
                         ->modalHeading('Hapus Barang')
                         ->modalDescription('Apakah Anda yakin? Barang akan dipindahkan ke sampah (Trash).')
                         ->action(function (Item $record) {
@@ -108,8 +109,8 @@ class ItemsTable
                             }
                         }),
 
-                    ForceDeleteAction::make()->iconSize('lg'),
-                    RestoreAction::make()->iconSize('lg'),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
                 ])
                 ->dropdownPlacement('left-start'),
             ])

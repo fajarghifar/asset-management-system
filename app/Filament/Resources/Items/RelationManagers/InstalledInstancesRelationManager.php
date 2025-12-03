@@ -65,12 +65,13 @@ class InstalledInstancesRelationManager extends RelationManager
                         titleAttribute: 'name',
                         modifyQueryUsing: fn(Builder $query) => $query->with('area')
                     )
+                    ->preload()
                     ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                     ->searchable(['name', 'code'])
                     ->required()
                     ->columnSpanFull(),
                 DatePicker::make('installed_at')
-                    ->label('Tanggal Pasang')
+                    ->label('Tanggal Pemasangan')
                     ->required()
                     ->maxDate(now()),
                 Textarea::make('notes')
@@ -92,17 +93,13 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->badge()
+                    ->weight('medium')
                     ->color('primary'),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable()
-                    ->fontFamily('mono')
-                    ->toggleable(),
-                TextColumn::make('currentLocation.name')
-                    ->label('Lokasi')
-                    ->searchable()
-                    ->sortable(),
+                    ->placeholder('-')
+                    ->fontFamily('mono'),
                 TextColumn::make('currentLocation.area.name')
                     ->label('Area')
                     ->searchable()
@@ -111,6 +108,10 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->color(
                         fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
                     ),
+                TextColumn::make('currentLocation.name')
+                    ->label('Lokasi')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('installed_at')
                     ->label('Tgl. Pemasangan')
                     ->date('d M Y')
@@ -123,7 +124,8 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(InstalledItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif'),
+                    ->tooltip(fn(InstalledItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->alignCenter(),
             ])
             ->filters([
                 SelectFilter::make('area')

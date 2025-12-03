@@ -18,11 +18,19 @@ class InstalledItemInstanceForm
     {
         return $schema
             ->components([
-                Section::make('Informasi Instance')
+                Section::make('Informasi Aset')
                     ->columns(2)
                     ->schema([
+                        TextInput::make('code')
+                            ->label('Kode Aset')
+                            ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
+                            ->disabled()
+                            ->dehydrated()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(50)
+                            ->columnSpanFull(),
                         Select::make('item_id')
-                            ->label('Jenis Barang')
+                            ->label('Nama Barang')
                             ->relationship(
                                 name: 'item',
                                 titleAttribute: 'name',
@@ -30,15 +38,10 @@ class InstalledItemInstanceForm
                                     ->where('type', 'installed')
                                     ->orderBy('name')
                             )
+                            ->preload()
                             ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->name} ({$record->code})")
                             ->searchable(['name', 'code'])
                             ->required(),
-                        TextInput::make('code')
-                            ->label('Kode Instance')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(30)
-                            ->autofocus(),
                         TextInput::make('serial_number')
                             ->label('Nomor Seri')
                             ->maxLength(100)
@@ -48,9 +51,11 @@ class InstalledItemInstanceForm
                             ->label('Lokasi Pemasangan')
                             ->relationship(
                                 name: 'currentLocation',
-                                titleAttribute: 'name'
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn(Builder $query) => $query->with('area')
                             )
-                            ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
+                            ->preload()
+                            ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                             ->searchable(['name', 'code'])
                             ->required()
                             ->columnSpanFull(),

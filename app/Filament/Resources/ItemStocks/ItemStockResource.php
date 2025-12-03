@@ -26,6 +26,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ItemStocks\Pages\ManageItemStocks;
@@ -41,7 +42,7 @@ class ItemStockResource extends Resource
         return $schema
             ->components([
                 Select::make('item_id')
-                    ->label('Barang (Consumable)')
+                    ->label('Nama Barang')
                     ->relationship(
                         name: 'item',
                         titleAttribute: 'name',
@@ -50,27 +51,31 @@ class ItemStockResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->code} - {$record->name}")
                     ->searchable(['name', 'code'])
                     ->preload()
-                    ->optionsLimit(5)
                     ->required()
                     ->unique(
                         table: 'item_stocks',
                         column: 'item_id',
-                        modifyRuleUsing: function (Unique $rule, callable $get) {
+                        modifyRuleUsing: function (Unique $rule, Get $get) {
                             return $rule->where('location_id', $get('location_id'));
                         },
                         ignoreRecord: true
                     )
                     ->validationMessages([
                         'unique' => 'Barang ini sudah terdaftar di lokasi yang dipilih.',
-                    ]),
+                    ])
+                    ->columnSpanFull(),
                 Select::make('location_id')
-                    ->label('Lokasi')
-                    ->relationship('location', 'name')
+                    ->label('Lokasi Penyimpanan')
+                    ->relationship(
+                        name: 'location',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query) => $query->with('area')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                     ->searchable(['name', 'code'])
                     ->preload()
-                    ->optionsLimit(5)
-                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
-                    ->required(),
+                    ->required()
+                    ->columnSpanFull(),
                 TextInput::make('quantity')
                     ->label('Qty. Stok')
                     ->numeric()
@@ -91,27 +96,32 @@ class ItemStockResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['item', 'location.area']))
             ->heading('Stok Barang Habis Pakai')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('item.code')
-                    ->label('Kode')
+                    ->label('Kode Aset')
                     ->searchable()
                     ->copyable()
-                    ->badge(),
+                    ->weight('medium')
+                    ->color('primary'),
                 TextColumn::make('item.name')
-                    ->label('Barang')
+                    ->label('Nama Barang')
                     ->searchable()
-                    ->sortable(),
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
                     ->sortable(),
                 TextColumn::make('location.area.name')
                     ->label('Area')
+                    ->sortable()
                     ->badge()
-                    ->color('gray'),
+                    ->color(
+                        fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
+                    ),
+                TextColumn::make('location.name')
+                    ->label('Lokasi')
+                    ->sortable(),
                 TextColumn::make('quantity')
                     ->label('Qty. Stok')
                     ->sortable()
@@ -126,7 +136,7 @@ class ItemStockResource extends Resource
                     ->alignCenter(),
                 TextColumn::make('updated_at')
                     ->label('Terakhir Diupdate')
-                    ->dateTime()
+                    ->dateTime('d M Y, H:i')
                     ->sortable()
                     ->size('sm'),
                 IconColumn::make('deleted_at')

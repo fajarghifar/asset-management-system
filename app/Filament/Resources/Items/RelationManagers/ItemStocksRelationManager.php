@@ -99,16 +99,17 @@ class ItemStocksRelationManager extends RelationManager
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('location.area.name')
                     ->label('Area')
+                    ->sortable()
                     ->badge()
                     ->color(
                         fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
                     ),
+                TextColumn::make('location.name')
+                    ->label('Lokasi')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('quantity')
                     ->label('Qty. Stok')
                     ->sortable()
@@ -123,7 +124,7 @@ class ItemStocksRelationManager extends RelationManager
                     ->alignCenter(),
                 TextColumn::make('updated_at')
                     ->label('Terakhir Diupdate')
-                    ->dateTime()
+                    ->dateTime('d M Y, H:i')
                     ->sortable(),
                 IconColumn::make('deleted_at')
                     ->label('Status Data')

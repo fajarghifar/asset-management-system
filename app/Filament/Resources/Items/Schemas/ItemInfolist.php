@@ -18,11 +18,10 @@ class ItemInfolist
                 Section::make('Informasi Barang')
                     ->schema([
                         TextEntry::make('code')
-                            ->label('Kode SKU')
-                            ->badge()
-                            ->color('primary')
+                            ->label('Kode')
                             ->copyable()
-                            ->weight(FontWeight::Bold)
+                            ->color('primary')
+                            ->weight('medium')
                             ->columnSpanFull(),
                         TextEntry::make('name')
                             ->label('Nama Barang'),
@@ -35,25 +34,6 @@ class ItemInfolist
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
-
-                Section::make('Statistik Inventaris')
-                    ->schema([
-                        TextEntry::make('total_units')
-                            ->label('Total Stok / Unit')
-                            ->state(function ($record) {
-                                return match ($record->type) {
-                                    ItemType::Consumable => $record->stocks()->sum('quantity') . ' pcs',
-                                    ItemType::Fixed => $record->fixedInstances()->count() . ' unit',
-                                    ItemType::Installed => $record->installedInstances()->count() . ' unit',
-                                };
-                            })
-                            ->badge()
-                            ->color(fn($state) => (int) $state > 0 ? 'success' : 'danger'),
-
-                        TextEntry::make('created_at')
-                            ->label('Terdaftar Sejak')
-                            ->dateTime('d M Y'),
-                    ])->columns(2),
             ]);
     }
 }

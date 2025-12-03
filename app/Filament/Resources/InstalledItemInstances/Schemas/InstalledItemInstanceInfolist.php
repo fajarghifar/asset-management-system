@@ -13,13 +13,12 @@ class InstalledItemInstanceInfolist
         return $schema
             ->columns(1)
             ->components([
-                Section::make('Informasi Instance')
+                Section::make('Informasi Aset')
                     ->schema([
                         TextEntry::make('code')
-                            ->label('Kode Instance')
-                            ->weight('bold')
+                            ->label('Kode Aset')
                             ->copyable()
-                            ->badge()
+                            ->weight('medium')
                             ->color('primary')
                             ->columnSpanFull(),
                         TextEntry::make('item.name')
@@ -28,11 +27,17 @@ class InstalledItemInstanceInfolist
                             ->label('Nomor Seri')
                             ->placeholder('-')
                             ->fontFamily('mono'),
-                        TextEntry::make('currentLocation.name')
+                        TextEntry::make('currentLocation')
                             ->label('Lokasi Saat Ini')
                             ->badge()
                             ->color('info')
-                            ->icon('heroicon-m-map-pin'),
+                            ->icon('heroicon-m-map-pin')
+                            ->formatStateUsing(
+                                fn($record) =>
+                                $record->currentLocation
+                                ? $record->currentLocation->area->name . ' — ' . $record->currentLocation->name
+                                : '-'
+                            ),
                         TextEntry::make('installed_at')
                             ->label('Tanggal Pasang')
                             ->date('d F Y'),

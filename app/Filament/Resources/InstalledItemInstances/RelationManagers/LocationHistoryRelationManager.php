@@ -45,6 +45,9 @@ class LocationHistoryRelationManager extends RelationManager
         return $table
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['location.area']))
             ->columns([
+                TextColumn::make('rowIndex')
+                    ->label('#')
+                    ->rowIndex(),
                 TextColumn::make('location.area.name')
                     ->label('Area')
                     ->searchable()
