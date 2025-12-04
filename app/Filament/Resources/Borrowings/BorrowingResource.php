@@ -57,7 +57,6 @@ class BorrowingResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['user'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

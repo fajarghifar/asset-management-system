@@ -50,6 +50,11 @@ enum ItemType: string implements HasLabel, HasColor
         return $this === self::Fixed;
     }
 
+    public function isInstalled(): bool
+    {
+        return $this === self::Installed;
+    }
+
     public function validateDeletion(Item $item): void
     {
         $hasDependents = match ($this) {

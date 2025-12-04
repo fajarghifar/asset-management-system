@@ -76,7 +76,8 @@
             "@php artisan db:seed --class=UserSeeder",
             "@php artisan db:seed --class=AreaSeeder",
             "@php artisan db:seed --class=LocationSeeder",
-            "@php artisan db:seed --class=ItemSeeder"
+            "@php artisan db:seed --class=ItemSeeder",
+            "@php artisan db:seed --class=InventorySeeder"
         ]
     },
     "extra": {

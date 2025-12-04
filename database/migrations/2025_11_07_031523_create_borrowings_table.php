@@ -13,20 +13,23 @@ return new class extends Migration
     {
         Schema::create('borrowings', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique(); // BRW-2025-001
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('code', 30)->unique();
+            $table->string('borrower_name');
+            $table->string('proof_image')->nullable();
             $table->text('purpose');
-            // Indexing tanggal untuk performa filtering/reporting
-            $table->dateTime('borrow_date')->index();
-            $table->dateTime('expected_return_date')->index();
+            $table->dateTime('borrow_date');
+            $table->dateTime('expected_return_date');
             $table->dateTime('actual_return_date')->nullable();
-            // Status menggunakan string (yang akan dicasting ke Enum di Model)
-            $table->string('status')->default('pending')->index();
+            $table->string('status')->default('pending');
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
-            // Composite Index untuk query umum (Status + Tanggal)
+            // Indexes
+            $table->index('borrower_name');
+            $table->index('borrow_date');
+            $table->index('expected_return_date');
+            $table->index('status');
             $table->index(['status', 'borrow_date']);
         });
     }

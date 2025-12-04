@@ -11,7 +11,6 @@ enum BorrowingStatus: string implements HasLabel, HasColor
     case Approved = 'approved';
     case Rejected = 'rejected';
     case Completed = 'completed';
-    case Overdue = 'overdue';
 
     public function getLabel(): ?string
     {
@@ -20,7 +19,6 @@ enum BorrowingStatus: string implements HasLabel, HasColor
             self::Approved => 'Disetujui / Berjalan',
             self::Rejected => 'Ditolak',
             self::Completed => 'Selesai',
-            self::Overdue => 'Terlambat',
         };
     }
 
@@ -28,10 +26,9 @@ enum BorrowingStatus: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::Pending => 'gray',
-            self::Approved => 'success',
+            self::Approved => 'info',
             self::Rejected => 'danger',
-            self::Completed => 'info',
-            self::Overdue => 'warning',
+            self::Completed => 'success',
         };
     }
 }

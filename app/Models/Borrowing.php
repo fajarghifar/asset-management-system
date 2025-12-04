@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BorrowingStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Borrowing extends Model
@@ -13,7 +14,8 @@ class Borrowing extends Model
 
     protected $fillable = [
         'code',
-        'user_id',
+        'borrower_name',
+        'proof_image',
         'purpose',
         'borrow_date',
         'expected_return_date',
@@ -29,31 +31,14 @@ class Borrowing extends Model
         'status' => BorrowingStatus::class,
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(BorrowingItem::class);
     }
 
-    // [UPDATE] Scopes menggunakan Enum
-    public function scopePending($query)
+    public function getIsOverdueAttribute(): bool
     {
-        return $query->where('status', BorrowingStatus::Pending);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('status', BorrowingStatus::Approved);
-    }
-
-    public function scopeOverdue($query)
-    {
-        return $query->whereNull('actual_return_date')
-            ->where('expected_return_date', '<', now())
-            ->where('status', BorrowingStatus::Approved);
+        return $this->status === BorrowingStatus::Approved
+            && $this->expected_return_date < now();
     }
 }

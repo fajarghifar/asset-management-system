@@ -15,16 +15,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('borrowing_id')->constrained()->cascadeOnDelete();
             $table->foreignId('item_id')->constrained()->restrictOnDelete();
-            // Relasi Polimorfik Eksplisit (Exclusive Arc)
-            // Fixed Item -> isi fixed_instance_id
-            $table->foreignId('fixed_instance_id')->nullable()
-                ->constrained('fixed_item_instances')->nullOnDelete();
-            // Consumable Item -> isi location_id (sumber stok)
-            $table->foreignId('location_id')->nullable()
-                ->constrained('locations')->nullOnDelete();
+            $table->foreignId('fixed_instance_id')
+                ->nullable()
+                ->constrained('fixed_item_instances')
+                ->nullOnDelete();
+            $table->foreignId('location_id')
+                ->nullable()
+                ->constrained('locations')
+                ->nullOnDelete();
             $table->integer('quantity')->default(1);
             $table->integer('returned_quantity')->default(0);
-            // Status per item (borrowed, returned, lost)
             $table->string('status')->default('borrowed');
             $table->dateTime('returned_at')->nullable();
             $table->timestamps();
