@@ -38,18 +38,11 @@ class LocationResource extends Resource
                     ->preload()
                     ->required()
                     ->disabledOn('edit'),
-                TextInput::make('code')
-                    ->label('Kode Lokasi')
-                    ->disabled()
-                    ->dehydrated()
-                    ->visible(fn(string $operation): bool => $operation === 'edit')
-                    ->maxLength(9),
                 TextInput::make('name')
                     ->label('Nama Lokasi')
                     ->required()
                     ->maxLength(100)
-                    ->placeholder('Contoh: Ruang Meeting Utama')
-                    ->columnSpan(fn(string $operation) => $operation === 'create' ? 1 : 2),
+                    ->placeholder('Contoh: Ruang Meeting Utama'),
                 Textarea::make('description')
                     ->label('Deskripsi')
                     ->rows(3)

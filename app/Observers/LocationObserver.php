@@ -55,19 +55,19 @@ class LocationObserver
 
     public function deleting(Location $location): void
     {
-        if ($location->itemStocks()->where('quantity', '>', 0)->exists()) {
+        if ($location->hasConsumableStock()) {
             throw ValidationException::withMessages([
                 'location' => "Gagal: Masih ada stok barang (Consumable) yang tersimpan di lokasi '{$location->name}'.",
             ]);
         }
 
-        if ($location->fixedItemInstances()->exists()) {
+        if ($location->hasFixedItems()) {
             throw ValidationException::withMessages([
                 'location' => "Gagal: Lokasi '{$location->name}' masih digunakan oleh Aset Tetap (Fixed Items).",
             ]);
         }
 
-        if ($location->installedItemInstances()->exists()) {
+        if ($location->hasInstalledItems()) {
             throw ValidationException::withMessages([
                 'location' => "Gagal: Lokasi '{$location->name}' masih digunakan oleh Aset Terpasang (Installed Items).",
             ]);
