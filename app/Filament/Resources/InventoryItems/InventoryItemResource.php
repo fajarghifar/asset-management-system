@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\InventoryItems;
 
-use App\Models\Area;
 use App\Models\Item;
 use App\Enums\ItemType;
 use App\Models\Location;
@@ -115,7 +114,6 @@ class InventoryItemResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('InventoryItem')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
@@ -206,6 +204,12 @@ class InventoryItemResource extends Resource
                                     ->danger()
                                     ->title('Gagal Menghapus')
                                     ->body($e->validator->errors()->first())
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Terjadi Kesalahan')
+                                    ->body($e->getMessage())
                                     ->send();
                             }
                         }),

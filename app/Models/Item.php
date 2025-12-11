@@ -26,8 +26,13 @@ class Item extends Model
         'type' => ItemType::class,
     ];
 
-    public function installedInstances()
+    public function installedItems()
     {
         return $this->hasMany(InstalledItem::class);
+    }
+
+    public function inventoryItems()
+    {
+        return $this->hasMany(InventoryItem::class);
     }
 }

@@ -34,8 +34,7 @@ enum ItemType: string implements HasLabel, HasColor
     public function getRelationName(): string
     {
         return match ($this) {
-            self::Consumable => 'stocks',
-            self::Fixed => 'fixedInstances',
+            self::Consumable, self::Fixed => 'inventoryItems',
             self::Installed => 'installedInstances',
         };
     }

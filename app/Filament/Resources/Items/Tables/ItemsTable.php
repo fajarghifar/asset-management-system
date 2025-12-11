@@ -27,8 +27,7 @@ class ItemsTable
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 return $query
-                    ->withCount(['fixedInstances', 'installedInstances'])
-                    ->withSum('stocks', 'quantity');
+                    ->withCount(['inventoryItems', 'installedItems']);
             })
             ->heading('Daftar Master Barang')
             ->columns([
@@ -52,9 +51,9 @@ class ItemsTable
                     ->label('Total Stok / Unit')
                     ->state(function (Item $record) {
                         return match ($record->type) {
-                            ItemType::Consumable => $record->stocks_sum_quantity ?? 0,
-                            ItemType::Fixed => $record->fixed_instances_count ?? 0,
-                            ItemType::Installed => $record->installed_instances_count ?? 0,
+                            ItemType::Consumable => $record->inventoryItems()->where('quantity', '>', 0)->sum('quantity'),
+                            ItemType::Fixed => $record->inventoryItems_count ?? 0,
+                            ItemType::Installed => $record->installed_items_count ?? 0,
                         };
                     })
                     ->badge()

@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources\Items\RelationManagers;
 
-use BackedEnum;
-use App\Models\Area;
 use App\Models\Item;
 use App\Enums\ItemType;
 use App\Models\Location;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use App\Enums\FixedItemStatus;
+use App\Models\InstalledItem;
 use Filament\Actions\EditAction;
-use App\Models\FixedItemInstance;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -24,65 +21,58 @@ use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
-use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Validation\ValidationException;
 use Filament\Resources\RelationManagers\RelationManager;
 
-class FixedInstancesRelationManager extends RelationManager
+class InstalledItemsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'fixedInstances';
+    protected static string $relationship = 'installedItems';
 
-    protected static ?string $title = 'Daftar Aset Tetap';
-
-    protected static string|BackedEnum|null $icon = 'heroicon-o-tag';
+    protected static ?string $title = 'Daftar Barang Terpasang';
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return $ownerRecord instanceof Item && $ownerRecord->type === ItemType::Fixed;
+        return $ownerRecord instanceof Item && $ownerRecord->type === ItemType::Installed;
     }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('code')
-                    ->label('Kode Aset')
-                    ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
-                    ->disabled()
-                    ->dehydrated()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(50)
-                    ->columnSpanFull(),
-                TextInput::make('serial_number')
-                    ->label('Nomor Seri')
-                    ->maxLength(100)
-                    ->unique(ignoreRecord: true)
-                    ->nullable()
-                    ->placeholder('Opsional'),
-                Select::make('status')
-                    ->label('Status Kondisi')
-                    ->options(FixedItemStatus::class)
-                    ->default(FixedItemStatus::Available)
-                    ->required()
-                    ->live(),
+                // TextInput::make('code')
+                //     ->label('Kode Aset')
+                //     ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
+                //     ->disabled()
+                //     ->dehydrated()
+                //     ->unique(ignoreRecord: true)
+                //     ->maxLength(50)
+                //     ->columnSpanFull(),
                 Select::make('location_id')
-                    ->label('Lokasi Penyimpanan')
+                    ->label('Lokasi Pemasangan')
                     ->relationship(
                         name: 'location',
                         titleAttribute: 'name',
                         modifyQueryUsing: fn(Builder $query) => $query->with('area')
                     )
+                    ->preload()
                     ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                     ->searchable(['name', 'code'])
-                    ->preload()
-                    ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value)
+                    ->required()
                     ->columnSpanFull(),
+                TextInput::make('serial_number')
+                    ->label('Nomor Seri')
+                    ->maxLength(100)
+                    ->unique(ignoreRecord: true),
+                DatePicker::make('installed_at')
+                    ->label('Tanggal Pemasangan')
+                    ->required()
+                    ->maxDate(now()),
                 Textarea::make('notes')
-                    ->label('Catatan Kondisi')
-                    ->rows(3)
+                    ->label('Catatan')
                     ->columnSpanFull(),
             ]);
     }
@@ -98,7 +88,6 @@ class FixedInstancesRelationManager extends RelationManager
                 TextColumn::make('code')
                     ->label('Kode Aset')
                     ->searchable()
-                    ->sortable()
                     ->copyable()
                     ->weight('medium')
                     ->color('primary'),
@@ -106,26 +95,20 @@ class FixedInstancesRelationManager extends RelationManager
                     ->label('Nomor Seri')
                     ->searchable()
                     ->copyable()
-                    ->fontFamily('mono')
-                    ->placeholder('-'),
-                TextColumn::make('location.area.name')
-                    ->label('Area')
-                    ->sortable()
-                    ->badge()
-                    ->color(
-                        fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
-                    ),
+                    ->placeholder('-')
+                    ->fontFamily('mono'),
                 TextColumn::make('location.name')
                     ->label('Lokasi')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('updated_at')
-                    ->label('Terakhir Diupdate')
-                    ->dateTime('d M Y, H:i')
+                TextColumn::make('location.area.name')
+                    ->label('Area')
+                    ->searchable()
+                    ->sortable()
+                    ->badge(),
+                TextColumn::make('installed_at')
+                    ->label('Tanggal Pemasangan')
+                    ->date('d M Y')
                     ->sortable(),
                 IconColumn::make('deleted_at')
                     ->label('Status Data')
@@ -135,36 +118,21 @@ class FixedInstancesRelationManager extends RelationManager
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(FixedItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->tooltip(fn(InstalledItem $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
                     ->alignCenter(),
-            ])
-            ->headerActions([
-                CreateAction::make()->label('Tambah Unit'),
             ])
             ->filters([
                 SelectFilter::make('area')
-                    ->label('Filter Area')
-                    ->options(fn() => Area::pluck('name', 'id'))
-                    ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
-                            $query->whereHas('location', fn($q) => $q->where('area_id', $data['value']));
-                        }
-                    })
-                    ->searchable()
-                    ->preload()
-                    ->optionsLimit(5),
-                SelectFilter::make('location')
-                    ->relationship('location', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->optionsLimit(5),
-                SelectFilter::make('status')
-                    ->options(FixedItemStatus::class),
+                    ->label('Area')
+                    ->relationship('location.area', 'name'),
                 TrashedFilter::make()
                     ->label('Status Data')
                     ->placeholder('Hanya data aktif')
                     ->trueLabel('Tampilkan semua data')
                     ->falseLabel('Hanya data yang dihapus'),
+            ])
+            ->headerActions([
+                CreateAction::make()->label('Tambah Unit'),
             ])
             ->recordActions([
                 ActionGroup::make([
