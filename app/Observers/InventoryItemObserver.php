@@ -11,16 +11,18 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryItemObserver
 {
-    /**
-     * Handle the InventoryItem "creating" event.
-     * Fokus: Generate Kode & Default Value
-     */
     public function creating(InventoryItem $inventory): void
     {
         $item = $inventory->item ?? Item::find($inventory->item_id);
 
         if (!$item) {
             throw ValidationException::withMessages(['item_id' => 'Master Item tidak ditemukan.']);
+        }
+
+        if (!in_array($item->type, [ItemType::Fixed, ItemType::Consumable])) {
+            throw ValidationException::withMessages([
+                'item_id' => "Item '{$item->name}' tidak dapat dimasukkan ke Inventory (hanya Fixed & Consumable)."
+            ]);
         }
 
         if (empty($inventory->location_id)) {
@@ -39,15 +41,11 @@ class InventoryItemObserver
             $inventory->code = $generatedCode;
         }
 
-        if ($item->type === ItemType::Fixed || $item->type === ItemType::Installed) {
+        if ($item->type === ItemType::Fixed) {
             $inventory->quantity = 1;
         }
     }
 
-    /**
-     * Handle the InventoryItem "saving" event.
-     * Fokus: Validasi Data sebelum disimpan (Create & Update)
-     */
     public function saving(InventoryItem $inventory): void
     {
         if (!$inventory->relationLoaded('item')) {
@@ -56,35 +54,42 @@ class InventoryItemObserver
 
         $item = $inventory->item;
 
-        if ($item->type === ItemType::Consumable) {
-            // --- VALIDASI CONSUMABLE ---
+        if (!in_array($item->type, [ItemType::Fixed, ItemType::Consumable])) {
+            throw ValidationException::withMessages([
+                'item_id' => "Item dengan tipe '{$item->type}' tidak diizinkan di InventoryItem."
+            ]);
+        }
+
+        if ($item->type === ItemType::Fixed) {
+            $inventory->quantity = 1;
+
+            if (empty($inventory->location_id)) {
+                throw ValidationException::withMessages([
+                    'location_id' => 'Lokasi wajib diisi untuk Aset Tetap.'
+                ]);
+            }
+        } else {
             if ($inventory->quantity < 0) {
                 throw ValidationException::withMessages(['quantity' => 'Stok tidak boleh negatif.']);
             }
         }
     }
 
-    /**
-     * Handle the InventoryItem "deleting" event.
-     * Fokus: Proteksi Hapus Data
-     */
     public function deleting(InventoryItem $inventory): void
     {
         if (!$inventory->isForceDeleting()) {
             $item = $inventory->item ?? Item::find($inventory->item_id);
 
             if ($item->type === ItemType::Consumable) {
-                // --- PROTEKSI CONSUMABLE ---
                 if ($inventory->quantity > 0) {
                     throw ValidationException::withMessages([
-                        'quantity' => "Gagal Hapus: Masih ada sisa stok ({$inventory->quantity} unit) di lokasi ini. Nol-kan stok terlebih dahulu atau gunakan fitur pemakaian.",
+                        'quantity' => "Gagal Hapus: Masih ada sisa stok ({$inventory->quantity} unit)."
                     ]);
                 }
             } else {
-                // --- PROTEKSI FIXED ---
                 if ($inventory->status === InventoryStatus::Borrowed) {
                     throw ValidationException::withMessages([
-                        'status' => 'Gagal Hapus: Aset ini sedang dipinjam. Harap kembalikan terlebih dahulu sebelum menghapus.',
+                        'status' => 'Gagal Hapus: Aset ini sedang dipinjam.'
                     ]);
                 }
             }

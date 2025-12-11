@@ -14,26 +14,13 @@ return new class extends Migration
         Schema::create('borrowing_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('borrowing_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('item_id')->constrained()->restrictOnDelete();
-            $table->foreignId('fixed_instance_id')
-                ->nullable()
-                ->constrained('fixed_item_instances')
-                ->nullOnDelete();
-            $table->foreignId('location_id')
-                ->nullable()
-                ->constrained('locations')
-                ->nullOnDelete();
+            $table->foreignId('inventory_item_id')->constrained('inventory_items')->restrictOnDelete();
             $table->integer('quantity')->default(1);
             $table->integer('returned_quantity')->default(0);
             $table->string('status')->default('borrowed');
             $table->dateTime('returned_at')->nullable();
+            $table->text('condition_notes')->nullable();
             $table->timestamps();
-
-            // Indexes
-            $table->unique(['borrowing_id', 'item_id', 'fixed_instance_id']);
-            $table->index('item_id');
-            $table->index('fixed_instance_id');
-            $table->index('location_id');
         });
     }
 

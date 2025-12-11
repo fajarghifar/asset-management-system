@@ -45,7 +45,11 @@ class InventoryItemResource extends Resource
             ->components([
                 Select::make('item_id')
                     ->label('Nama Barang')
-                    ->relationship('item', 'name')
+                    ->relationship(
+                        'item',
+                        'name',
+                        fn($query) => $query->whereIn('type', [ItemType::Fixed, ItemType::Consumable])
+                    )
                     ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->name} ({$record->code})")
                     ->searchable()
                     ->preload()

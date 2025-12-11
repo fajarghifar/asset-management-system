@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ItemType;
+use App\Models\InstalledItem;
 use App\Observers\ItemObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,18 +26,8 @@ class Item extends Model
         'type' => ItemType::class,
     ];
 
-    public function stocks()
-    {
-        return $this->hasMany(ItemStock::class);
-    }
-
-    public function fixedInstances()
-    {
-        return $this->hasMany(FixedItemInstance::class);
-    }
-
     public function installedInstances()
     {
-        return $this->hasMany(InstalledItemInstance::class);
+        return $this->hasMany(InstalledItem::class);
     }
 }

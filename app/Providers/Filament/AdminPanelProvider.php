@@ -6,11 +6,11 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Pages\Dashboard;
 use Filament\Support\Enums\Width;
-use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Navigation\NavigationItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Widgets\FilamentInfoWidget;
+use Openplain\FilamentShadcnTheme\Color;
 use Filament\Http\Middleware\Authenticate;
 use App\Filament\Pages\CreateBorrowingPage;
 use App\Filament\Resources\Areas\AreaResource;
@@ -67,13 +67,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->spa()
             ->sidebarCollapsibleOnDesktop()
-            ->maxContentWidth(Width::Full)
+            // ->maxContentWidth(Width::Full)
             ->topNavigation()
             ->navigationGroups([
-                NavigationGroup::make()
-                    ->label('Peminjaman')
-                    ->icon('heroicon-o-inbox-arrow-down')
-                    ->collapsible(),
                 NavigationGroup::make()
                     ->label('Inventaris')
                     ->icon('heroicon-o-archive-box')
@@ -99,15 +95,9 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(4)
                     ->isActiveWhen(fn() => request()->routeIs(InstalledItemResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Ajukan Peminjaman')
-                    ->url(fn(): string => CreateBorrowingPage::getUrl())
-                    ->group('Peminjaman')
-                    ->sort(1)
-                    ->isActiveWhen(fn() => request()->routeIs(CreateBorrowingPage::getRouteName())),
-                NavigationItem::make('Daftar Peminjaman')
+                NavigationItem::make('Peminjaman')
                     ->url(fn(): string => BorrowingResource::getUrl('index'))
-                    ->group('Peminjaman')
-                    ->sort(2)
+                    ->icon('heroicon-o-inbox-arrow-down')
                     ->isActiveWhen(fn() => request()->routeIs(BorrowingResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))

@@ -11,6 +11,16 @@ class BorrowingItem extends Model
 
     protected $guarded = ['id'];
 
+    protected $fillable = [
+        'borrowing_id',
+        'inventory_item_id',
+        'quantity',
+        'returned_quantity',
+        'status',
+        'returned_at',
+        'condition_notes',
+    ];
+
     protected $casts = [
         'returned_at' => 'datetime',
     ];
@@ -20,18 +30,18 @@ class BorrowingItem extends Model
         return $this->belongsTo(Borrowing::class);
     }
 
-    public function item()
+    public function inventoryItem()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(InventoryItem::class);
     }
 
-    public function fixedInstance()
+    public function getItemAttribute()
     {
-        return $this->belongsTo(FixedItemInstance::class);
+        return $this->inventoryItem?->item;
     }
 
-    public function location()
+    public function getLocationAttribute()
     {
-        return $this->belongsTo(Location::class);
+        return $this->inventoryItem?->location;
     }
 }

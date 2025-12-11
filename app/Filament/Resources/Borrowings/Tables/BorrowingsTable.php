@@ -11,6 +11,8 @@ use Filament\Actions\ViewAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
@@ -23,27 +25,30 @@ class BorrowingsTable
         return $table
             ->heading('Daftar Peminjaman')
             ->columns([
+                TextColumn::make('rowIndex')
+                    ->label('#')
+                    ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode')
+                    ->label('Kode Peminjaman')
                     ->searchable()
-                    ->sortable()
-                    ->weight('bold')
-                    ->color('primary')
-                    ->copyable(),
-                TextColumn::make('user.name')
+                    ->copyable()
+                    ->weight('medium')
+                    ->color('primary'),
+                TextColumn::make('borrower_name')
                     ->label('Peminjam')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('borrow_date')
                     ->label('Tgl. Pinjam')
-                    ->date('d M Y')
+                    ->date('d M Y, H:i')
                     ->sortable(),
                 TextColumn::make('expected_return_date')
                     ->label('Tgl. Tenggat')
-                    ->date('d M Y')
+                    ->date('d M Y, H:i')
                     ->sortable()
                     ->color(
-                        fn(Borrowing $record) => ($record->status === BorrowingStatus::Approved && now() > $record->expected_return_date) ? 'danger' : 'gray'
+                        fn(Borrowing $record) =>
+                        $record->isOverdue ? 'danger' : 'gray'
                     ),
                 TextColumn::make('purpose')
                     ->label('Tujuan')
@@ -63,8 +68,7 @@ class BorrowingsTable
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make()
-                        ->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending),
+                    EditAction::make()->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending),
                     Action::make('approve')
                         ->label('Setujui')
                         ->icon('heroicon-o-check-circle')
@@ -92,9 +96,9 @@ class BorrowingsTable
                             app(BorrowingApprovalService::class)->reject($record, 'Ditolak oleh Admin via Tabel');
                             Notification::make()->success()->title('Peminjaman Ditolak')->send();
                         }),
-
-                    DeleteAction::make()
-                        ->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending),
+                    DeleteAction::make()->visible(fn(Borrowing $record) => $record->status === BorrowingStatus::Pending),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
                 ])
             ])
             ->defaultSort('created_at', 'desc');

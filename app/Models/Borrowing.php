@@ -41,4 +41,14 @@ class Borrowing extends Model
         return $this->status === BorrowingStatus::Approved
             && $this->expected_return_date < now();
     }
+
+    public function getItemAttribute()
+    {
+        return $this->inventoryItem?->item;
+    }
+
+    public function getLocationAttribute()
+    {
+        return $this->inventoryItem?->location;
+    }
 }

@@ -4,9 +4,11 @@ namespace App\Filament\Resources\Borrowings\Pages;
 
 use Filament\Actions\Action;
 use App\Services\BorrowingService;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Validation\ValidationException;
 use App\Filament\Resources\Borrowings\BorrowingResource;
 
 class CreateBorrowing extends CreateRecord
@@ -24,38 +26,32 @@ class CreateBorrowing extends CreateRecord
         ];
     }
 
-    protected function handleRecordCreation(array $data): Model
+    protected function afterCreate(): void
     {
+        $data = $this->form->getState();
         $itemsData = $data['items'] ?? [];
 
-        unset($data['items']);
-
         try {
-            $service = app(BorrowingService::class);
+            DB::transaction(function () use ($itemsData) {
+                $borrowing = $this->getRecord();
+                app(BorrowingService::class)->processItems($borrowing, $itemsData);
+            });
 
-            return $service->create($data, $itemsData);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
             Notification::make()
-                ->danger()
-                ->title('Gagal Membuat Peminjaman')
-                ->body($e->validator->errors()->first())
-                ->persistent()
+                ->success()
+                ->title('Berhasil')
+                ->body('Pengajuan peminjaman berhasil diajukan.')
                 ->send();
 
-            $this->halt();
-
+        } catch (ValidationException $e) {
+            Notification::make()->danger()->title('Gagal Mengajukan Peminjaman')->body($e->validator->errors()->first())->persistent()->send();
+            $this->getRecord()->delete();
+            $this->redirect($this->getResource()::getUrl('create'));
         } catch (\Exception $e) {
-            Notification::make()
-                ->danger()
-                ->title('Terjadi Kesalahan Sistem')
-                ->body($e->getMessage())
-                ->persistent()
-                ->send();
-
-            $this->halt();
+            Log::error('Borrowing creation error: ' . $e->getMessage());
+            Notification::make()->danger()->title('Kesalahan Sistem')->body('Terjadi kesalahan. Silakan coba lagi.')->persistent()->send();
+            $this->getRecord()->delete();
+            $this->redirect($this->getResource()::getUrl('create'));
         }
-
-        throw new \RuntimeException('Failed to create Borrowing record.');
     }
 }

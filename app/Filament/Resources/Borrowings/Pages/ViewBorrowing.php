@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Borrowings\Pages;
 
 use Filament\Actions\Action;
-use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use App\Filament\Resources\Borrowings\BorrowingResource;
 use App\Filament\Resources\Borrowings\BorrowingActionsTrait;
@@ -24,7 +23,6 @@ class ViewBorrowing extends ViewRecord
                 ->url($this->getResource()::getUrl('index'))
                 ->color('gray')
                 ->icon('heroicon-m-arrow-left'),
-            EditAction::make(),
             ...$borrowingActions,
         ];
     }
