@@ -13,16 +13,14 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('area_id')->constrained()->onDelete('restrict');
-            // Kode Otomatis: Fixed 9 Karakter (Cth: BKS01-A9X)
-            $table->char('code', 9)->unique();
+            $table->string('site')->index();
             $table->string('name');
+            $table->string('code')->unique();
             $table->text('description')->nullable();
             $table->timestamps();
 
             // Indexes
-            $table->index('name');
-            $table->index(['area_id', 'name']);
+            $table->index(['site', 'name']);
         });
     }
 

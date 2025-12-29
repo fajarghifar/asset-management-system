@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Locations;
 
+use BackedEnum;
 use App\Models\Location;
 use Filament\Tables\Table;
+use App\Enums\LocationSite;
 use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -17,32 +19,36 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use App\Filament\Resources\Locations\Pages\ManageLocations;
 
 class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
-
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $navigationLabel = 'Lokasi';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Select::make('area_id')
-                    ->label('Area')
-                    ->relationship('area', 'name')
-                    ->searchable()
-                    ->preload()
+                Select::make('site')
+                    ->label('Site / Area')
+                    ->options(LocationSite::class)
                     ->required()
-                    ->disabledOn('edit'),
+                    ->searchable()
+                    ->native(false),
+                TextInput::make('code')
+                    ->label('Kode Lokasi')
+                    ->required()
+                    ->maxLength(100)
+                    ->placeholder('Contoh: BT-IT, JMP2-IT, BT-OFF4'),
                 TextInput::make('name')
                     ->label('Nama Lokasi')
                     ->required()
                     ->maxLength(100)
-                    ->placeholder('Contoh: Ruang Meeting Utama'),
+                    ->placeholder('Contoh: Ruang Meeting Utama')
+                    ->columnSpanFull(),
                 Textarea::make('description')
                     ->label('Deskripsi')
                     ->rows(3)
@@ -56,23 +62,22 @@ class LocationResource extends Resource
             ->heading('Daftar Lokasi')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('No.')
+                    ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
                     ->label('Kode')
-                    ->badge()
-                    ->color('primary')
                     ->searchable()
-                    ->copyable(),
+                    ->copyable()
+                    ->weight('medium')
+                    ->color('primary'),
                 TextColumn::make('name')
                     ->label('Nama Lokasi')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('area.name')
-                    ->label('Area')
-                    ->sortable()
+                TextColumn::make('site')
+                    ->label('Site')
                     ->badge()
-                    ->color(fn(Location $record) => $record->area?->category?->getColor() ?? 'gray'),
+                    ->sortable(),
                 TextColumn::make('description')
                     ->label('Deskripsi')
                     ->limit(50)
@@ -80,20 +85,20 @@ class LocationResource extends Resource
                     ->tooltip(fn(TextColumn $column) => $column->getState()),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Lokasi')
-                    ->modalDescription('Kode Lokasi akan digenerate otomatis berdasarkan Kode Area.'),
+                CreateAction::make()->label('Tambah Lokasi'),
             ])
             ->filters([
-                SelectFilter::make('area')
-                    ->relationship('area', 'name')
+                SelectFilter::make('site')
+                    ->label('Filter Site')
+                    ->options(LocationSite::class)
+                    ->native(false)
                     ->searchable()
-                    ->preload()
-                    ->optionsLimit(10),
+                    ->multiple(),
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()->iconSize('lg'),
-                    EditAction::make()->iconSize('lg'),
+                    ViewAction::make(),
+                    EditAction::make(),
                     DeleteAction::make()
                         ->action(function (Location $record) {
                             try {
@@ -125,11 +130,5 @@ class LocationResource extends Resource
         return [
             'index' => ManageLocations::route('/'),
         ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->with('area');
     }
 }

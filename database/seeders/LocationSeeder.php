@@ -2,35 +2,36 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Location;
-use App\Models\Area;
+use App\Enums\LocationSite;
+use Illuminate\Database\Seeder;
 
 class LocationSeeder extends Seeder
 {
     public function run(): void
     {
-        // Daftar Kode Area yang ingin ditambahkan Ruang IT
-        $targetAreaCodes = ['JMP2', 'TGS', 'BT'];
+        $targetSites = [
+            LocationSite::JMP2,
+            LocationSite::TGS,
+            LocationSite::BT,
+        ];
 
-        foreach ($targetAreaCodes as $code) {
-            $area = Area::where('code', $code)->first();
+        foreach ($targetSites as $site) {
+            $name = 'Ruang IT';
+            $code = "{$site->value}-{$name}";
 
-            if ($area) {
-                Location::firstOrCreate(
-                    [
-                        'area_id' => $area->id,
-                        'name' => 'Ruang IT',
-                    ],
-                    [
-                        'description' => "Ruang Server dan operasional IT Staff di area {$area->name}.",
-                    ]
-                );
+            Location::firstOrCreate(
+                [
+                    'site' => $site->value,
+                    'name' => $name,
+                ],
+                [
+                    'code' => $code,
+                    'description' => "Pusat server dan operasional IT Staff di area {$site->getLabel()}.",
+                ]
+            );
 
-                $this->command->info("✅ Lokasi 'Ruang IT' berhasil dibuat untuk Area: {$code}");
-            } else {
-                $this->command->warn("⚠️ Area dengan kode '{$code}' tidak ditemukan. Lewati.");
-            }
+            $this->command->info("✅ Lokasi '{$name}' ({$code}) berhasil dibuat di {$site->value}");
         }
     }
 }
