@@ -75,10 +75,10 @@
         "reset": [
             "@php artisan migrate:fresh",
             "@php artisan db:seed --class=UserSeeder",
-            "@php artisan db:seed --class=AreaSeeder",
             "@php artisan db:seed --class=LocationSeeder",
-            "@php artisan db:seed --class=ItemSeeder",
-            "@php artisan db:seed --class=InventorySeeder"
+            "@php artisan db:seed --class=CategorySeeder",
+            "@php artisan db:seed --class=ProductSeeder",
+            "@php artisan db:seed --class=AssetSeeder"
         ]
     },
     "extra": {

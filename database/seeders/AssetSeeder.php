@@ -2,21 +2,19 @@
 
 namespace Database\Seeders;
 
-use App\Models\Area;
-use App\Models\Item;
-use App\Enums\ItemType;
+use App\Models\Asset;
+use App\Models\Product;
 use App\Models\Location;
-use App\Models\ItemStock;
-use App\Models\InstalledItem;
-use App\Models\InventoryItem;
+use App\Enums\AssetStatus;
+use App\Enums\ProductType;
+use App\Enums\LocationSite;
 use Illuminate\Database\Seeder;
-use App\Models\FixedItemInstance;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-class InventorySeeder extends Seeder
+class AssetSeeder extends Seeder
 {
     public function run(): void
     {
-        // ✅ Mapping eksplisit: [nama di data inventaris mentah => kode item di ItemSeeder]
         $itemNameToCode = [
             // --- Fixed Items ---
             'TANG POTONG' => 'TANGPT',
@@ -52,7 +50,7 @@ class InventorySeeder extends Seeder
             'FANVIL' => 'IPPHON',
             'POE' => 'POE',
 
-            // --- Installed Items (Sparepart) ---
+            // --- Installed Items (Sparepart - Kini masuk Asset) ---
             'HARDISK EXTERNAL' => 'HDDEXT',
             'HARDIKS WD 500GB' => 'WD500',
             'HARDIKS SEAGATE 500GB' => 'SGT500',
@@ -61,13 +59,12 @@ class InventorySeeder extends Seeder
             'SEAGATE 250GB' => 'SGT250',
             'HARDIKS LAPTOP' => 'HDDLAP',
 
-            // --- Consumable Items ---
+            // --- Consumable Items (Mapping tetap ada agar tidak error lookup, tapi nanti diskip) ---
             'CLEANING KIT' => 'CLKIT',
-            'TESTER LAN' => 'LANTST',
             'BATERAI CIMOS' => 'CMOS',
-            'FIMEL' => 'FEMALE',
+            'JACK DC FEMALE' => 'JACKFM',
+            'JACK DC MALE' => 'JACKML',
             'PASTA' => 'PASTA',
-            'JACK DC MALE' => 'JACKDC',
             'KEYBOARD MINI' => 'KEYMIN',
             'MADHERBOARD' => 'MOBO',
             'HDMI TO USB' => 'CNHDMI',
@@ -78,7 +75,7 @@ class InventorySeeder extends Seeder
             'RJ11' => 'RJ11',
         ];
 
-        // Data inventaris mentah (langsung dari tabel Anda)
+        // 2. Data Mentah
         $rawData = [
             ['item' => 'TANG POTONG', 'location' => 'TGS', 'qty' => 1],
             ['item' => 'TANG LANCIP', 'location' => 'TGS', 'qty' => 1],
@@ -117,13 +114,15 @@ class InventorySeeder extends Seeder
             ['item' => 'POE', 'location' => 'JMP', 'qty' => 1],
             ['item' => 'UPS', 'location' => 'JMP', 'qty' => 2],
             ['item' => 'HT', 'location' => 'JMP', 'qty' => 3],
+            // Consumables (Akan diskip)
             ['item' => 'KONEKTOR RJ45', 'location' => 'JMP', 'qty' => 163],
             ['item' => 'BATERAI CIMOS', 'location' => 'JMP', 'qty' => 8],
             ['item' => 'MATHERPAS', 'location' => 'JMP', 'qty' => 2],
             ['item' => 'RJ11', 'location' => 'JMP', 'qty' => 61],
-            ['item' => 'FIMEL', 'location' => 'JMP', 'qty' => 23],
             ['item' => 'PASTA', 'location' => 'JMP', 'qty' => 5],
+            ['item' => 'JACK DC FEMALE', 'location' => 'JMP', 'qty' => 23],
             ['item' => 'JACK DC MALE', 'location' => 'JMP', 'qty' => 27],
+            // End Consumables
             ['item' => 'BLOWER', 'location' => 'JMP', 'qty' => 1],
             ['item' => 'KEYBOARD MINI', 'location' => 'JMP', 'qty' => 1],
             ['item' => 'MADHERBOARD', 'location' => 'JMP', 'qty' => 1],
@@ -145,114 +144,89 @@ class InventorySeeder extends Seeder
             ['item' => 'RG 4', 'location' => 'JMP', 'qty' => 1],
         ];
 
-        // Mapping lokasi → area code
-        $locationAliasToAreaCode = [
-            'TGS' => 'TGS',
-            'BT Store' => 'BT',
-            'JMP' => 'JMP2',
+        // 3. Mapping Lokasi Lama -> Enum LocationSite Baru
+        $locationAliasToSite = [
+            'TGS' => LocationSite::TGS,
+            'BT Store' => LocationSite::BT,
+            'JMP' => LocationSite::JMP2,
         ];
+
+        $totalAssets = 0;
+        $globalCounter = 1; // Untuk generate Asset Tag unik
 
         foreach ($rawData as $row) {
             $itemName = trim($row['item']);
             $locationAlias = $row['location'];
             $qty = (int) $row['qty'];
 
-            if ($qty <= 0)
-                continue;
+            if ($qty <= 0) continue;
 
-            $itemCode = $itemNameToCode[$itemName] ?? null;
-            if (!$itemCode) {
-                $this->command->warn("⚠️ Tidak ada mapping untuk item: \"$itemName\"");
-                continue;
-            }
-
-            $item = Item::where('code', $itemCode)->first();
-            if (!$item) {
-                $this->command->error("❌ Item \"$itemCode\" tidak ditemukan.");
+            // A. Cari Produk
+            $productCode = $itemNameToCode[$itemName] ?? null;
+            if (!$productCode) {
+                // $this->command->warn("⚠️ SKIP: Mapping tidak ditemukan untuk '$itemName'");
                 continue;
             }
 
-            // Tentukan lokasi (termasuk fallback ke JMP untuk null)
-            if ($locationAlias === null) {
-                $area = Area::where('code', 'JMP2')->first();
-                if (!$area) {
-                    $this->command->warn("⚠️ Area JMP tidak ditemukan");
-                    continue;
-                }
-                $location = Location::where('area_id', $area->id)
-                    ->where('name', 'Ruang IT')
-                    ->first();
-                if (!$location) {
-                    $this->command->warn("⚠️ Lokasi Ruang IT di JMP tidak ditemukan");
-                    continue;
-                }
-            } else {
-                $areaCode = $locationAliasToAreaCode[$locationAlias] ?? null;
-                if (!$areaCode) {
-                    $this->command->warn("⚠️ Alias lokasi tidak dikenali: \"$locationAlias\"");
-                    continue;
-                }
-                $area = Area::where('code', $areaCode)->first();
-                if (!$area) {
-                    $this->command->warn("⚠️ Area tidak ditemukan: $areaCode");
-                    continue;
-                }
-                $location = Location::where('area_id', $area->id)
-                    ->where('name', 'Ruang IT')
-                    ->first();
-                if (!$location) {
-                    $this->command->warn("⚠️ Lokasi 'Ruang IT' tidak ditemukan di area: {$area->name}");
-                    continue;
+            $product = Product::where('code', $productCode)->first();
+            if (!$product) {
+                $this->command->error("❌ ERROR: Produk '$productCode' ($itemName) tidak ditemukan di database.");
+                continue;
+            }
+
+            // B. FILTER UTAMA: Skip Consumables
+            if ($product->type === ProductType::Consumable) {
+                // Opsional: Uncomment jika ingin melihat log apa saja yang diskip
+                // $this->command->info("ℹ️ SKIP Consumable: {$product->name}");
+                continue;
+            }
+
+            // C. Cari Lokasi (Menggunakan Logic Single Table + Enum Site)
+            $location = null;
+            if ($locationAlias) {
+                $siteEnum = $locationAliasToSite[$locationAlias] ?? null;
+
+                if ($siteEnum) {
+                    // Cari "Ruang IT" di Site tersebut sebagai default
+                    // Jika tidak ada, ambil sembarang lokasi di Site tersebut
+                    $location = Location::where('site', $siteEnum)
+                        ->where('name', 'like', '%Ruang IT%')
+                        ->first();
+
+                    if (!$location) {
+                        $location = Location::where('site', $siteEnum)->first();
+                    }
                 }
             }
 
-            // ✅ PROSES BERDASARKAN TIPE ITEM
-            if ($item->type === ItemType::Installed) {
-                // --- SIMPAN KE TABEL TERPISAH: installed_item_instances ---
-                for ($i = 0; $i < $qty; $i++) {
-                    InstalledItem::create([
-                        'item_id' => $item->id,
-                        'location_id' => $location->id,
-                        'installed_at' => now()->subDays(rand(30, 365)),
-                        'serial_number' => null,
-                        'notes' => 'Auto-seeded from inventory',
-                    ]);
-                }
-                $this->command->info("📦 [INSTALLED] {$item->name} (x{$qty}) → {$location->name}");
+            // D. Generate Assets (Looping sebanyak Qty karena Asset perlu tag unik per unit)
+            for ($i = 0; $i < $qty; $i++) {
+                // Format Asset Tag: AST-{TAHUN}-{KODE_PRODUK}-{COUNTER}
+                // Contoh: AST-2025-LANTST-0001
+                $assetTag = sprintf(
+                    'AST-%s-%s-%04d',
+                    date('Y'),
+                    $product->code,
+                    $globalCounter++
+                );
 
-            } elseif ($item->type === ItemType::Consumable) {
-                // --- SIMPAN KE inventory_items (stok) ---
-                $inventoryItem = InventoryItem::firstOrNew([
-                    'item_id' => $item->id,
-                    'location_id' => $location->id,
+                Asset::create([
+                    'product_id'     => $product->id,
+                    'location_id'    => $location?->id, // Bisa null jika lokasi tidak ditemukan
+                    'asset_tag'      => $assetTag,
+                    'serial_number'  => null, // Kosongkan dulu, nanti update pas opname
+                    'status'         => AssetStatus::InStock,
+                    'purchase_date'  => now()->subMonths(rand(1, 24)), // Dummy date
+                    'purchase_price' => 0,
+                    'notes'          => "Migrasi dari data lama (Lokasi Awal: $locationAlias)",
                 ]);
-
-                if ($inventoryItem->exists) {
-                    $inventoryItem->quantity += $qty;
-                } else {
-                    $inventoryItem->quantity = $qty;
-                    $inventoryItem->min_quantity = max(1, intval($qty * 0.2));
-                }
-                $inventoryItem->save();
-                $this->command->info("📦 [CONSUMABLE] {$item->name} (x{$qty}) → {$location->name}");
-
-            } elseif ($item->type === ItemType::Fixed) {
-                // --- SIMPAN KE inventory_items (per unit) ---
-                for ($i = 0; $i < $qty; $i++) {
-                    InventoryItem::create([
-                        'item_id' => $item->id,
-                        'location_id' => $location->id,
-                        'status' => 'available',
-                        'serial_number' => null,
-                        'notes' => 'Auto-seeded from inventory',
-                    ]);
-                }
-                $this->command->info("📦 [FIXED] {$item->name} (x{$qty}) → {$location->name}");
             }
+
+            $totalAssets += $qty;
+            $locationName = $location?->full_name ?? 'No Location';
+            $this->command->info("✅ Created {$qty} unit(s) of [{$product->code}] {$product->name} -> {$locationName}");
         }
 
-        $this->command->info("✅ SEEDER SELESAI!");
-        $this->command->info("- Inventory Items: " . InventoryItem::count());
-        $this->command->info("- Installed Items: " . InstalledItem::count());
+        $this->command->info("🎉 SEEDER SELESAI! Total Aset Fisik (Non-Consumable) Dibuat: $totalAssets");
     }
 }
