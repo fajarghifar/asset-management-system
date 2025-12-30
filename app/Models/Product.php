@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Asset;
+use App\Models\ConsumableStock;
 use App\Enums\ProductType;
 use App\Observers\ProductObserver;
-use Filament\Support\Assets\Asset;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,13 +36,13 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    // public function assets(): HasMany
-    // {
-    //     return $this->hasMany(Asset::class);
-    // }
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
 
-    // public function consumableStocks(): HasMany
-    // {
-    //     return $this->hasMany(ConsumableStock::class);
-    // }
+    public function consumableStocks(): HasMany
+    {
+        return $this->hasMany(ConsumableStock::class);
+    }
 }
