@@ -38,14 +38,14 @@ class CategoryResource extends Resource
                     ->required()
                     ->maxLength(100)
                     ->live(onBlur: true)
-                    ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
+                    ->afterStateUpdated(function ($get, $set, ?string $old, ?string $state) {
                         if (($get('slug') ?? '') !== Str::slug($old ?? '')) {
                             return;
                         }
                         $set('slug', Str::slug($state));
                     }),
                 TextInput::make('slug')
-                    ->label('Slug URL')
+                    ->label('Slug')
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(100)
@@ -68,7 +68,7 @@ class CategoryResource extends Resource
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('name')
-                    ->label('Nama')
+                    ->label('Nama Kategori')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('slug')

@@ -129,20 +129,29 @@ class ProductSeeder extends Seeder
 
     private function seedBatch(array $items, ProductType $type, int $categoryId, bool $isLoanable = true): void
     {
-        $count = 0;
+        $now = now();
+        $data = [];
+
         foreach ($items as $code => $name) {
-            Product::updateOrCreate(
-                ['code' => strtoupper(trim($code))],
-                [
-                    'name' => $name,
-                    'type' => $type,
-                    'category_id' => $categoryId,
-                    'can_be_loaned' => $isLoanable,
-                    'description' => "Initial Import ({$type->getLabel()})",
-                ]
-            );
-            $count++;
+            $data[] = [
+                'code' => strtoupper(trim($code)),
+                'name' => $name,
+                'type' => $type->value,
+                'category_id' => $categoryId,
+                'can_be_loaned' => $isLoanable,
+                'description' => "Initial Import ({$type->getLabel()})",
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
-        $this->command->info("✅ Seeded {$count} items | Loanable: " . ($isLoanable ? 'YES' : 'NO'));
+
+        // Upsert based on 'code' unique column
+        Product::upsert(
+            $data,
+            ['code'], // Unique constraint
+            ['name', 'type', 'category_id', 'can_be_loaned', 'description', 'updated_at'] // Update these if exists
+        );
+
+        $this->command->info("✅ Seeded " . count($data) . " items | Loanable: " . ($isLoanable ? 'YES' : 'NO'));
     }
 }

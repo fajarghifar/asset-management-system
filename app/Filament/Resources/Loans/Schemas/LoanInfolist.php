@@ -83,8 +83,8 @@ class LoanInfolist
                             ->table([
                                 TableColumn::make('Barang'),
                                 TableColumn::make('Lokasi'),
-                                TableColumn::make('Jml. Pinjam')->alignRight(),
-                                TableColumn::make('Jml. Kembali')->alignRight(),
+                                TableColumn::make('Jumlah Pinjam')->alignRight(),
+                                TableColumn::make('Jumlah Kembali')->alignRight(),
                             ])
                             ->schema([
                                 TextEntry::make('product_name'),

@@ -8,7 +8,7 @@ use Filament\Support\Contracts\HasIcon;
 
 enum AssetAction: string implements HasLabel, HasColor, HasIcon
 {
-    // SIKLUS HIDUP UTAMA
+    // --- MAIN LIFECYCLE ---
     case Register = 'register';
     case Update = 'update';
     case Move = 'move';
@@ -16,20 +16,20 @@ enum AssetAction: string implements HasLabel, HasColor, HasIcon
     case CheckOut = 'check_out';
     case CheckIn = 'check_in';
 
-    // INSTALASI (FIXED)
+    // --- INSTALLATION (FIXED ASSETS) ---
     case Deploy = 'deploy';
     case Pull = 'pull';
 
-    // KESEHATAN & MAINTENACE
+    // --- HEALTH & MAINTENANCE ---
     case ReportBroken = 'report_broken';
     case Maintenance = 'maintenance';
     case Repaired = 'repaired';
 
-    // AKHIR HIDUP
+    // --- END OF LIFE ---
     case MarkAsLost = 'mark_as_lost';
     case Dispose = 'dispose';
 
-    // LAINNYA
+    // --- OTHERS ---
     case Audit = 'audit';
 
     public function getLabel(): ?string

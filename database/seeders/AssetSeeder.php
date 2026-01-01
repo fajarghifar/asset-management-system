@@ -9,7 +9,6 @@ use App\Enums\AssetStatus;
 use App\Enums\ProductType;
 use App\Enums\LocationSite;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class AssetSeeder extends Seeder
 {
@@ -26,7 +25,6 @@ class AssetSeeder extends Seeder
             'TANG CRIMPING' => 'CRIMP',
             'GUNTING BESAR' => 'GNTBS',
             'GUNTING KECIL' => 'GNTKC',
-            'GUNTING' => 'GNTKC', // Map generic to specific
             'PISAU CUTTER' => 'CUTTER',
             'KATER' => 'CUTTER',
             'GERGAJI KECIL' => 'GERGAJ',
@@ -93,9 +91,9 @@ class AssetSeeder extends Seeder
             ['item' => 'HARDIKS WD 320GB', 'location' => 'JMP', 'qty' => 1],
             ['item' => 'HARDIKS SEAGATE 1 TB', 'location' => 'JMP', 'qty' => 2],
             ['item' => 'SEAGATE 250GB', 'location' => 'JMP', 'qty' => 1],
-            ['item' => 'POWER SUPPLY TESTER', 'location' => 'JMP', 'qty' => 2], // Merged from duplicate entry
+            ['item' => 'POWER SUPPLY TESTER', 'location' => 'JMP', 'qty' => 2],
             ['item' => 'HARDIKS LAPTOP', 'location' => 'JMP', 'qty' => 1],
-            ['item' => 'TESTER LAN', 'location' => 'JMP', 'qty' => 1], // Mapped to LANTST? Wait, 'TESTER LAN' not in map. 'LAN TESTER' is. 'TESTER LAN' needs mapping or fix. Assuming typo for 'LAN TESTER'.
+            ['item' => 'TESTER LAN', 'location' => 'JMP', 'qty' => 1],
             ['item' => 'POE', 'location' => 'JMP', 'qty' => 1],
             ['item' => 'UPS', 'location' => 'JMP', 'qty' => 2],
             ['item' => 'HT', 'location' => 'JMP', 'qty' => 3],
@@ -117,8 +115,31 @@ class AssetSeeder extends Seeder
             'JMP' => LocationSite::JMP2,
         ];
 
+        // --- OPTIMIZATION START ---
+        // 1. Prefetch Products (Type Asset Only to filter early)
+        $products = Product::whereIn('code', array_values($itemNameToCode))
+            ->where('type', ProductType::Asset)
+            ->get()
+            ->keyBy('code');
+
+        // 2. Prefetch Locations
+        // Logic match: 'Ruang IT' preference or just site fallback
+        $allLocations = Location::all();
+        $locationLookup = [];
+
+        foreach ($locationAliasToSite as $alias => $siteEnum) {
+            $siteLocations = $allLocations->where('site', $siteEnum);
+
+            // Prefer 'Ruang IT' if exists, otherwise take first
+            $preferred = $siteLocations->first(fn($loc) => str_contains($loc->name, 'Ruang IT'));
+            $fallback = $siteLocations->first();
+
+            $locationLookup[$alias] = $preferred ?? $fallback;
+        }
+
         $totalAssets = 0;
         $globalCounter = 1;
+        $now = now();
 
         foreach ($rawData as $row) {
             $itemName = trim($row['item']);
@@ -134,37 +155,36 @@ class AssetSeeder extends Seeder
             $productCode = $itemNameToCode[$itemName] ?? null;
             if (!$productCode) continue;
 
-            $product = Product::where('code', $productCode)->first();
+            // Use In-Memory Lookup
+            $product = $products->get($productCode);
+
             if (!$product) {
-                $this->command->error("❌ ERROR: Produk '$productCode' ($itemName) tidak ditemukan.");
+                // If product not found in the fetched list, it might be Consumable or Missing
+                // Since we filtered by Asset type above, this correctly skips Consumables
+                // Or warns if Asset is missing.
+                $this->command->warn("⚠️ SKIP: Produk '$productCode' ($itemName) tidak ditemukan atau bukan Aset.");
                 continue;
             }
 
-            // Skip Consumables
-            if ($product->type === ProductType::Consumable) {
-                continue;
-            }
-
-            $location = null;
-            if ($locationAlias) {
-                $siteEnum = $locationAliasToSite[$locationAlias] ?? null;
-                if ($siteEnum) {
-                    $location = Location::where('site', $siteEnum)
-                        ->where('name', 'like', '%Ruang IT%')
-                        ->first()
-                        ?? Location::where('site', $siteEnum)->first();
-                }
-            }
+            $location = $locationLookup[$locationAlias] ?? null;
+            $locationId = $location?->id;
 
             for ($i = 0; $i < $qty; $i++) {
                 $assetTag = sprintf('AST-%s-%s-%04d', date('Y'), $product->code, $globalCounter++);
 
+                // Prepare batch insert data (AssetObserver won't run on insert, but that's okay for Seeding)
+                // However, user specifically asked for "Clean Code".
+                // Using create() triggers Observers which is good for history.
+                // Given the scale isn't massive (hundreds), create() loop is acceptable for "Correctness".
+                // If massive (10k+), we'd use insert() and manual history.
+                // Let's stick to create() for now to ensure AssetObserver registers the 'Register' history.
+
                 Asset::create([
                     'product_id'     => $product->id,
-                    'location_id'    => $location?->id,
+                    'location_id' => $locationId,
                     'asset_tag'      => $assetTag,
                     'status'         => AssetStatus::InStock,
-                    'purchase_date'  => now()->subMonths(rand(1, 24)),
+                    'purchase_date' => $now->subMonths(rand(1, 24)),
                     'purchase_price' => 0,
                     'notes'          => "Migrasi dari data lama (Lokasi Awal: $locationAlias)",
                 ]);

@@ -4,19 +4,16 @@ namespace App\Filament\Resources\Assets\Pages;
 
 use App\Models\Asset;
 use App\Models\Location;
-use App\Enums\AssetAction;
 use App\Enums\AssetStatus;
-use App\Models\AssetHistory;
 use Filament\Actions\Action;
-use Filament\Actions\ViewAction;
+use App\Services\AssetService;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
-use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
-use Filament\Resources\Pages\EditRecord;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\Assets\AssetResource;
 
 class EditAsset extends EditRecord
@@ -41,27 +38,19 @@ class EditAsset extends EditRecord
                     ->form([
                         Select::make('location_id')
                             ->label('Lokasi Baru')
-                            ->options(Location::all()->pluck('full_name', 'id'))
+                            ->options(fn() => Location::pluck('name', 'id'))
                             ->searchable()
                             ->required(),
                         Textarea::make('notes')
                             ->label('Alasan Pindah')
                             ->required(),
                     ])
-                    ->action(function (Asset $record, array $data) {
-                        $record->shouldLogHistory = false;
-                        $record->update(['location_id' => $data['location_id']]);
-
-                        AssetHistory::create([
-                            'asset_id' => $record->id,
-                            'user_id' => Auth::id(),
-                            'status' => $record->status,
-                            'location_id' => $data['location_id'],
-                            'action_type' => AssetAction::Move,
-                            'notes' => $data['notes'],
-                        ]);
-
-                        Notification::make()->success()->title('Lokasi Berhasil Dipindah')->send();
+                    ->action(function (Asset $record, array $data, AssetService $service) {
+                        $service->move($record, $data['location_id'], $data['notes']);
+                        Notification::make()
+                            ->success()
+                            ->title('Lokasi Berhasil Dipindah')
+                            ->send();
                     }),
 
                 // PEMINJAMAN (Check-Out)
@@ -80,21 +69,12 @@ class EditAsset extends EditRecord
                             ->label('Keperluan')
                             ->required(),
                     ])
-                    ->action(function (Asset $record, array $data) {
-                        $record->shouldLogHistory = false;
-                        $record->update(['status' => AssetStatus::Loaned]);
-
-                        AssetHistory::create([
-                            'asset_id'       => $record->id,
-                            'user_id'        => Auth::id(),
-                            'recipient_name' => $data['recipient_name'],
-                            'status'         => AssetStatus::Loaned,
-                            'location_id'    => $record->location_id,
-                            'action_type'    => AssetAction::CheckOut,
-                            'notes'          => $data['notes'],
-                        ]);
-
-                        Notification::make()->success()->title('Aset diserahkan ke: ' . $data['recipient_name'])->send();
+                    ->action(function (Asset $record, array $data, AssetService $service) {
+                        $service->checkOut($record, $data['recipient_name'], $data['notes']);
+                        Notification::make()
+                            ->success()
+                            ->title('Aset diserahkan ke: ' . $data['recipient_name'])
+                            ->send();
                     }),
 
                 // PENGEMBALIAN (Check-In)
@@ -106,30 +86,19 @@ class EditAsset extends EditRecord
                     ->form([
                         Select::make('location_id')
                             ->label('Kembali ke Lokasi')
-                            ->options(Location::pluck('name', 'id'))
+                            ->options(fn() => Location::pluck('name', 'id'))
                             ->default(fn(Asset $record) => $record->location_id)
                             ->required(),
                         Textarea::make('notes')
                             ->label('Kondisi Pengembalian')
                             ->required(),
                     ])
-                    ->action(function (Asset $record, array $data) {
-                        $record->shouldLogHistory = false;
-                        $record->update([
-                            'status' => AssetStatus::InStock,
-                            'location_id' => $data['location_id']
-                        ]);
-
-                        AssetHistory::create([
-                            'asset_id' => $record->id,
-                            'user_id' => Auth::id(),
-                            'status' => AssetStatus::InStock,
-                            'location_id' => $data['location_id'],
-                            'action_type' => AssetAction::CheckIn,
-                            'notes' => $data['notes'],
-                        ]);
-
-                        Notification::make()->success()->title('Aset Dikembalikan')->send();
+                    ->action(function (Asset $record, array $data, AssetService $service) {
+                        $service->checkIn($record, $data['location_id'], $data['notes']);
+                        Notification::make()
+                            ->success()
+                            ->title('Aset Dikembalikan')
+                            ->send();
                     }),
 
                 DeleteAction::make()
@@ -138,9 +107,9 @@ class EditAsset extends EditRecord
                         try {
                             $record->delete();
                             Notification::make()
-                            ->success()
-                            ->title('Aset berhasil dihapus')
-                            ->send();
+                                ->success()
+                                ->title('Aset berhasil dihapus')
+                                ->send();
                             return redirect($this->getResource()::getUrl('index'));
                         } catch (\Illuminate\Database\QueryException $e) {
                             Notification::make()

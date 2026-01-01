@@ -19,7 +19,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Validation\ValidationException;
 use App\Filament\Resources\Locations\Pages\ManageLocations;
 
 class LocationResource extends Resource
@@ -35,7 +34,7 @@ class LocationResource extends Resource
         return $schema
             ->components([
                 Select::make('site')
-                    ->label('Site / Area')
+                    ->label('Site / Gedung')
                     ->options(LocationSite::class)
                     ->required()
                     ->searchable()
@@ -92,7 +91,7 @@ class LocationResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('site')
-                    ->label('Filter Site')
+                    ->label('Site / Gedung')
                     ->options(LocationSite::class)
                     ->native(false)
                     ->searchable()
@@ -107,11 +106,11 @@ class LocationResource extends Resource
                             try {
                                 $record->delete();
                                 Notification::make()->success()->title('Lokasi berhasil dihapus')->send();
-                            } catch (ValidationException $e) {
+                            } catch (\Illuminate\Database\QueryException $e) {
                                 Notification::make()
                                     ->danger()
                                     ->title('Gagal Menghapus')
-                                    ->body($e->validator->errors()->first())
+                                    ->body('Lokasi tidak bisa dihapus karena masih digunakan oleh Aset/Stok.')
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()

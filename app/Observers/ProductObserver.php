@@ -11,5 +11,9 @@ class ProductObserver
         if ($product->isDirty('code') && !empty($product->code)) {
             $product->code = strtoupper(trim($product->code));
         }
+
+        if ($product->isDirty('name')) {
+            $product->name = trim($product->name);
+        }
     }
 }

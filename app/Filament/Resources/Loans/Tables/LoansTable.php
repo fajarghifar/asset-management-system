@@ -57,7 +57,7 @@ class LoansTable
                     ->color(fn(Loan $record) => $record->status === LoanStatus::Overdue ? 'danger' : 'gray'),
 
                 TextColumn::make('returned_date')
-                    ->label('Tanggal Kembali')
+                    ->label('Waktu Kembali')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->placeholder('-'),
@@ -93,7 +93,7 @@ class LoansTable
 
                     // Approve Action
                     Action::make('approve')
-                        ->label('Setujui')
+                        ->label('Setujui Peminjaman')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()

@@ -47,7 +47,12 @@ class LoanItem extends Model
      */
     public function scopeWithProducts($query)
     {
-        return $query->with(['asset.product', 'consumableStock.product']);
+        return $query->with([
+            'asset.product',
+            'asset.location',
+            'consumableStock.product',
+            'consumableStock.location'
+        ]);
     }
 
     /**

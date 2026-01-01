@@ -23,8 +23,6 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes
-            $table->index('code');
-            $table->index('status');
             $table->index('borrower_name');
             $table->index('loan_date');
             $table->index('due_date');

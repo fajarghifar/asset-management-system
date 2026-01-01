@@ -6,22 +6,15 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use App\Filament\Auth\Login;
 use Filament\Pages\Dashboard;
-use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
-use Filament\Navigation\NavigationItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Widgets\FilamentInfoWidget;
 use Filament\Http\Middleware\Authenticate;
-use App\Filament\Resources\Areas\AreaResource;
-use App\Filament\Resources\Assets\AssetResource;
-use App\Filament\Resources\Categories\CategoryResource;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Filament\Http\Middleware\AuthenticateSession;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use App\Filament\Resources\Locations\LocationResource;
-use App\Filament\Resources\Products\ProductResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -68,6 +61,10 @@ class AdminPanelProvider extends PanelProvider
             // ->maxContentWidth(Width::Full)
             ->topNavigation()
             ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Peminjaman')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->collapsible(),
                 NavigationGroup::make()
                     ->label('Inventaris')
                     ->icon('heroicon-o-archive-box')

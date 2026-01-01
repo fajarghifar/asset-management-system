@@ -96,7 +96,7 @@ class LoanForm
                                 Grid::make(1)->schema([
                                     // Unified Selection Field (Virtual)
                                     Select::make('item_selection')
-                                        ->label('Pilih Barang & Lokasi')
+                                        ->label('Pilih Barang / Aset')
                                         ->searchable()
                                         ->getSearchResultsUsing(function (string $search) {
                                             $results = [];

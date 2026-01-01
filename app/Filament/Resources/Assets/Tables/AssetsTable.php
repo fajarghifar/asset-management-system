@@ -4,18 +4,16 @@ namespace App\Filament\Resources\Assets\Tables;
 
 use App\Models\Asset;
 use App\Models\Location;
-use App\Enums\AssetAction;
 use App\Enums\AssetStatus;
 use Filament\Tables\Table;
 use App\Enums\LocationSite;
 use Filament\Actions\Action;
-use App\Models\AssetHistory;
+use App\Services\AssetService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Tables\Filters\Filter;
-use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Textarea;
@@ -26,6 +24,9 @@ use Illuminate\Database\Eloquent\Builder;
 
 class AssetsTable
 {
+    /**
+     * Configure the table columns and filters.
+     */
     public static function configure(Table $table): Table
     {
         return $table
@@ -35,6 +36,7 @@ class AssetsTable
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
+
                 TextColumn::make('asset_tag')
                     ->label('Tag ID')
                     ->searchable()
@@ -45,26 +47,33 @@ class AssetsTable
                     ->label('Barang')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('serial_number')
-                    ->label('Nomor Seri')
+                    ->label('Serial Number')
                     ->searchable()
                     ->fontFamily('mono')
-                    ->color('gray'),
+                    ->color('gray')
+                    ->placeholder('-'),
+
                 TextColumn::make('location.site')
                     ->label('Site')
                     ->badge()
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('location.name')
                     ->label('Lokasi')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('status')
                     ->badge()
                     ->sortable(),
+
                 TextColumn::make('latestHistory.recipient_name')
-                    ->label('Peminjam')
-                    ->placeholder('-'),
+                    ->label('Peminjam / Penerima')
+                    ->placeholder('-')
+                    ->limit(20),
             ])
             ->headerActions([
                 CreateAction::make()->label('Tambah Aset'),
@@ -75,6 +84,7 @@ class AssetsTable
                     ->searchable()
                     ->native(false),
 
+                // Advanced Location Filter
                 Filter::make('filter_location')
                     ->form([
                         Select::make('site')
@@ -84,6 +94,7 @@ class AssetsTable
                             ->multiple()
                             ->native(false)
                             ->live(),
+
                         Select::make('location_id')
                             ->label('Area / Ruangan')
                             ->searchable()
@@ -105,7 +116,7 @@ class AssetsTable
                 ActionGroup::make([
                     EditAction::make(),
 
-                    // PINDAH LOKASI (Move)
+                    // --- MOVE ACTION ---
                     Action::make('move')
                         ->label('Pindah Lokasi')
                         ->icon('heroicon-m-arrows-right-left')
@@ -113,27 +124,19 @@ class AssetsTable
                         ->form([
                             Select::make('location_id')
                                 ->label('Lokasi Baru')
-                                ->options(Location::all()->pluck('full_name', 'id'))
+                                ->options(fn() => Location::pluck('name', 'id'))
                                 ->searchable()
                                 ->required(),
                             Textarea::make('notes')
                                 ->label('Alasan Pindah')
                                 ->required(),
                         ])
-                        ->action(function (Asset $record, array $data) {
-                            $record->shouldLogHistory = false;
-                            $record->update(['location_id' => $data['location_id']]);
-
-                            AssetHistory::create([
-                                'asset_id' => $record->id,
-                                'user_id' => Auth::id(),
-                                'status' => $record->status,
-                                'location_id' => $data['location_id'],
-                                'action_type' => AssetAction::Move,
-                                'notes' => $data['notes'],
-                            ]);
-
-                            Notification::make()->success()->title('Lokasi Berhasil Dipindah')->send();
+                        ->action(function (Asset $record, array $data, AssetService $service) {
+                            $service->move($record, $data['location_id'], $data['notes']);
+                            Notification::make()
+                                ->success()
+                                ->title('Lokasi Berhasil Dipindah')
+                                ->send();
                         }),
 
                     // PEMINJAMAN (Check-Out)
@@ -152,21 +155,12 @@ class AssetsTable
                                 ->label('Keperluan')
                                 ->required(),
                         ])
-                        ->action(function (Asset $record, array $data) {
-                            $record->shouldLogHistory = false;
-                            $record->update(['status' => AssetStatus::Loaned]);
-
-                            AssetHistory::create([
-                                'asset_id'       => $record->id,
-                                'user_id'        => Auth::id(),
-                                'recipient_name' => $data['recipient_name'],
-                                'status'         => AssetStatus::Loaned,
-                                'location_id'    => $record->location_id,
-                                'action_type'    => AssetAction::CheckOut,
-                                'notes'          => $data['notes'],
-                            ]);
-
-                            Notification::make()->success()->title('Aset diserahkan ke: ' . $data['recipient_name'])->send();
+                        ->action(function (Asset $record, array $data, AssetService $service) {
+                            $service->checkOut($record, $data['recipient_name'], $data['notes']);
+                            Notification::make()
+                                ->success()
+                                ->title('Aset diserahkan ke: ' . $data['recipient_name'])
+                                ->send();
                         }),
 
                     // PENGEMBALIAN (Check-In)
@@ -185,23 +179,12 @@ class AssetsTable
                                 ->label('Kondisi Pengembalian')
                                 ->required(),
                         ])
-                        ->action(function (Asset $record, array $data) {
-                            $record->shouldLogHistory = false;
-                            $record->update([
-                                'status' => AssetStatus::InStock,
-                                'location_id' => $data['location_id']
-                            ]);
-
-                            AssetHistory::create([
-                                'asset_id' => $record->id,
-                                'user_id' => Auth::id(),
-                                'status' => AssetStatus::InStock,
-                                'location_id' => $data['location_id'],
-                                'action_type' => AssetAction::CheckIn,
-                                'notes' => $data['notes'],
-                            ]);
-
-                            Notification::make()->success()->title('Aset Dikembalikan')->send();
+                        ->action(function (Asset $record, array $data, AssetService $service) {
+                            $service->checkIn($record, $data['location_id'], $data['notes']);
+                            Notification::make()
+                                ->success()
+                                ->title('Aset Dikembalikan')
+                                ->send();
                         }),
 
                     DeleteAction::make()

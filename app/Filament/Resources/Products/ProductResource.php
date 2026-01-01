@@ -48,9 +48,13 @@ class ProductResource extends Resource
         ];
     }
 
+    /**
+     * Eager load relationships and stock counts to prevent N+1 queries.
+     */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['category']);
+            ->with(['category'])
+            ->withStock();
     }
 }

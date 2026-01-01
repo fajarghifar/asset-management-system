@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class AssetObserver
 {
+    /**
+     * Handle the Asset "created" event.
+     */
     public function created(Asset $asset): void
     {
         $this->logHistory(
@@ -18,8 +21,13 @@ class AssetObserver
         );
     }
 
+    /**
+     * Handle the Asset "updated" event.
+     * Logs changes only for specific administrative fields.
+     */
     public function updated(Asset $asset): void
     {
+        // Skip logging if the flag is explicitly set to false (e.g. during specific Service operations)
         if (! $asset->shouldLogHistory) {
             return;
         }

@@ -48,7 +48,10 @@ class LoanResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['user', 'loanItems.asset.location', 'loanItems.consumableStock.location', 'loanItems.asset.product', 'loanItems.consumableStock.product']);
+            ->with([
+                'user',
+                'loanItems' => fn($query) => $query->withProducts(),
+            ]);
     }
 
     public static function getPages(): array
