@@ -13,11 +13,6 @@ enum LocationSite: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return match ($this) {
-            self::BT => 'BT Batik Trusmi',
-            self::JMP1 => 'JMP 1',
-            self::JMP2 => 'JMP 2',
-            self::TGS => 'TGS',
-        };
+        return __('enums.location_site.' . $this->value);
     }
 }

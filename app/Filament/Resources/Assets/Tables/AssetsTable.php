@@ -33,7 +33,7 @@ class AssetsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->heading('Daftar Aset')
+            ->heading(fn() => __('resources.assets.plural_label'))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
@@ -41,18 +41,18 @@ class AssetsTable
                     ->rowIndex(),
 
                 TextColumn::make('asset_tag')
-                    ->label('Tag ID')
+                    ->label(__('resources.assets.fields.asset_tag'))
                     ->searchable()
                     ->copyable()
                     ->color('primary')
                     ->weight('medium'),
                 TextColumn::make('product.name')
-                    ->label('Barang')
+                    ->label(__('resources.assets.fields.product'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('serial_number')
-                    ->label('Serial Number')
+                    ->label(__('resources.assets.fields.serial_number'))
                     ->searchable()
                     ->fontFamily('mono')
                     ->color('gray')
@@ -65,7 +65,7 @@ class AssetsTable
                     ->sortable(),
 
                 TextColumn::make('location.name')
-                    ->label('Lokasi')
+                    ->label(__('resources.assets.fields.location'))
                     ->searchable()
                     ->sortable(),
 
@@ -74,7 +74,7 @@ class AssetsTable
                     ->sortable(),
 
                 TextColumn::make('latestHistory.recipient_name')
-                    ->label('Peminjam / Penerima')
+                    ->label(__('resources.assets.fields.recipient_name'))
                     ->placeholder('-')
                     ->limit(20),
             ])
@@ -129,7 +129,7 @@ class AssetsTable
                     ->fileName('Data_Aset_' . date('Y-m-d'))
                     ->defaultFormat('xlsx'),
 
-                CreateAction::make()->label('Tambah Aset'),
+                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Aset'), // Need to add general create? Leaving fallback
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -171,17 +171,17 @@ class AssetsTable
 
                     // --- MOVE ACTION ---
                     Action::make('move')
-                        ->label('Pindah Lokasi')
+                        ->label(__('resources.assets.actions.move'))
                         ->icon('heroicon-m-arrows-right-left')
                         ->color('gray')
                         ->form([
                             Select::make('location_id')
-                                ->label('Lokasi Baru')
+                                ->label(__('resources.assets.fields.location'))
                                 ->options(fn() => Location::pluck('name', 'id'))
                                 ->searchable()
                                 ->required(),
                             Textarea::make('notes')
-                                ->label('Alasan Pindah')
+                                ->label(__('resources.assets.fields.notes'))
                                 ->required(),
                         ])
                         ->action(function (Asset $record, array $data, AssetService $service) {
@@ -194,18 +194,18 @@ class AssetsTable
 
                     // PEMINJAMAN (Check-Out)
                     Action::make('check_out')
-                        ->label('Pinjamkan / Serahkan')
+                        ->label(__('resources.assets.actions.check_out'))
                         ->icon('heroicon-m-arrow-up-tray')
                         ->color('info')
                         ->visible(fn (Asset $record) => $record->status === AssetStatus::InStock)
                         ->form([
                             TextInput::make('recipient_name')
-                                ->label('Nama Peminjam / Penerima')
+                                ->label(__('resources.assets.fields.recipient_name'))
                                 ->placeholder('Contoh: IT - Dimas atau Vendor CCTV')
                                 ->required()
                                 ->maxLength(255),
                             Textarea::make('notes')
-                                ->label('Keperluan')
+                                ->label(__('resources.assets.fields.notes'))
                                 ->required(),
                         ])
                         ->action(function (Asset $record, array $data, AssetService $service) {
@@ -218,7 +218,7 @@ class AssetsTable
 
                     // PENGEMBALIAN (Check-In)
                     Action::make('check_in')
-                        ->label('Kembalikan (Check-In)')
+                        ->label(__('resources.assets.actions.check_in'))
                         ->icon('heroicon-m-arrow-down-tray')
                         ->color('success')
                         ->visible(fn (Asset $record) => $record->status === AssetStatus::Loaned)

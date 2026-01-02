@@ -17,10 +17,27 @@ use App\Filament\Resources\Products\Tables\ProductsTable;
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
-    protected static string|UnitEnum|null $navigationGroup = 'Inventaris';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationLabel = 'Data Barang';
-    protected static ?string $pluralModelLabel = 'Data Barang';
+
+    public static function getModelLabel(): string
+    {
+        return __('resources.products.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.products.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.products.plural_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('resources.navigation_groups.inventory');
+    }
 
     public static function form(Schema $schema): Schema
     {

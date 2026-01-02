@@ -31,17 +31,34 @@ use App\Filament\Resources\ConsumableStocks\Pages\ManageConsumableStocks;
 class ConsumableStockResource extends Resource
 {
     protected static ?string $model = ConsumableStock::class;
-    protected static string|UnitEnum|null $navigationGroup = 'Inventaris';
     protected static ?int $navigationSort = 3;
-    protected static ?string $navigationLabel = 'Stok Consumable';
-    protected static ?string $pluralModelLabel = 'Stok Consumable';
+
+    public static function getModelLabel(): string
+    {
+        return __('resources.consumables.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.consumables.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.consumables.plural_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('resources.navigation_groups.inventory');
+    }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Select::make('product_id')
-                    ->label('Barang')
+                    ->label(__('resources.consumables.fields.product'))
                     ->relationship('product', 'name', fn($query) => $query->where('type', ProductType::Consumable))
                     ->searchable()
                     ->preload()
@@ -49,7 +66,7 @@ class ConsumableStockResource extends Resource
                     ->columnSpanFull(),
 
                 Select::make('location_id')
-                    ->label('Lokasi')
+                    ->label(__('resources.consumables.fields.location'))
                     ->relationship('location', 'name')
                     ->getOptionLabelFromRecordUsing(fn(Location $record) => $record->full_name)
                     ->searchable()
@@ -58,14 +75,14 @@ class ConsumableStockResource extends Resource
                     ->columnSpanFull(),
 
                 TextInput::make('quantity')
-                    ->label('Jumlah Stok Saat Ini')
+                    ->label(__('resources.consumables.fields.current_stock'))
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
                     ->required(),
 
                 TextInput::make('min_quantity')
-                    ->label('Batas Minimum Stok (Alert)')
+                    ->label(__('resources.consumables.fields.min_stock_alert'))
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
@@ -76,7 +93,7 @@ class ConsumableStockResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Daftar Stok Barang Habis Pakai')
+            ->heading(fn() => __('resources.consumables.plural_label'))
             ->defaultSort('quantity', 'asc')
             ->columns([
                 TextColumn::make('rowIndex')
@@ -84,30 +101,30 @@ class ConsumableStockResource extends Resource
                     ->rowIndex(),
 
                 TextColumn::make('product.name')
-                    ->label('Barang')
+                    ->label(__('resources.consumables.fields.product'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('location.site')
-                    ->label('Gedung / Site')
+                    ->label('Site')
                     ->badge()
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('location.name')
-                    ->label('Lokasi')
+                    ->label(__('resources.consumables.fields.location'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('quantity')
-                    ->label('Sisa Stok Aktual')
+                    ->label(__('resources.consumables.fields.remaining_stock'))
                     ->badge()
                     ->color(fn(ConsumableStock $record) => $record->quantity <= $record->min_quantity ? 'danger' : 'success')
                     ->sortable()
                     ->alignCenter(),
 
                 TextColumn::make('min_quantity')
-                    ->label('Batas Min.')
+                    ->label(__('resources.consumables.fields.min_limit'))
                     ->sortable()
                     ->alignCenter(),
             ])
@@ -153,7 +170,7 @@ class ConsumableStockResource extends Resource
                     ->fileName('Stok_Consumable_' . date('Y-m-d'))
                     ->defaultFormat('xlsx'),
 
-                CreateAction::make()->label('Tambah Stok Baru'),
+                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Stok Baru'),
             ])
             ->filters([
                 SelectFilter::make('product')

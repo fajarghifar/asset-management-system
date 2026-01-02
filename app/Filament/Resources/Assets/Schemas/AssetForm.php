@@ -20,10 +20,10 @@ class AssetForm
     {
         return $schema
             ->components([
-                Section::make('Informasi Aset')
+                Section::make(__('resources.assets.fields.asset_info'))
                     ->schema([
                         Select::make('product_id')
-                            ->label('Barang (Master)')
+                            ->label(__('resources.assets.fields.product'))
                             ->relationship(
                                 'product',
                                 'name',
@@ -36,7 +36,7 @@ class AssetForm
                             ->required(),
 
                         Select::make('location_id')
-                            ->label('Lokasi Awal')
+                            ->label(__('resources.assets.fields.location'))
                             ->relationship('location', 'name')
                             ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->site->value})")
                             ->searchable(['name', 'site'])
@@ -46,42 +46,42 @@ class AssetForm
                             ->required(),
 
                         TextInput::make('asset_tag')
-                            ->label('Tag ID')
+                            ->label(__('resources.assets.fields.asset_tag'))
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(50)
                             ->placeholder('Ex: LPT-001'),
 
                         TextInput::make('serial_number')
-                            ->label('Serial Number')
+                            ->label(__('resources.assets.fields.serial_number'))
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->placeholder('SN Pabrik'),
 
                         // Detail Pembelian
                         DatePicker::make('purchase_date')
-                            ->label('Tanggal Beli')
+                            ->label(__('resources.assets.fields.purchase_date'))
                             ->default(now())
                             ->maxDate(now()),
 
                         TextInput::make('purchase_price')
-                            ->label('Harga Beli')
+                            ->label(__('resources.assets.fields.purchase_price'))
                             ->integer()
                             ->prefix('Rp')
                             ->maxValue(99999999999),
 
                         TextInput::make('supplier_name')
-                            ->label('Supplier')
+                            ->label(__('resources.assets.fields.supplier'))
                             ->maxLength(100)
                             ->placeholder('Nama Toko / Vendor'),
 
                         TextInput::make('order_number')
-                            ->label('No. PO / Invoice')
+                            ->label(__('resources.assets.fields.order_number'))
                             ->maxLength(50),
 
                         // Catatan
                         Textarea::make('notes')
-                            ->label('Keterangan')
+                            ->label(__('resources.assets.fields.notes'))
                             ->rows(3)
                             ->columnSpanFull()
                             ->placeholder('Kondisi fisik, kelengkapan, dll.'),

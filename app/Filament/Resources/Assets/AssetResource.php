@@ -18,10 +18,27 @@ use App\Filament\Resources\Assets\RelationManagers\HistoriesRelationManager;
 class AssetResource extends Resource
 {
     protected static ?string $model = Asset::class;
-    protected static string|UnitEnum|null $navigationGroup = 'Inventaris';
     protected static ?int $navigationSort = 2;
-    protected static ?string $navigationLabel = 'Daftar Aset';
-    protected static ?string $pluralModelLabel = 'Daftar Aset';
+
+    public static function getModelLabel(): string
+    {
+        return __('resources.assets.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.assets.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.assets.plural_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('resources.navigation_groups.inventory');
+    }
 
     public static function form(Schema $schema): Schema
     {

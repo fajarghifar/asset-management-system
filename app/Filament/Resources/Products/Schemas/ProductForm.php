@@ -19,11 +19,11 @@ class ProductForm
     {
         return $schema
             ->components([
-                Section::make('Informasi Produk')
-                    ->description('Masukkan detail informasi dasar barang.')
+                Section::make(__('resources.products.fields.product_info'))
+                    ->description(__('resources.products.fields.product_info_desc'))
                     ->schema([
                         TextInput::make('code')
-                            ->label('Kode Barang')
+                            ->label(__('resources.products.fields.code'))
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(20)
@@ -36,13 +36,13 @@ class ProductForm
                             ->dehydrated(),
 
                         TextInput::make('name')
-                            ->label('Nama Barang')
+                            ->label(__('resources.products.fields.name'))
                             ->required()
                             ->maxLength(100)
-                            ->placeholder('Nama lengkap barang'),
+                            ->placeholder(__('resources.products.fields.description_placeholder')),
 
                         Select::make('category_id')
-                            ->label('Kategori Barang')
+                            ->label(__('resources.products.fields.category'))
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
@@ -51,7 +51,7 @@ class ProductForm
                             ->createOptionForm(null),
 
                         Select::make('type')
-                            ->label('Tipe Barang')
+                            ->label(__('resources.products.fields.type'))
                             ->options(ProductType::class)
                             ->required()
                             ->native(false)
@@ -59,7 +59,7 @@ class ProductForm
                             ->dehydrated(),
 
                         Toggle::make('can_be_loaned')
-                            ->label('Dapat Dipinjam')
+                            ->label(__('resources.products.fields.can_be_loaned'))
                             ->onColor('success')
                             ->offColor('danger')
                             ->default(true)
@@ -67,10 +67,10 @@ class ProductForm
                             ->columnSpanFull(),
 
                         Textarea::make('description')
-                            ->label('Deskripsi')
+                            ->label(__('resources.products.fields.description'))
                             ->rows(3)
                             ->columnSpanFull()
-                            ->placeholder('Deskripsi tambahan mengenai barang ini...'),
+                            ->placeholder(__('resources.products.fields.description_placeholder')),
                 ])
                 ->columns(2)
                 ->columnSpanFull(),

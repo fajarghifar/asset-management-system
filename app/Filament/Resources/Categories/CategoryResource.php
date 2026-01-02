@@ -24,17 +24,34 @@ use App\Filament\Resources\Categories\Pages\ManageCategories;
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
-    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationLabel = 'Kategori Barang';
-    protected static ?string $pluralModelLabel = 'Kategori Barang';
+
+    public static function getModelLabel(): string
+    {
+        return __('resources.categories.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.categories.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.categories.plural_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('resources.navigation_groups.settings');
+    }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->label('Nama Kategori')
+                    ->label(__('resources.categories.fields.name'))
                     ->required()
                     ->maxLength(100)
                     ->live(onBlur: true)
@@ -45,14 +62,14 @@ class CategoryResource extends Resource
                         $set('slug', Str::slug($state));
                     }),
                 TextInput::make('slug')
-                    ->label('Slug')
+                    ->label(__('resources.categories.fields.slug'))
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(100)
                     ->regex('/^[a-z0-9]+(?:-[a-z0-9]+)*$/')
                     ->helperText('Otomatis diisi dari nama. Ubah jika perlu kustomisasi URL.'),
                 Textarea::make('description')
-                    ->label('Deskripsi')
+                    ->label(__('resources.categories.fields.description'))
                     ->rows(3)
                     ->columnSpanFull(),
             ]);
@@ -61,29 +78,29 @@ class CategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Kategori Barang')
+            ->heading(fn() => __('resources.categories.plural_label'))
             ->modifyQueryUsing(fn(Builder $query) => $query->withCount('products'))
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('name')
-                    ->label('Nama Kategori')
+                    ->label(__('resources.categories.fields.name'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('slug')
-                    ->label('Slug')
+                    ->label(__('resources.categories.fields.slug'))
                     ->color('gray')
                     ->fontFamily('mono'),
                 TextColumn::make('products_count')
-                    ->label('Total Barang')
+                    ->label(__('resources.categories.fields.products_count'))
                     ->sortable()
                     ->badge()
                     ->color(fn($state) => $state > 0 ? 'info' : 'gray')
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Kategori'),
+                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Kategori'),
             ])
             ->filters([
                 //

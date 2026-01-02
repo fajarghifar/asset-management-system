@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Products\Tables;
 use App\Models\Product;
 use App\Enums\ProductType;
 use Filament\Tables\Table;
+use App\Imports\ProductImport;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
@@ -27,7 +28,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->heading('Daftar Data Barang')
+            ->heading(fn() => __('resources.products.plural_label'))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
@@ -35,32 +36,32 @@ class ProductsTable
                     ->rowIndex(),
 
                 TextColumn::make('code')
-                    ->label('Kode Barang')
+                    ->label(__('resources.products.fields.code'))
                     ->searchable()
                     ->copyable()
                     ->weight('medium')
                     ->color('primary'),
 
                 TextColumn::make('name')
-                    ->label('Nama Barang')
+                    ->label(__('resources.products.fields.name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('category.name')
-                    ->label('Kategori Barang')
+                    ->label(__('resources.products.fields.category'))
                     ->sortable()
                     ->badge()
                     ->color('gray'),
 
                 TextColumn::make('type')
-                    ->label('Tipe Barang')
+                    ->label(__('resources.products.fields.type'))
                     ->sortable()
                     ->badge(),
 
                 // Use the Model accessor `total_stock`
                 // This works efficiently because we use `scopeWithStock()` in the Resource
                 TextColumn::make('total_stock')
-                    ->label('Total Stok')
+                    ->label(__('resources.products.fields.total_stock'))
                     ->formatStateUsing(function (Product $record, $state) {
                         $unit = $record->type === ProductType::Asset ? 'Unit' : 'Pcs';
                         return "{$state} {$unit}";
@@ -70,7 +71,7 @@ class ProductsTable
                     ->alignCenter(),
 
                 IconColumn::make('can_be_loaned')
-                    ->label('Status Pinjam')
+                    ->label(__('resources.products.fields.can_be_loaned'))
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
@@ -80,7 +81,7 @@ class ProductsTable
                     ->alignCenter(),
 
                 TextColumn::make('created_at')
-                    ->label('Tanggal Dibuat')
+                    ->label(__('resources.general.created_at'))
                     ->dateTime('d M Y')
                     ->sortable(),
             ])
@@ -128,7 +129,7 @@ class ProductsTable
                     ->defaultFormat('xlsx')
                     ->disableAdditionalColumns(),
 
-                CreateAction::make()->label('Tambah Barang'),
+                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Barang'),
             ])
             ->filters([
                 SelectFilter::make('category_id')
