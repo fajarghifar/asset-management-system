@@ -29,7 +29,7 @@ class ProductForm
                             ->maxLength(20)
                             ->regex('/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/')
                             ->placeholder('Contoh: HDD500, SSD128')
-                            ->helperText('Kode ini akan menjadi prefix untuk aset turunan (Ex: LPT01-xxxxx).')
+                            ->helperText('Kode ini digunakan sebagai awalan untuk aset turunan (Contoh: LPT01-xxxxx).')
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn($state, callable $set) => $set('code', strtoupper($state)))
                             ->disabled(fn($operation) => $operation === 'edit')
@@ -42,7 +42,7 @@ class ProductForm
                             ->placeholder('Nama lengkap barang'),
 
                         Select::make('category_id')
-                            ->label('Kategori')
+                            ->label('Kategori Barang')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
@@ -51,7 +51,7 @@ class ProductForm
                             ->createOptionForm(null),
 
                         Select::make('type')
-                            ->label('Jenis Barang')
+                            ->label('Tipe Barang')
                             ->options(ProductType::class)
                             ->required()
                             ->native(false)
@@ -59,11 +59,11 @@ class ProductForm
                             ->dehydrated(),
 
                         Toggle::make('can_be_loaned')
-                            ->label('Bisa Dipinjam')
+                            ->label('Dapat Dipinjam')
                             ->onColor('success')
                             ->offColor('danger')
                             ->default(true)
-                            ->helperText('Aktifkan untuk barang yang boleh dibawa pulang/dipinjam user.')
+                            ->helperText('Aktifkan jika barang ini diizinkan untuk dipinjam oleh karyawan.')
                             ->columnSpanFull(),
 
                         Textarea::make('description')

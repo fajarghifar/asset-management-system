@@ -16,12 +16,16 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Select;
+use App\Imports\ConsumableStockImport;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
 use Illuminate\Database\QueryException;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use EightyNine\ExcelImport\ExcelImportAction;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportHeaderAction;
 use App\Filament\Resources\ConsumableStocks\Pages\ManageConsumableStocks;
 
 class ConsumableStockResource extends Resource
@@ -108,6 +112,47 @@ class ConsumableStockResource extends Resource
                     ->alignCenter(),
             ])
             ->headerActions([
+                ExcelImportAction::make()
+                    ->label('Import Stok')
+                    ->color('gray')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->use(ConsumableStockImport::class)
+                    ->validateUsing([
+                        'product_name' => 'required',
+                        'location_name' => 'required',
+                        'quantity' => 'required',
+                    ])
+                    ->sampleExcel(
+                        sampleData: [
+                            [
+                                'product_name' => 'Kertas HVS A4',
+                                'product_code' => 'ATK-001',
+                                'location_name' => 'Gudang Utama',
+                                'quantity' => 100,
+                                'min_stock' => 10,
+                            ],
+                            [
+                                'product_name' => 'Tinta Printer Hitam',
+                                'product_code' => '',
+                                'location_name' => 'Ruang Staff',
+                                'quantity' => 5,
+                                'min_stock' => 2,
+                            ],
+                        ],
+                        fileName: 'template_import_stok.xlsx',
+                        sampleButtonLabel: 'Download Template',
+                        customiseActionUsing: fn($action) => $action
+                            ->color('info')
+                            ->icon('heroicon-o-document-arrow-down')
+                    ),
+
+                FilamentExportHeaderAction::make('export')
+                    ->label('Export Data')
+                    ->color('gray')
+                    ->defaultPageOrientation('landscape')
+                    ->fileName('Stok_Consumable_' . date('Y-m-d'))
+                    ->defaultFormat('xlsx'),
+
                 CreateAction::make()->label('Tambah Stok Baru'),
             ])
             ->filters([
@@ -177,7 +222,9 @@ class ConsumableStockResource extends Resource
                 ])->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
-                //
+                FilamentExportBulkAction::make('export')
+                    ->label('Export Selected')
+                    ->icon('heroicon-o-arrow-down-tray')
             ]);
     }
 

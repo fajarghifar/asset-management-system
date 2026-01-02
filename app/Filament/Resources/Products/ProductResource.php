@@ -19,8 +19,8 @@ class ProductResource extends Resource
     protected static ?string $model = Product::class;
     protected static string|UnitEnum|null $navigationGroup = 'Inventaris';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationLabel = 'Master Barang';
-    protected static ?string $pluralModelLabel = 'Master Barang';
+    protected static ?string $navigationLabel = 'Data Barang';
+    protected static ?string $pluralModelLabel = 'Data Barang';
 
     public static function form(Schema $schema): Schema
     {

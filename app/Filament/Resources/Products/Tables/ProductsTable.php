@@ -15,6 +15,9 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\QueryException;
 use Filament\Tables\Filters\TernaryFilter;
+use EightyNine\ExcelImport\ExcelImportAction;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportHeaderAction;
 
 class ProductsTable
 {
@@ -24,7 +27,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->heading('Daftar Master Barang')
+            ->heading('Daftar Data Barang')
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
@@ -44,13 +47,13 @@ class ProductsTable
                     ->sortable(),
 
                 TextColumn::make('category.name')
-                    ->label('Kategori')
+                    ->label('Kategori Barang')
                     ->sortable()
                     ->badge()
                     ->color('gray'),
 
                 TextColumn::make('type')
-                    ->label('Jenis Barang')
+                    ->label('Tipe Barang')
                     ->sortable()
                     ->badge(),
 
@@ -67,7 +70,7 @@ class ProductsTable
                     ->alignCenter(),
 
                 IconColumn::make('can_be_loaned')
-                    ->label('Pinjam?')
+                    ->label('Status Pinjam')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
@@ -77,11 +80,54 @@ class ProductsTable
                     ->alignCenter(),
 
                 TextColumn::make('created_at')
-                    ->label('Dibuat')
+                    ->label('Tanggal Dibuat')
                     ->dateTime('d M Y')
                     ->sortable(),
             ])
             ->headerActions([
+                ExcelImportAction::make()
+                    ->label('Import Excel')
+                    ->color('gray')
+                    ->icon(icon: 'heroicon-o-arrow-up-tray')
+                    ->use(ProductImport::class)
+                    ->validateUsing([
+                        'nama_produk' => 'required',
+                        'kategori' => 'required',
+                        'tipe' => 'required',
+                    ])
+                    ->sampleExcel(
+                        sampleData: [
+                            [
+                                'nama_produk' => 'Laptop Lenovo Thinkpad',
+                                'kode_barang' => 'LPT-THINK-01',
+                                'kategori' => 'Elektronik',
+                                'tipe' => 'asset',
+                                'deskripsi' => 'Laptop untuk staff IT',
+                            ],
+                            [
+                                'nama_produk' => 'Kertas A4 Sidu',
+                                'kode_barang' => 'ATK-A4-001',
+                                'kategori' => 'ATK',
+                                'tipe' => 'consumable',
+                                'deskripsi' => 'Kertas HVS 70gsm',
+                            ],
+                        ],
+                        fileName: 'template_import_produk.xlsx',
+                        sampleButtonLabel: 'Download Template',
+                        customiseActionUsing: fn($action) => $action
+                            ->color('info')
+                            ->icon('heroicon-o-document-arrow-down')
+                    ),
+
+                FilamentExportHeaderAction::make('export')
+                    ->label('Export Data')
+                    ->color('gray')
+                    ->defaultPageOrientation('landscape')
+                    ->disableAdditionalColumns()
+                    ->fileName(date('Y-m-d_H-i'))
+                    ->defaultFormat('xlsx')
+                    ->disableAdditionalColumns(),
+
                 CreateAction::make()->label('Tambah Barang'),
             ])
             ->filters([
@@ -132,6 +178,17 @@ class ProductsTable
                             }
                         }),
                 ])->dropdownPlacement('left-start'),
+            ])
+            ->toolbarActions([
+                FilamentExportBulkAction::make('export')
+                    ->label('Export Data')
+                    ->color('gray')
+                    ->defaultPageOrientation('landscape')
+                    ->disableAdditionalColumns()
+                    ->fileName(date('Y-m-d_H-i'))
+                    ->defaultFormat('xlsx')
+                    ->defaultPageOrientation('landscape')
+                    ->disableAdditionalColumns(),
             ]);
     }
 }

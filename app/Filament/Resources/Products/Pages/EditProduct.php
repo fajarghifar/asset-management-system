@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\Products\Pages;
 
-use App\Filament\Resources\Products\ProductResource;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\Products\ProductResource;
 
 class EditProduct extends EditRecord
 {

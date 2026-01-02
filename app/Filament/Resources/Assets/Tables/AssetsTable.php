@@ -21,6 +21,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use EightyNine\ExcelImport\ExcelImportAction;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportHeaderAction;
 
 class AssetsTable
 {
@@ -76,6 +79,56 @@ class AssetsTable
                     ->limit(20),
             ])
             ->headerActions([
+                ExcelImportAction::make()
+                    ->label('Import Aset')
+                    ->color('gray')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->use(\App\Imports\AssetImport::class)
+                    ->validateUsing([
+                        'product_name' => 'required',
+                        'location_name' => 'required',
+                    ])
+                    ->sampleExcel(
+                        sampleData: [
+                            [
+                                'product_name' => 'Laptop Dell Latitude',
+                                'product_code' => 'LPT-DELL-01',
+                                'location_name' => 'Ruang IT',
+                                'asset_tag' => 'AST-IT-001',
+                                'serial_number' => 'SN12345678',
+                                'status' => 'Tersedia',
+                                'purchase_date' => '2025-01-01',
+                                'purchase_price' => 15000000,
+                                'supplier' => 'CV. Tech Solution',
+                                'notes' => 'Pengadaan Awal Tahun',
+                            ],
+                            [
+                                'product_name' => 'Kursi Kerja Ergonomis',
+                                'product_code' => '',
+                                'location_name' => 'Lobby Utama',
+                                'asset_tag' => '',
+                                'serial_number' => '',
+                                'status' => 'Dipinjam',
+                                'purchase_date' => '2025-02-15',
+                                'purchase_price' => 2500000,
+                                'supplier' => 'IKEA Business',
+                                'notes' => '',
+                            ],
+                        ],
+                        fileName: 'template_import_aset.xlsx',
+                        sampleButtonLabel: 'Download Template',
+                        customiseActionUsing: fn($action) => $action
+                            ->color('info')
+                            ->icon('heroicon-o-document-arrow-down')
+                    ),
+
+                FilamentExportHeaderAction::make('export')
+                    ->label('Export Aset')
+                    ->color('gray')
+                    ->defaultPageOrientation('landscape')
+                    ->fileName('Data_Aset_' . date('Y-m-d'))
+                    ->defaultFormat('xlsx'),
+
                 CreateAction::make()->label('Tambah Aset'),
             ])
             ->filters([
@@ -210,7 +263,9 @@ class AssetsTable
                 ])->dropdownPlacement('left-start')
             ])
             ->toolbarActions([
-                //
+                FilamentExportBulkAction::make('export')
+                    ->label('Export Selected')
+                    ->icon('heroicon-o-arrow-down-tray')
             ]);
     }
 }
