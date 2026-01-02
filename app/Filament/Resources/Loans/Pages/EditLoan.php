@@ -19,7 +19,7 @@ class EditLoan extends EditRecord
         return array_merge(
             [
                 Action::make('back')
-                    ->label('Kembali')
+                    ->label(__('resources.general.actions.back'))
                     ->url($this->getResource()::getUrl('index'))
                     ->color('gray')
                     ->icon('heroicon-m-arrow-left'),

@@ -15,19 +15,18 @@ class LoanReturnService
     /**
      * Process logic for returning items (partial or full).
      */
-    public function processReturn(Loan $loan, LoanItem $loanItem, int $returnQty, ?string $conditionNotes = null): void
+    public function processReturn(Loan $loan, LoanItem $loanItem, int $stockIncrement, int $resolutionIncrement, bool $isResolved = false, ?string $conditionNotes = null): void
     {
-        DB::transaction(function () use ($loan, $loanItem, $returnQty, $conditionNotes) {
+        DB::transaction(function () use ($loan, $loanItem, $stockIncrement, $resolutionIncrement, $isResolved, $conditionNotes) {
 
             // Handle Inventory Updates
             if ($loanItem->type === ProductType::Consumable) {
-                // For consumables, ensure we don't return more than borrowed? Validation should be in UI.
-                if ($returnQty > 0) {
-                    $loanItem->consumableStock->increment('quantity', $returnQty);
+                if ($stockIncrement > 0) {
+                    $loanItem->consumableStock->increment('quantity', $stockIncrement);
                 }
             } else {
-                // For assets, set status back to InStock
-                if ($returnQty > 0 && $loanItem->asset_id) {
+                // For assets, set status back to InStock if physically returned
+                if ($stockIncrement > 0 && $loanItem->asset_id) {
                     $loanItem->asset->update([
                         'status' => AssetStatus::InStock,
                         // Logic for location assignment can be refined here if needed
@@ -35,12 +34,14 @@ class LoanReturnService
                 }
             }
 
-            // Update Loan Item Data
-            if ($returnQty > 0) {
-                $loanItem->increment('quantity_returned', $returnQty);
+            // Update Loan Item Data (Resolution)
+            if ($resolutionIncrement > 0) {
+                $loanItem->increment('quantity_returned', $resolutionIncrement);
+            }
 
-                // If fully returned, mark completion timestamp
-                if ($loanItem->quantity_returned >= $loanItem->quantity_borrowed) {
+            // Mark completion if explicitly resolved OR fully returned
+            if ($isResolved || $loanItem->quantity_returned >= $loanItem->quantity_borrowed) {
+                if ($loanItem->returned_at === null) {
                     $loanItem->update(['returned_at' => now()]);
                 }
             }
@@ -57,11 +58,12 @@ class LoanReturnService
     {
         $loan->refresh(); // Load fresh relation data
 
+        // Check completion based on returned_at timestamp (explicit resolution)
         $allReturned = $loan->loanItems->every(
-            fn($item) => $item->quantity_returned >= $item->quantity_borrowed
+            fn($item) => $item->returned_at !== null
         );
 
-        if ($allReturned) {
+        if ($allReturned && $loan->status !== LoanStatus::Closed) {
             $loan->update([
                 'status' => LoanStatus::Closed,
                 'returned_date' => now(),

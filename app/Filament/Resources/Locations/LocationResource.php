@@ -24,35 +24,52 @@ use App\Filament\Resources\Locations\Pages\ManageLocations;
 class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
-    protected static string|UnitEnum|null $navigationGroup = 'Lokasi';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationLabel = 'Daftar Lokasi';
-    protected static ?string $pluralModelLabel = 'Daftar Lokasi';
+
+    public static function getModelLabel(): string
+    {
+        return __('resources.locations.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.locations.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.locations.plural_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('resources.navigation_groups.location');
+    }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Select::make('site')
-                    ->label('Site / Gedung')
+                    ->label(__('resources.locations.fields.site'))
                     ->options(LocationSite::class)
                     ->required()
                     ->searchable()
                     ->native(false),
                 TextInput::make('code')
-                    ->label('Kode Lokasi')
+                    ->label(__('resources.locations.fields.code'))
                     ->required()
                     ->maxLength(100)
                     ->unique(ignoreRecord: true)
                     ->placeholder('Contoh: BT-IT, JMP2-IT'),
                 TextInput::make('name')
-                    ->label('Nama Lokasi')
+                    ->label(__('resources.locations.fields.name'))
                     ->required()
                     ->maxLength(100)
                     ->placeholder('Contoh: Ruang Meeting Utama')
                     ->columnSpanFull(),
                 Textarea::make('description')
-                    ->label('Deskripsi')
+                    ->label(__('resources.locations.fields.description'))
                     ->rows(3)
                     ->columnSpanFull(),
             ]);
@@ -61,37 +78,37 @@ class LocationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Daftar Lokasi')
+            ->heading(fn() => __('resources.locations.plural_label'))
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode Lokasi')
+                    ->label(__('resources.locations.fields.code'))
                     ->searchable()
                     ->copyable()
                     ->weight('medium')
                     ->color('primary'),
                 TextColumn::make('name')
-                    ->label('Nama Lokasi')
+                    ->label(__('resources.locations.fields.name'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('site')
-                    ->label('Site')
+                    ->label(__('resources.locations.fields.site'))
                     ->badge()
                     ->sortable(),
                 TextColumn::make('description')
-                    ->label('Deskripsi')
+                    ->label(__('resources.locations.fields.description'))
                     ->limit(50)
                     ->wrap()
                     ->tooltip(fn(TextColumn $column) => $column->getState()),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Lokasi'),
+                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Lokasi'),
             ])
             ->filters([
                 SelectFilter::make('site')
-                    ->label('Site / Gedung')
+                    ->label(__('resources.locations.fields.site'))
                     ->options(LocationSite::class)
                     ->native(false)
                     ->searchable()

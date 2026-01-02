@@ -26,7 +26,7 @@ class LoansTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->heading('Daftar Peminjaman')
+            ->heading(fn() => __('resources.loans.plural_label'))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
@@ -34,52 +34,52 @@ class LoansTable
                     ->rowIndex(),
 
                 TextColumn::make('code')
-                    ->label('Kode')
+                    ->label(__('resources.loans.fields.code'))
                     ->searchable()
                     ->copyable()
                     ->weight('medium')
                     ->color('primary'),
 
                 TextColumn::make('borrower_name')
-                    ->label('Peminjam')
+                    ->label(__('resources.loans.fields.borrower'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('loan_date')
-                    ->label('Tanggal Pinjam')
+                    ->label(__('resources.loans.fields.loan_date'))
                     ->dateTime('d M Y H:i')
                     ->sortable(),
 
                 TextColumn::make('due_date')
-                    ->label('Tenggat Pengembalian')
+                    ->label(__('resources.loans.fields.due_date'))
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->color(fn(Loan $record) => $record->status === LoanStatus::Overdue ? 'danger' : 'gray'),
 
                 TextColumn::make('returned_date')
-                    ->label('Waktu Kembali')
+                    ->label(__('resources.loans.fields.returned_date'))
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->placeholder('-'),
 
                 TextColumn::make('purpose')
-                    ->label('Keperluan')
+                    ->label(__('resources.loans.fields.purpose'))
                     ->limit(30)
                     ->tooltip(fn(Loan $record) => $record->purpose),
 
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('resources.loans.fields.status'))
                     ->badge()
                     ->sortable(),
 
                 TextColumn::make('loan_items_count')
-                    ->label('Jumlah Item')
+                    ->label(__('resources.loans.fields.items_count'))
                     ->counts('loanItems')
                     ->badge()
                     ->color('gray'),
             ])
             ->headerActions([
-                CreateAction::make()->label('Buat Peminjaman'),
+                CreateAction::make()->label(__('resources.loans.actions.create')),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -93,41 +93,47 @@ class LoansTable
 
                     // Approve Action
                     Action::make('approve')
-                        ->label('Setujui Peminjaman')
+                        ->label(__('resources.loans.actions.approve'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->modalHeading('Setujui Peminjaman?')
-                        ->modalDescription('Stok akan dikurangi dan status barang berubah menjadi "Sedang Dipinjam".')
+                        ->modalHeading(__('resources.loans.actions.approve_heading'))
+                        ->modalDescription(__('resources.loans.actions.approve_desc'))
                         ->visible(fn($record) => $record->status === LoanStatus::Pending)
                         ->action(function (Loan $record) {
                             try {
                                 app(LoanApprovalService::class)->approve($record);
-                                Notification::make()->success()->title('Peminjaman Disetujui')->send();
+                                Notification::make()->success()
+                                    ->title(__('resources.loans.notifications.approved_title'))
+                                    ->send();
                             } catch (\Exception $e) {
-                                Notification::make()->danger()->title('Gagal')->body($e->getMessage())->send();
+                                Notification::make()->danger()
+                                    ->title(__('resources.loans.notifications.failed_title'))
+                                    ->body($e->getMessage())->send();
                             }
                         }),
 
                     // Reject Action
                     Action::make('reject')
-                        ->label('Tolak')
+                        ->label(__('resources.loans.actions.reject'))
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalHeading('Tolak Peminjaman?')
+                        ->modalHeading(__('resources.loans.actions.reject_heading'))
                         ->form([
-                            Textarea::make('reason')->required()->label('Alasan Penolakan')
+                            Textarea::make('reason')->required()->label(__('resources.loans.fields.reason'))
                         ])
                         ->visible(fn($record) => $record->status === LoanStatus::Pending)
                         ->action(function (Loan $record, array $data) {
                             app(LoanApprovalService::class)->reject($record, $data['reason']);
-                            Notification::make()->success()->title('Peminjaman Ditolak')->send();
+                            Notification::make()->success()
+                                ->title(__('resources.loans.notifications.rejected_title'))
+                                ->send();
                         }),
 
                     // Return Items Action (Redirect)
                     Action::make('returnItems')
-                        ->label('Pengembalian')
+                        ->label(__('resources.loans.actions.return'))
                         ->icon('heroicon-o-arrow-left-start-on-rectangle')
                         ->color('info')
                         ->visible(fn($record) => in_array($record->status, [LoanStatus::Approved, LoanStatus::Overdue]))

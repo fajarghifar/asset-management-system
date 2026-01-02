@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Loans;
 
-use UnitEnum;
 use App\Models\Loan;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
@@ -19,9 +18,27 @@ use App\Filament\Resources\Loans\Schemas\LoanInfolist;
 class LoanResource extends Resource
 {
     protected static ?string $model = Loan::class;
-    protected static string|UnitEnum|null $navigationGroup = 'Peminjaman';
-    protected static ?string $navigationLabel = 'Daftar Peminjaman';
-    protected static ?string $pluralModelLabel = 'Data Peminjaman';
+    protected static ?int $navigationSort = 4;
+
+    public static function getModelLabel(): string
+    {
+        return __('resources.loans.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.loans.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.loans.plural_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('resources.navigation_groups.loans');
+    }
 
     public static function form(Schema $schema): Schema
     {

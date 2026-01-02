@@ -25,6 +25,12 @@ trait LoanActionsTrait
     /**
      * Define the header actions available for Loan View/Edit pages.
      * Contains logic for Approve, Reject, and Return Items.
+     *
+     * The Return Items action is a complex modal that allows partial or full returns.
+     * It interacts with `LoanReturnService` to safely update inventory and asset statuses.
+     *
+     * @param Model|Loan $record
+     * @return array
      */
     protected function getLoanHeaderActions(Model|Loan $record): array
     {
@@ -33,36 +39,44 @@ trait LoanActionsTrait
         // --- PENDING ACTION GROUP (Approve / Reject) ---
         if ($record->status === LoanStatus::Pending) {
             $actions[] = Action::make('approve')
-                ->label('Setujui')
+                ->label(__('resources.loans.actions.approve'))
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('Setujui Peminjaman?')
-                ->modalDescription('Stok barang akan dikurangi dan status aset akan berubah menjadi "Sedang Dipinjam".')
+                ->modalHeading(__('resources.loans.actions.approve_heading'))
+                ->modalDescription(__('resources.loans.actions.approve_desc'))
                 ->action(function () use ($record) {
                     try {
                         app(LoanApprovalService::class)->approve($record);
-                        Notification::make()->success()->title('Berhasil')->body('Peminjaman disetujui.')->send();
+                        Notification::make()->success()
+                            ->title(__('resources.loans.notifications.approved_title'))
+                            ->body(__('resources.loans.notifications.approved_body'))
+                            ->send();
                         $this->redirect(request()->header('Referer'));
                     } catch (\Exception $e) {
-                        Notification::make()->danger()->title('Gagal')->body($e->getMessage())->send();
+                        Notification::make()->danger()
+                            ->title(__('resources.loans.notifications.failed_title'))
+                            ->body($e->getMessage())->send();
                     }
                 });
 
             $actions[] = Action::make('reject')
-                ->label('Tolak')
+                ->label(__('resources.loans.actions.reject'))
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->form([
                     Textarea::make('reason')
-                        ->label('Alasan Penolakan')
+                        ->label(__('resources.loans.fields.reason'))
                         ->required()
                         ->maxLength(255),
                 ])
                 ->action(function (array $data) use ($record) {
                     try {
                         app(LoanApprovalService::class)->reject($record, $data['reason']);
-                        Notification::make()->success()->title('Berhasil')->body('Peminjaman ditolak.')->send();
+                        Notification::make()->success()
+                            ->title(__('resources.loans.notifications.rejected_title'))
+                            ->body(__('resources.loans.notifications.rejected_body'))
+                            ->send();
                         $this->redirect(request()->header('Referer'));
                     } catch (\Exception $e) {
                         Notification::make()->danger()->body($e->getMessage())->send();
@@ -75,7 +89,7 @@ trait LoanActionsTrait
         // --- ACTIVE LOAN ACTIONS (Return Items) ---
         if (in_array($record->status, [LoanStatus::Approved, LoanStatus::Overdue])) {
             $actions[] = Action::make('returnItems')
-                ->label('Pengembalian Barang')
+                ->label(__('resources.loans.actions.return_items'))
                 ->icon('heroicon-o-arrow-left-start-on-rectangle')
                 ->color('info')
                 ->modalWidth('4xl')
@@ -106,39 +120,40 @@ trait LoanActionsTrait
                     Section::make()
                         ->schema([
                             Repeater::make('items_to_return')
-                                ->label('Daftar Barang yang Belum Kembali')
+                                ->label(__('resources.loans.fields.items_to_return'))
                                 ->schema([
                                     Hidden::make('loan_item_id'),
                                     Hidden::make('type'),
 
                                     Grid::make(12)->schema([
                                         TextInput::make('item_name')
-                                            ->label('Nama Barang')
+                                            ->label(__('resources.loans.fields.item_name'))
                                             ->disabled()
                                             ->columnSpan(4),
 
                                         TextInput::make('identity_info')
-                                            ->label('Info / Kode')
+                                            ->label(__('resources.loans.fields.identity_info'))
                                             ->disabled()
                                             ->columnSpan(3),
 
                                         TextInput::make('remaining_qty')
-                                            ->label('Sisa')
+                                            ->label(__('resources.loans.fields.remaining_qty'))
                                             ->disabled()
                                             ->numeric()
                                             ->columnSpan(2),
 
-                                        // Asset: Toggle for return
+                                        // Asset: Toggle for return (Default True as per requirement)
                                         Toggle::make('is_returning')
-                                            ->label('Kembali?')
+                                            ->label(__('resources.loans.fields.is_returning'))
                                             ->onColor('success')
+                                            ->default(true)
                                             ->visible(fn($get) => $get('type') === ProductType::Asset->value)
                                             ->columnSpan(3)
                                             ->inline(false),
 
                                         // Consumable: Quantity Input for partial return
                                         TextInput::make('return_quantity')
-                                            ->label('Jumlah Kembali')
+                                            ->label(__('resources.loans.fields.return_input'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -160,24 +175,38 @@ trait LoanActionsTrait
                         $loanItem = $record->loanItems->find($returnData['loan_item_id']);
                         if (!$loanItem) continue;
 
-                        $qtyToReturn = 0;
+                        $stockIncrement = 0;
+                        $resolutionIncrement = 0;
+
                         if ($returnData['type'] === ProductType::Asset->value) {
-                            if (!empty($returnData['is_returning'])) $qtyToReturn = 1;
+                            if (!empty($returnData['is_returning'])) {
+                                $stockIncrement = 1;
+                                $resolutionIncrement = 1;
+                                $isResolved = true;
+                            }
                         } else {
-                            $qtyToReturn = (int) ($returnData['return_quantity'] ?? 0);
+                            $stockIncrement = (int) ($returnData['return_quantity'] ?? 0);
+                            $resolutionIncrement = $stockIncrement;
+                            $isResolved = true;
                         }
 
-                        if ($qtyToReturn > 0) {
-                            $service->processReturn($record, $loanItem, $qtyToReturn);
+                        if ($isResolved || $resolutionIncrement > 0) {
+                            $service->processReturn($record, $loanItem, $stockIncrement, $resolutionIncrement, $isResolved);
                             $processed++;
                         }
                     }
 
                     if ($processed > 0) {
-                         Notification::make()->success()->title('Berhasil')->body("$processed item dikembalikan.")->send();
-                         $this->redirect(request()->header('Referer'));
+                        Notification::make()->success()
+                            ->title(__('resources.loans.notifications.returned_title'))
+                            ->body(__('resources.loans.notifications.returned_body'))
+                            ->send();
+                        $this->redirect(request()->header('Referer'));
                     } else {
-                         Notification::make()->warning()->title('Dibatalkan')->body("Tidak ada item yang dipilih.")->send();
+                        Notification::make()->warning()
+                            ->title(__('resources.loans.notifications.return_canceled_title'))
+                            ->body(__('resources.loans.notifications.return_canceled_body'))
+                            ->send();
                     }
                 });
         }
