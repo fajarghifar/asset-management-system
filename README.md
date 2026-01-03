@@ -1,59 +1,182 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Filament Assets Management 🏢
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Laravel](https://img.shields.io/badge/laravel-v12-red)
+![Filament](https://img.shields.io/badge/filament-v4-orange)
 
-## About Laravel
+A comprehensive **Asset & Loan Management System** built with **Laravel 12** and **FilamentPHP v4**. Designed to streamline internal company operations, tracking assets (IT equipment, Furniture), consumable stocks, and employee loans with approval workflows.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+![POS Screenshot](./public/screenshots/preview.png)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## ✨ Key Features
 
-## Learning Laravel
+### 📦 Asset Management
+* **Lifecycle Tracking:** Complete history of every asset (Purchase, Assignment, Moving, Return, Disposal).
+* **Location Management:** Track assets across multiple sites (Head Office, Branch) and specific room locations.
+* **Smart Actions:**
+    * **Check-In / Check-Out:** Assign assets to employees with automated history logging.
+    * **Moving:** Transfer assets between locations with reason tracking.
+    * **Maintenance Status:** Mark assets as "In Repair" or "Broken".
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 📊 Consumable Stock
+* **Stock Tracking:** Manage inventory for disposable items (ATK, Paper, Ink, etc.).
+* **Low Stock Alerts:** Dashboard indicators for items running below minimum thresholds.
+* **Auto-Deduction:** Stock is automatically deducted when included in approved loan requests (as non-returnable items).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 📝 Loan & Approval System
+* **Employee Loans:** Request flow for borrowing assets or requesting consumables.
+* **Hybrid Items:** Support for mixing **Returnable Assets** (Laptops, Projectors) and **Consumables** (Pens, Paper) in a single loan request.
+* **Approval Workflow:**
+    * **Pending:** Draft request waiting for admin review.
+    * **Approved:** Items deducted from stock/status updated.
+    * **Rejected:** Logged with rejection reason.
+    * **Returned/Overdue:** Tracking return dates and overdue status.
+* **Partial Returns:** Ability to return specific items from a bulk loan (e.g., returning 1 of 2 borrowed laptops).
 
-## Laravel Sponsors
+### 📈 Dashboard & Reporting
+* **Real-time Overview:**
+    * Total Assets Value & Count.
+    * Active Loans & Overdue Loans.
+    * Low Stock warnings.
+* **Interactive Charts:**
+    * Monthly Loan Frequency.
+    * Asset Status Distribution.
+    * Top Borrowed Products.
+* **Export/Import:** Bulk import assets via Excel and export reports for audit purposes.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🛠️ Tech Stack
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+* **Backend:** [Laravel 12](https://laravel.com/)
+* **Admin Panel:** [FilamentPHP v4](https://filamentphp.com/)
+* **Database:** MySQL / MariaDB
+* **Charts:** [ApexCharts](https://apexcharts.com/) (via Filament Widgets)
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🏗️ Architecture Highlights
 
-## Code of Conduct
+1.  **Hybrid Persistence Architecture (`LoanForm` & `CreateLoan`):**
+    *   Handles complex polymorphic relationships (Assets vs. Consumables) by manually processing form data in `handleRecordCreation` to ensure data integrity.
+2.  **Observer Pattern:**
+    *   **`LoanObserver`:** Generates unique loan codes (`LN/2024/...`) and handles status transitions.
+    *   **`AssetObserver`:** Automatically logs every state change (move, status update) into the `AssetHistory` table.
+3.  **Service Layer:**
+    *   **`LoanApprovalService`:** Encapsulates business logic for approving/rejecting loans and updating asset statuses.
+    *   **`LoanReturnService`:** Manages the complex logic of partial returns and stock restoration.
+4.  **Localization (i18n):**
+    *   Full support for **Indonesian (ID)** and **English (EN)** via standard Laravel translation files (`lang/id/resources.php`).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🚀 Installation Guide
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Clone the Repository
+```bash
+git clone https://github.com/fajarghifar/filament-assets-management.git
+cd filament-assets-management
+```
 
-## License
+### 2. Install Dependencies
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer install
+npm install && npm run build
+```
+
+### 3. Environment Setup
+
+Copy the example environment file:
+```bash
+cp .env.example .env
+```
+Open `.env` and configure your database:
+```options
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=trusmi_assets
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Generate the application key and storage link:
+```bash
+php artisan key:generate
+php artisan storage:link
+```
+
+### 4. Database Setup & Seeding (Fast Reset)
+
+This project uses a custom composer script to migrate and seed data in the correct order.
+**Warning:** This command will wipe your database (`migrate:fresh`).
+
+```bash
+composer run reset
+```
+> *This script will sequentially run all seeders to populate initial data:*
+> *   **Users:** Admin
+> *   **Master Data:** Locations, Categories
+> *   **Inventory:**
+>     *   **Assets (IT):** Laptop ThinkPad, Toolkit Network, Printer, Switch.
+>     *   **Consumables (Network):** RJ45 Connectors, Cable Ties, UTP Cables.
+
+### 5. Run the Server
+
+```bash
+php artisan serve
+```
+
+Access the admin panel at `http://localhost:8000/admin`.
+
+---
+
+## 🔑 Default Credentials
+
+| Role | Email | Password |
+| --- | --- | --- |
+| **Admin** | `admin` | `password` |
+
+> **Note:** Please change credentials immediately after deployment.
+
+---
+
+## 📖 Usage Guide
+
+### 📦 Inventory Workflow
+
+The system uses **Product** as the master parent table for all items.
+
+1.  **Create Product (Master):**
+    *   Go to **Inventory > Products**.
+    *   Create a new product (e.g., "MacBook Pro M3" or "RJ45 Connector").
+    *   Select the type: **Asset** (Fixed Item) or **Consumable** (Disposable).
+
+2.  **Add Stock/Units:**
+    *   **For Assets:** Go to the **Assets** menu (or via Product relations). Register individual units with unique ID/Tag (e.g., `AST-001`, `AST-002`).
+    *   **For Consumables:** Go to **Consumable Stocks**. Add stock quantity to a specific location (e.g., "Warehouse A: 500 pcs").
+
+### 🔄 Managing Operations
+*   **Assets Operations:**
+    *   **Check Out:** Assign a specific Asset ID to an employee.
+    *   **Move:** Transfer Asset from one Location/Site to another.
+*   **Loan Request:**
+    *   Create a Loan for mixed items (1 Laptop + 5 Connectors).
+    *   System automatically validates availability.
+1. Employees (or Admin acting as one) create a **Loan** request.
+2. Add items: Select **Product** -> System detects if it's an **Asset** (shows specific units) or **Consumable** (shows stock qty).
+3. **Admin** goes to the Loan record and clicks **Approve**.
+4. When returning, click **Return Items** to process full or partial returns.
+
+---
+
+## 📄 License
+
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+**Made with ❤️ by Fajar Ghifari Nugroho**
