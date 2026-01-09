@@ -12,7 +12,10 @@ enum ProductType: string implements HasLabel, HasColor
 
     public function getLabel(): ?string
     {
-        return __('enums.product_type.' . $this->value);
+        return match ($this) {
+            self::Asset => 'Asset',
+            self::Consumable => 'Consumable',
+        };
     }
 
     public function getColor(): ?string

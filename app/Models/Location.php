@@ -23,6 +23,6 @@ class Location extends Model
 
     public function getFullNameAttribute(): string
     {
-        return "{$this->site->value} - {$this->name}";
+        return "{$this->site->getLabel()} - {$this->name}";
     }
 }

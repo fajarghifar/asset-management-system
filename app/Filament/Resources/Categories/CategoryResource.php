@@ -10,12 +10,12 @@ use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
+use App\Services\CategoryService;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
-use Illuminate\Database\QueryException;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
@@ -100,7 +100,11 @@ class CategoryResource extends Resource
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label(__('resources.general.actions.create')),
+                CreateAction::make()
+                    ->label(__('resources.general.actions.create'))
+                    ->using(function (array $data, CategoryService $service): Category {
+                        return $service->createCategory($data);
+                    }),
             ])
             ->filters([
                 //
@@ -108,26 +112,23 @@ class CategoryResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make(),
+                    EditAction::make()
+                        ->using(function (Category $record, array $data, CategoryService $service): Category {
+                            return $service->updateCategory($record, $data);
+                        }),
                     DeleteAction::make()
                         ->modalDescription(__('resources.categories.notifications.delete_confirm'))
-                        ->action(function (Category $record) {
+                        ->action(function (Category $record, CategoryService $service) {
                             try {
-                                $record->delete();
+                                $service->deleteCategory($record);
                                 Notification::make()
                                     ->success()
                                     ->title(__('resources.categories.notifications.delete_success'))
                                     ->send();
-                            } catch (QueryException $e) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title(__('resources.categories.notifications.delete_failed'))
-                                    ->body(__('resources.categories.notifications.delete_failed_body'))
-                                    ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title(__('resources.categories.notifications.system_error'))
+                                    ->title(__('resources.categories.notifications.delete_failed'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

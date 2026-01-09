@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
@@ -63,14 +64,17 @@ class CategorySeeder extends Seeder
             ],
         ];
 
-        foreach ($categories as $cat) {
-            Category::updateOrCreate(
-                ['slug' => $cat['slug']],
-                [
-                    'name' => $cat['name'],
-                    'description' => $cat['description'],
-                ]
-            );
-        }
+        DB::transaction(function () use ($categories) {
+            foreach ($categories as $cat) {
+                // Upsert logic or updateOrCreate
+                Category::updateOrCreate(
+                    ['slug' => $cat['slug']],
+                    [
+                        'name' => $cat['name'],
+                        'description' => $cat['description'],
+                    ]
+                );
+            }
+        });
     }
 }

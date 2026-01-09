@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Locations;
 
-use UnitEnum;
 use App\Models\Location;
 use Filament\Tables\Table;
 use App\Enums\LocationSite;
@@ -10,6 +9,7 @@ use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
+use App\Services\LocationService;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -24,7 +24,6 @@ use App\Filament\Resources\Locations\Pages\ManageLocations;
 class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
-    protected static ?int $navigationSort = 1;
 
     public static function getModelLabel(): string
     {
@@ -71,6 +70,7 @@ class LocationResource extends Resource
                 Textarea::make('description')
                     ->label(__('resources.locations.fields.description'))
                     ->rows(3)
+                    ->maxLength(500)
                     ->columnSpanFull(),
             ]);
     }
@@ -104,7 +104,11 @@ class LocationResource extends Resource
                     ->tooltip(fn(TextColumn $column) => $column->getState()),
             ])
             ->headerActions([
-                CreateAction::make()->label(__('resources.general.actions.create')),
+                CreateAction::make()
+                    ->label(__('resources.general.actions.create'))
+                    ->using(function (array $data, LocationService $service): Location {
+                        return $service->createLocation($data);
+                    }),
             ])
             ->filters([
                 SelectFilter::make('site')
@@ -117,25 +121,22 @@ class LocationResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make(),
+                    EditAction::make()
+                        ->using(function (Location $record, array $data, LocationService $service): Location {
+                            return $service->updateLocation($record, $data);
+                        }),
                     DeleteAction::make()
-                        ->action(function (Location $record) {
+                        ->action(function (Location $record, LocationService $service) {
                             try {
-                                $record->delete();
+                                $service->deleteLocation($record);
                                 Notification::make()
                                     ->success()
                                     ->title(__('resources.locations.notifications.delete_success'))
                                     ->send();
-                            } catch (\Illuminate\Database\QueryException $e) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title(__('resources.locations.notifications.delete_failed'))
-                                    ->body(__('resources.locations.notifications.delete_failed_body'))
-                                    ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title(__('resources.locations.notifications.system_error'))
+                                    ->title(__('resources.locations.notifications.delete_failed'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

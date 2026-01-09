@@ -34,7 +34,21 @@ enum AssetAction: string implements HasLabel, HasColor, HasIcon
 
     public function getLabel(): ?string
     {
-        return __('enums.asset_action.' . $this->value);
+        return match ($this) {
+            self::Register => 'Register',
+            self::Update => 'Update',
+            self::Move => 'Move',
+            self::CheckOut => 'Check Out',
+            self::CheckIn => 'Check In',
+            self::Deploy => 'Deploy',
+            self::Pull => 'Pull',
+            self::ReportBroken => 'Report Broken',
+            self::Maintenance => 'Maintenance',
+            self::Repaired => 'Repaired',
+            self::MarkAsLost => 'Mark As Lost',
+            self::Dispose => 'Dispose',
+            self::Audit => 'Audit',
+        };
     }
 
     public function getColor(): string|array|null

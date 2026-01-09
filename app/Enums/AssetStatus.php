@@ -18,7 +18,15 @@ enum AssetStatus: string implements HasLabel, HasColor, HasIcon
 
     public function getLabel(): ?string
     {
-        return __('enums.asset_status.' . $this->value);
+        return match ($this) {
+            self::InStock => 'In Stock',
+            self::Loaned => 'Loaned',
+            self::Installed => 'Installed',
+            self::Maintenance => 'Maintenance',
+            self::Broken => 'Broken',
+            self::Lost => 'Lost',
+            self::Disposed => 'Disposed',
+        };
     }
 
     public function getColor(): string|array|null
