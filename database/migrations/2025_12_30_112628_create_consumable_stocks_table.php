@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
             $table->foreignId('location_id')->constrained()->restrictOnDelete();
-            $table->integer('quantity')->default(0);
-            $table->integer('min_quantity')->default(5);
+            $table->integer('quantity')->default(0)->comment('Current quantity');
+            $table->integer('min_quantity')->default(5)->comment('Minimum stock alert threshold');
             $table->unique(['product_id', 'location_id']);
             $table->timestamps();
         });

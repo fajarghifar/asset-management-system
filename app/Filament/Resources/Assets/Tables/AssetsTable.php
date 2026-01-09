@@ -242,22 +242,16 @@ class AssetsTable
 
                     DeleteAction::make()
                         ->modalDescription(__('resources.assets.notifications.delete_confirm'))
-                        ->action(function (Asset $record) {
+                        ->action(function (Asset $record, AssetService $service) {
                             try {
-                                $record->delete();
+                                $service->deleteAsset($record);
                                 Notification::make()->success()
                                     ->title(__('resources.assets.notifications.delete_success'))
-                                    ->send();
-                            } catch (\Illuminate\Database\QueryException $e) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title(__('resources.assets.notifications.delete_failed'))
-                                    ->body(__('resources.assets.notifications.delete_failed_body'))
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title(__('resources.assets.notifications.system_error'))
+                                    ->title(__('resources.assets.notifications.delete_failed'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

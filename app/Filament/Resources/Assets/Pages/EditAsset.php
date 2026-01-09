@@ -11,6 +11,8 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -19,6 +21,12 @@ use App\Filament\Resources\Assets\AssetResource;
 class EditAsset extends EditRecord
 {
     protected static string $resource = AssetResource::class;
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $service = app(AssetService::class);
+        return $service->updateAsset($record, $data);
+    }
 
     protected function getHeaderActions(): array
     {
@@ -111,7 +119,7 @@ class EditAsset extends EditRecord
                                 ->title(__('resources.assets.notifications.delete_success'))
                                 ->send();
                             return redirect($this->getResource()::getUrl('index'));
-                        } catch (\Illuminate\Database\QueryException $e) {
+                        } catch (QueryException $e) {
                             Notification::make()
                                 ->danger()
                                 ->title(__('resources.assets.notifications.delete_failed'))

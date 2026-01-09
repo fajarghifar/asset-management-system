@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Enums\ProductType;
 use Filament\Tables\Table;
 use App\Imports\ProductImport;
+use App\Services\ProductService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
@@ -14,7 +15,6 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\QueryException;
 use Filament\Tables\Filters\TernaryFilter;
 use EightyNine\ExcelImport\ExcelImportAction;
 use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
@@ -62,6 +62,7 @@ class ProductsTable
                 // This works efficiently because we use `scopeWithStock()` in the Resource
                 TextColumn::make('total_stock')
                     ->label(__('resources.products.fields.total_stock'))
+                    ->sortable()
                     ->formatStateUsing(function (Product $record, $state) {
                         $unit = $record->type === ProductType::Asset ? 'Unit' : 'Pcs';
                         return "{$state} {$unit}";
@@ -157,23 +158,17 @@ class ProductsTable
                     DeleteAction::make()
                         ->modalHeading(__('resources.products.notifications.delete_title'))
                         ->modalDescription(__('resources.products.notifications.delete_confirm'))
-                        ->action(function (Product $record) {
+                        ->action(function (Product $record, ProductService $service) {
                             try {
-                                $record->delete();
+                                $service->deleteProduct($record);
                                 Notification::make()
                                     ->success()
                                     ->title(__('resources.products.notifications.delete_success'))
                                     ->send();
-                            } catch (QueryException $e) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title(__('resources.products.notifications.delete_failed'))
-                                    ->body(__('resources.products.notifications.delete_failed_body'))
-                                    ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title(__('resources.products.notifications.system_error'))
+                                    ->title(__('resources.products.notifications.delete_failed'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

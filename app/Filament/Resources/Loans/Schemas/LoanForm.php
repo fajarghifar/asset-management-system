@@ -229,7 +229,7 @@ class LoanForm
                                     // Quantity
                                     TextInput::make('quantity_borrowed')
                                         ->label(__('resources.loans.fields.quantity'))
-                                        ->numeric()
+                                        ->integer()
                                         ->default(1)
                                         ->minValue(1)
                                         ->maxValue(function ($get) {

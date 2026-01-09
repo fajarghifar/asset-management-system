@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Assets\Schemas;
 
+use App\Models\Product;
 use App\Models\Location;
 use App\Enums\ProductType;
 use Filament\Schemas\Schema;
@@ -30,6 +31,7 @@ class AssetForm
                                 fn($query) => $query->where('type', ProductType::Asset)
                             )
                             ->searchable()
+                            ->getOptionLabelFromRecordUsing(fn(Product $record) => $record->full_name)
                             ->preload()
                             ->optionsLimit(50)
                             ->disabledOn('edit')
@@ -38,7 +40,7 @@ class AssetForm
                         Select::make('location_id')
                             ->label(__('resources.assets.fields.location'))
                             ->relationship('location', 'name')
-                            ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->site->value})")
+                            ->getOptionLabelFromRecordUsing(fn(Location $record) => $record->full_name)
                             ->searchable(['name', 'site'])
                             ->preload()
                             ->optionsLimit(50)
@@ -47,10 +49,10 @@ class AssetForm
 
                         TextInput::make('asset_tag')
                             ->label(__('resources.assets.fields.asset_tag'))
-                            ->required()
-                            ->unique(ignoreRecord: true)
+                            ->disabled()
+                            ->dehydrated()
                             ->maxLength(50)
-                            ->placeholder(__('resources.assets.fields.asset_tag_placeholder')),
+                            ->placeholder('Auto-generated'),
 
                         TextInput::make('serial_number')
                             ->label(__('resources.assets.fields.serial_number'))
@@ -67,8 +69,10 @@ class AssetForm
                         TextInput::make('purchase_price')
                             ->label(__('resources.assets.fields.purchase_price'))
                             ->integer()
+                            ->default(0)
                             ->prefix('Rp')
-                            ->maxValue(99999999999),
+                            ->maxValue(99999999999)
+                            ->dehydrateStateUsing(fn($state) => $state ?? 0),
 
                         TextInput::make('supplier_name')
                             ->label(__('resources.assets.fields.supplier'))

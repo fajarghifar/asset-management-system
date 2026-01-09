@@ -2,15 +2,15 @@
 
 namespace App\Filament\Resources\ConsumableStocks;
 
-use UnitEnum;
+use App\Models\Product;
 use App\Models\Location;
+use App\Enums\ProductType;
 use Filament\Tables\Table;
 use App\Enums\LocationSite;
-use App\Enums\ProductType;
 use Filament\Schemas\Schema;
 use App\Models\ConsumableStock;
-use Filament\Resources\Resource;
 use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -18,7 +18,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Select;
 use App\Imports\ConsumableStockImport;
 use Filament\Tables\Columns\TextColumn;
-use Illuminate\Database\QueryException;
+use App\Services\ConsumableStockService;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
@@ -60,8 +60,10 @@ class ConsumableStockResource extends Resource
                 Select::make('product_id')
                     ->label(__('resources.consumables.fields.product'))
                     ->relationship('product', 'name', fn($query) => $query->where('type', ProductType::Consumable))
+                    ->getOptionLabelFromRecordUsing(callback: fn(Product $record) => $record->full_name)
                     ->searchable()
                     ->preload()
+                    ->optionsLimit(20)
                     ->required()
                     ->columnSpanFull(),
 
@@ -71,19 +73,20 @@ class ConsumableStockResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn(Location $record) => $record->full_name)
                     ->searchable()
                     ->preload()
+                    ->optionsLimit(20)
                     ->required()
                     ->columnSpanFull(),
 
                 TextInput::make('quantity')
                     ->label(__('resources.consumables.fields.current_stock'))
-                    ->numeric()
+                    ->integer()
                     ->default(0)
                     ->minValue(0)
                     ->required(),
 
                 TextInput::make('min_quantity')
                     ->label(__('resources.consumables.fields.min_stock_alert'))
-                    ->numeric()
+                    ->integer()
                     ->default(0)
                     ->minValue(0)
                     ->required(),
@@ -170,7 +173,11 @@ class ConsumableStockResource extends Resource
                     ->fileName('Stok_Consumable_' . date('Y-m-d'))
                     ->defaultFormat('xlsx'),
 
-                CreateAction::make()->label(__('resources.general.actions.create')),
+                CreateAction::make()
+                    ->label(__('resources.general.actions.create'))
+                    ->using(function (array $data, ConsumableStockService $service): ConsumableStock {
+                        return $service->createStock($data);
+                    }),
             ])
             ->filters([
                 SelectFilter::make('product')
@@ -215,26 +222,23 @@ class ConsumableStockResource extends Resource
             ])
             ->recordActions([
                 ActionGroup::make([
-                    EditAction::make(),
+                    EditAction::make()
+                        ->using(function (ConsumableStock $record, array $data, ConsumableStockService $service): ConsumableStock {
+                            return $service->updateStock($record, $data);
+                        }),
                     DeleteAction::make()
                         ->modalDescription(__('resources.consumables.notifications.delete_confirm'))
-                        ->action(function (ConsumableStock $record) {
+                        ->action(function (ConsumableStock $record, ConsumableStockService $service) {
                             try {
-                                $record->delete();
+                                $service->deleteStock($record);
                                 Notification::make()
                                     ->success()
                                     ->title(__('resources.consumables.notifications.delete_success'))
                                     ->send();
-                            } catch (QueryException $e) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title(__('resources.consumables.notifications.delete_failed'))
-                                    ->body(__('resources.consumables.notifications.delete_failed_body'))
-                                    ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title(__('resources.consumables.notifications.system_error'))
+                                    ->title(__('resources.consumables.notifications.delete_failed'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

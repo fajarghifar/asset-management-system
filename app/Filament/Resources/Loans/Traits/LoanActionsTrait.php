@@ -139,7 +139,7 @@ trait LoanActionsTrait
                                         TextInput::make('remaining_qty')
                                             ->label(__('resources.loans.fields.remaining_qty'))
                                             ->disabled()
-                                            ->numeric()
+                                            ->integer()
                                             ->columnSpan(2),
 
                                         // Asset: Toggle for return (Default True as per requirement)
@@ -154,7 +154,7 @@ trait LoanActionsTrait
                                         // Consumable: Quantity Input for partial return
                                         TextInput::make('return_quantity')
                                             ->label(__('resources.loans.fields.return_input'))
-                                            ->numeric()
+                                            ->integer()
                                             ->default(0)
                                             ->minValue(0)
                                             ->maxValue(fn($get) => (int) $get('remaining_qty'))

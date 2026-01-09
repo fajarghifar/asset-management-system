@@ -71,6 +71,6 @@ class ProductResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with(['category'])
-            ->withStock();
+            ->withTotalStock();
     }
 }

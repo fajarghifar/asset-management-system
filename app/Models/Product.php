@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\AssetStatus;
 use App\Enums\ProductType;
 use App\Models\ConsumableStock;
-use App\Observers\ProductObserver;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-#[ObservedBy(ProductObserver::class)]
 class Product extends Model
 {
     use HasFactory;
@@ -29,6 +28,11 @@ class Product extends Model
         'type' => ProductType::class,
         'can_be_loaned' => 'boolean',
     ];
+
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->name} ({$this->code})";
+    }
 
     public function category(): BelongsTo
     {
@@ -48,25 +52,32 @@ class Product extends Model
     /**
      * Scope to eager load stock counts efficiently.
      */
-    public function scopeWithStock($query)
-    {
-        return $query->withCount([
-            'assets' => fn($q) => $q->where('status', \App\Enums\AssetStatus::InStock),
-        ])->withSum('consumableStocks', 'quantity');
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                                   Scopes                                   */
+    /* -------------------------------------------------------------------------- */
 
     /**
-     * Accessor to get total available stock dynamically.
-     * Note: Requires `withStock()` scope to be efficient, otherwise triggers lazy loading.
+     * Scope to load 'total_stock' as a virtual column efficiently.
+     * Allows sorting: $query->orderBy('total_stock', 'desc')
      */
-    public function getTotalStockAttribute(): int
+    public function scopeWithTotalStock(Builder $query): Builder
     {
-        if ($this->type === ProductType::Asset) {
-            // Use loaded count if available, otherwise count manually
-            return $this->assets_count ?? $this->assets()->where('status', \App\Enums\AssetStatus::InStock)->count();
-        }
-
-        // For consumables
-        return (int) ($this->consumable_stocks_sum_quantity ?? $this->consumableStocks()->sum('quantity'));
+        return $query->addSelect([
+            'total_stock' => function ($subQuery) {
+                $subQuery->selectRaw('
+                CASE
+                    WHEN products.type = ? THEN (
+                        SELECT COUNT(*) FROM assets
+                        WHERE assets.product_id = products.id
+                        AND assets.status = ?
+                    )
+                    ELSE (
+                        SELECT COALESCE(SUM(quantity), 0) FROM consumable_stocks
+                        WHERE consumable_stocks.product_id = products.id
+                    )
+                END
+            ', [ProductType::Asset->value, AssetStatus::InStock->value]);
+            }
+        ]);
     }
 }
