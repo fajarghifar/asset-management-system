@@ -53,6 +53,10 @@ class HistoriesRelationManager extends RelationManager
                     ->searchable()
                     ->placeholder('-'),
 
+                TextColumn::make('location.site')
+                    ->label(__('resources.assets.history.site'))
+                    ->searchable(),
+
                 TextColumn::make('location.name')
                     ->label(__('resources.assets.history.location'))
                     ->searchable(),

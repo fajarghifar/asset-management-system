@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Loans\Pages;
 
 use Filament\Actions\Action;
+use App\Services\LoanService;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\Loans\LoanResource;
@@ -38,18 +39,8 @@ class CreateLoan extends CreateRecord
         $items = $data['loanItems'] ?? [];
         unset($data['loanItems']);
 
-        $loan = static::getModel()::create($data);
-
-        foreach ($items as $itemData) {
-            $loan->loanItems()->create([
-                'type' => $itemData['type'],
-                'asset_id' => $itemData['asset_id'] ?? null,
-                'consumable_stock_id' => $itemData['consumable_stock_id'] ?? null,
-                'quantity_borrowed' => $itemData['quantity_borrowed'] ?? 1,
-            ]);
-        }
-
-        return $loan;
+        // Use LoanService to handle creation, code generation, and item persistence transactionally
+        return app(LoanService::class)->createLoan($data, $items);
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

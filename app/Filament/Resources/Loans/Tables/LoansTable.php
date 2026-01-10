@@ -12,7 +12,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Textarea;
-use App\Services\LoanApprovalService;
+use App\Services\LoanService;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
@@ -102,7 +102,7 @@ class LoansTable
                         ->visible(fn($record) => $record->status === LoanStatus::Pending)
                         ->action(function (Loan $record) {
                             try {
-                                app(LoanApprovalService::class)->approve($record);
+                                app(LoanService::class)->approveLoan($record);
                                 Notification::make()->success()
                                     ->title(__('resources.loans.notifications.approved_title'))
                                     ->send();
@@ -125,7 +125,7 @@ class LoansTable
                         ])
                         ->visible(fn($record) => $record->status === LoanStatus::Pending)
                         ->action(function (Loan $record, array $data) {
-                            app(LoanApprovalService::class)->reject($record, $data['reason']);
+                            app(LoanService::class)->rejectLoan($record, $data['reason']);
                             Notification::make()->success()
                                 ->title(__('resources.loans.notifications.rejected_title'))
                                 ->send();

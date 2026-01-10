@@ -138,6 +138,7 @@ return [
             'min_stock_alert' => 'Min Stock Alert',
             'remaining_stock' => 'Remaining Stock',
             'min_limit' => 'Min Limit',
+            'site' => 'Site',
         ],
         'actions' => [
             'import' => 'Import Stock',

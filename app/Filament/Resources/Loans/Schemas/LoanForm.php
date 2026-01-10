@@ -237,10 +237,10 @@ class LoanForm
                                             if ($type === ProductType::Consumable->value) {
                                                 $stockId = $get('consumable_stock_id');
                                                 if ($stockId) {
-                                                     return ConsumableStock::find($stockId)?->quantity ?? 1;
+                                                    return ConsumableStock::find($stockId)?->quantity ?? 1;
                                                 }
                                             }
-                                            return 1; // Asset always 1
+                                            return 1;
                                         })
                                         ->readOnly(fn($get) => $get('type') === ProductType::Asset->value)
                                         ->required()
@@ -249,6 +249,7 @@ class LoanForm
                                 ]),
                             ])
                             ->defaultItems(1)
+                            ->minItems(1)
                             ->columns(1)
                             ->addActionLabel(__('resources.loans.actions.add_item'))
                             ->deletable(fn($livewire) => !$isReadOnly($livewire))

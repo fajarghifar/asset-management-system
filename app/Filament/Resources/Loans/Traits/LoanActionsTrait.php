@@ -3,22 +3,21 @@
 namespace App\Filament\Resources\Loans\Traits;
 
 use App\Models\Loan;
-use Filament\Actions\Action;
 use App\Enums\LoanStatus;
 use App\Enums\ProductType;
+use Filament\Actions\Action;
+use App\Services\LoanService;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use App\Services\LoanReturnService;
-use App\Services\LoanApprovalService;
 
 trait LoanActionsTrait
 {
@@ -47,7 +46,7 @@ trait LoanActionsTrait
                 ->modalDescription(__('resources.loans.actions.approve_desc'))
                 ->action(function () use ($record) {
                     try {
-                        app(LoanApprovalService::class)->approve($record);
+                        app(LoanService::class)->approveLoan($record);
                         Notification::make()->success()
                             ->title(__('resources.loans.notifications.approved_title'))
                             ->body(__('resources.loans.notifications.approved_body'))
@@ -72,7 +71,7 @@ trait LoanActionsTrait
                 ])
                 ->action(function (array $data) use ($record) {
                     try {
-                        app(LoanApprovalService::class)->reject($record, $data['reason']);
+                        app(LoanService::class)->rejectLoan($record, $data['reason']);
                         Notification::make()->success()
                             ->title(__('resources.loans.notifications.rejected_title'))
                             ->body(__('resources.loans.notifications.rejected_body'))
@@ -96,7 +95,7 @@ trait LoanActionsTrait
                 // Pre-fill form with items that haven't been fully returned
                 ->fillForm(function (Loan $record): array {
                     $itemsToReturn = $record->loanItems()
-                        ->whereRaw('quantity_borrowed > quantity_returned')
+                        ->whereNull('returned_at')
                         ->with(['consumableStock.product', 'asset.product', 'asset'])
                         ->get()
                         ->map(function ($item) {
@@ -168,44 +167,18 @@ trait LoanActionsTrait
                         ])
                 ])
                 ->action(function (array $data) use ($record) {
-                    $service = app(LoanReturnService::class);
-                    $processed = 0;
+                    try {
+                        app(LoanService::class)->returnItems($record, $data['items_to_return'] ?? []);
 
-                    foreach ($data['items_to_return'] ?? [] as $returnData) {
-                        $loanItem = $record->loanItems->find($returnData['loan_item_id']);
-                        if (!$loanItem) continue;
-
-                        $stockIncrement = 0;
-                        $resolutionIncrement = 0;
-
-                        if ($returnData['type'] === ProductType::Asset->value) {
-                            if (!empty($returnData['is_returning'])) {
-                                $stockIncrement = 1;
-                                $resolutionIncrement = 1;
-                                $isResolved = true;
-                            }
-                        } else {
-                            $stockIncrement = (int) ($returnData['return_quantity'] ?? 0);
-                            $resolutionIncrement = $stockIncrement;
-                            $isResolved = true;
-                        }
-
-                        if ($isResolved || $resolutionIncrement > 0) {
-                            $service->processReturn($record, $loanItem, $stockIncrement, $resolutionIncrement, $isResolved);
-                            $processed++;
-                        }
-                    }
-
-                    if ($processed > 0) {
                         Notification::make()->success()
                             ->title(__('resources.loans.notifications.returned_title'))
                             ->body(__('resources.loans.notifications.returned_body'))
                             ->send();
                         $this->redirect(request()->header('Referer'));
-                    } else {
-                        Notification::make()->warning()
-                            ->title(__('resources.loans.notifications.return_canceled_title'))
-                            ->body(__('resources.loans.notifications.return_canceled_body'))
+                    } catch (\Exception $e) {
+                        Notification::make()->danger()
+                            ->title(__('resources.loans.notifications.failed_title'))
+                            ->body($e->getMessage())
                             ->send();
                     }
                 });

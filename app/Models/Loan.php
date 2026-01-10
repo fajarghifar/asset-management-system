@@ -2,15 +2,32 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Enums\LoanStatus;
-use App\Observers\LoanObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-#[ObservedBy(LoanObserver::class)]
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $borrower_name
+ * @property string $code
+ * @property string|null $proof_image
+ * @property string|null $purpose
+ * @property \Illuminate\Support\Carbon $loan_date
+ * @property \Illuminate\Support\Carbon|null $due_date
+ * @property \Illuminate\Support\Carbon|null $returned_date
+ * @property LoanStatus $status
+ * @property string|null $notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read User $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, LoanItem> $loanItems
+ */
 class Loan extends Model
 {
     use HasFactory;
@@ -48,7 +65,7 @@ class Loan extends Model
     /**
      * Scope for loans that are still in progress (Approved or Overdue).
      */
-    public function scopeOngoing($query)
+    public function scopeOngoing(Builder $query): Builder
     {
         return $query->whereIn('status', [LoanStatus::Approved, LoanStatus::Overdue]);
     }
@@ -56,7 +73,7 @@ class Loan extends Model
     /**
      * Scope for overdue loans.
      */
-    public function scopeOverdue($query)
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('status', LoanStatus::Overdue)
             ->orWhere(fn($q) => $q->where('status', LoanStatus::Approved)->where('due_date', '<', now()));
