@@ -138,6 +138,7 @@ return [
             'min_stock_alert' => 'Batas Minimum Stok (Alert)',
             'remaining_stock' => 'Sisa Stok Aktual',
             'min_limit' => 'Batas Min.',
+            'site' => 'Site',
         ],
         'actions' => [
             'import' => 'Import Stok',
