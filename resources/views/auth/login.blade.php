@@ -46,7 +46,6 @@
             </div>
 
             <div class="flex items-center justify-end mt-4">
-                {{-- If regular registration is enabled, maybe link here? Standard breeze doesn't usually link to register from login but it's good UX --}}
                 <x-primary-button class="w-full">
                     {{ __('Log in') }}
                 </x-primary-button>
