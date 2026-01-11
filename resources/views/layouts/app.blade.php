@@ -15,20 +15,27 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased bg-background text-foreground">
-        <div class="min-h-screen bg-background">
-            @include('layouts.navigation')
+        <div class="min-h-screen bg-background flex flex-col">
+            <div class="flex-1">
+                @include('layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
-                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
-                </div>
-            @endisset
+                <!-- Page Heading -->
+                @isset($header)
+                    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                @endisset
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                <!-- Page Content -->
+                <main>
+                    {{ $slot }}
+                </main>
+            </div>
+
+            <!-- Footer -->
+            @include('layouts.footer')
         </div>
+        <x-toaster />
+        <livewire:components.delete-modal />
     </body>
 </html>

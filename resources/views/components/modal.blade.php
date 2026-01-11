@@ -36,7 +36,7 @@ $maxWidth = $maxWidthClasses[$maxWidth] ?? $maxWidthClasses['2xl'];
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
     >
-        <div class="absolute inset-0 bg-gray-500/75 dark:bg-gray-900/75 opacity-100"></div>
+        <div class="absolute inset-0 bg-gray-500/75 opacity-100"></div>
     </div>
 
     <!-- Modal Content -->
