@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
 
     Route::view('locations', 'locations.index')->name('locations.index');
     Route::view('categories', 'categories.index')->name('categories.index');
+    Route::view('products', 'products.index')->name('products.index');
 });
 
 require __DIR__.'/auth.php';

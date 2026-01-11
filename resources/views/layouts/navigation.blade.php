@@ -20,6 +20,27 @@
                             Dashboard
                         </a>
 
+                        <!-- Products Dropdown -->
+                        <x-nav-dropdown active="{{ request()->routeIs('products.*') }}">
+                            <x-slot name="icon">
+                                <x-heroicon-o-archive-box class="mr-2 h-4 w-4" />
+                            </x-slot>
+                            <x-slot name="trigger">
+                                Products
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                                    Products
+                                </x-dropdown-link>
+                                {{-- <x-dropdown-link :href="route('assets.index')" :active="request()->routeIs('assets.index')">
+                                    Assets
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('stocks.index')" :active="request()->routeIs('stocks.index')">
+                                    Stocks
+                                </x-dropdown-link> --}}
+                            </x-slot>
+                        </x-nav-dropdown>
+
                         <!-- Locations Link -->
                         <a href="{{ route('locations.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('locations.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
                             <x-heroicon-o-map-pin class="mr-2 h-4 w-4" />
@@ -31,22 +52,6 @@
                             <x-heroicon-o-tag class="mr-2 h-4 w-4" />
                             Categories
                         </a>
-
-                        <!-- Products Dropdown -->
-                        <x-nav-dropdown>
-                            <x-slot name="icon">
-                                <x-heroicon-o-archive-box class="mr-2 h-4 w-4" />
-                            </x-slot>
-                            <x-slot name="trigger">
-                                Products
-                            </x-slot>
-                            <x-slot name="content">
-                                <x-dropdown-link href="#">Blog</x-dropdown-link>
-                                <x-dropdown-link href="#">Company</x-dropdown-link>
-                                <x-dropdown-link href="#">Careers</x-dropdown-link>
-                                <x-dropdown-link href="#">Support</x-dropdown-link>
-                            </x-slot>
-                        </x-nav-dropdown>
 
                         <!-- Resources Dropdown -->
                         <x-nav-dropdown>
@@ -146,22 +151,24 @@
 
                     <div class="flex w-full flex-col gap-4">
                         <a href="{{ route('dashboard') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('dashboard') ? 'text-primary' : '' }}">Dashboard</a>
-                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
-                        <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">Categories</a>
 
                         <!-- Mobile Products Accordion -->
-                        <div x-data="{ expanded: false }" class="border-b-0">
-                            <button @click="expanded = !expanded" class="flex flex-1 items-center justify-between py-0 font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180 w-full text-left text-md">
+                        <div x-data="{ expanded: {{ request()->routeIs('products.*') ? 'true' : 'false' }} }" class="border-b-0">
+                            <button @click="expanded = !expanded" class="flex flex-1 items-center justify-between py-0 font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180 w-full text-left text-md {{ request()->routeIs('products.*') ? 'text-primary' : '' }}">
                                 Products
                                 <x-heroicon-o-chevron-down :class="{'rotate-180': expanded}" class="h-4 w-4 shrink-0 transition-transform duration-200" />
                             </button>
                             <div x-show="expanded" x-collapse>
                                 <div class="mt-2 flex flex-col gap-2 pl-4 border-l border-border ml-2">
-                                    <a class="text-sm font-medium hover:underline py-1" href="#">Blog</a>
-                                    <a class="text-sm font-medium hover:underline py-1" href="#">Company</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('products.index') ? 'text-primary' : '' }}" href="{{ route('products.index') }}">Products</a>
+                                    {{-- <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('assets.index') ? 'text-primary' : '' }}" href="{{ route('assets.index') }}">Assets</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('stocks.index') ? 'text-primary' : '' }}" href="{{ route('stocks.index') }}">Stocks</a> --}}
                                 </div>
                             </div>
                         </div>
+
+                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
+                        <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">Categories</a>
 
                         <!-- Mobile User Menu -->
                         <div class="pt-4 mt-4 border-t border-border">
