@@ -2,19 +2,31 @@
 
 <div
     x-data="{
-        notifications: [],
+        notifications: [
+            @if(session()->has('success'))
+                { id: Date.now(), message: @js(session('success')), type: 'success' },
+            @endif
+            @if(session()->has('error'))
+                { id: Date.now() + 1, message: @js(session('error')), type: 'error' },
+            @endif
+            @if(session()->has('warning'))
+                { id: Date.now() + 2, message: @js(session('warning')), type: 'warning' },
+            @endif
+            @if(session()->has('info'))
+                { id: Date.now() + 3, message: @js(session('info')), type: 'info' },
+            @endif
+        ],
+        init() {
+            // Auto-dismiss valid initial notifications
+            this.notifications.forEach(n => {
+                setTimeout(() => this.remove(n.id), 8000);
+            });
+        },
         add(message, type = 'success') {
             const id = Date.now();
-            // Unshift to add to the top of the stack (array index 0 is newest/front)
             this.notifications.unshift({ id, message, type });
-
-            // Auto dismiss (Longer duration)
             setTimeout(() => this.remove(id), 8000);
-
-            // Limit stack
-            if (this.notifications.length > 5) {
-                this.notifications.pop();
-            }
+            if (this.notifications.length > 5) this.notifications.pop();
         },
         remove(id) {
             this.notifications = this.notifications.filter(notification => notification.id !== id);

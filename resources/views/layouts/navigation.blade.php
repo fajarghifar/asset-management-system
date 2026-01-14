@@ -21,7 +21,7 @@
                         </a>
 
                         <!-- Products Dropdown -->
-                        <x-nav-dropdown active="{{ request()->routeIs(['products.*', 'stocks.*']) }}">
+                        <x-nav-dropdown active="{{ request()->routeIs(['products.*', 'stocks.*', 'assets.*']) }}">
                             <x-slot name="icon">
                                 <x-heroicon-o-archive-box class="mr-2 h-4 w-4" />
                             </x-slot>
@@ -32,9 +32,9 @@
                                 <x-dropdown-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                                     Products
                                 </x-dropdown-link>
-                                {{-- <x-dropdown-link :href="route('assets.index')" :active="request()->routeIs('assets.index')">
+                                <x-dropdown-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
                                     Assets
-                                </x-dropdown-link> --}}
+                                </x-dropdown-link>
                                 <x-dropdown-link :href="route('stocks.index')" :active="request()->routeIs('stocks.*')">
                                     Stocks
                                 </x-dropdown-link>
@@ -161,8 +161,8 @@
                             <div x-show="expanded" x-collapse>
                                 <div class="mt-2 flex flex-col gap-2 pl-4 border-l border-border ml-2">
                                     <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('products.index') ? 'text-primary' : '' }}" href="{{ route('products.index') }}">Products</a>
-                                    {{-- <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('assets.index') ? 'text-primary' : '' }}" href="{{ route('assets.index') }}">Assets</a>
-                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('stocks.index') ? 'text-primary' : '' }}" href="{{ route('stocks.index') }}">Stocks</a> --}}
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('assets.*') ? 'text-primary' : '' }}" href="{{ route('assets.index') }}">Assets</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('stocks.index') ? 'text-primary' : '' }}" href="{{ route('stocks.index') }}">Stocks</a>
                                 </div>
                             </div>
                         </div>

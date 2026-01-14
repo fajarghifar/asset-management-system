@@ -40,4 +40,9 @@ class Product extends Model
     {
         return $this->hasMany(ConsumableStock::class);
     }
+
+    public function getLabelAttribute(): string
+    {
+        return "{$this->name} ({$this->code})";
+    }
 }
