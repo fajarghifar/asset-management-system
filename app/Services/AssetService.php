@@ -127,6 +127,44 @@ class AssetService
     }
 
     /**
+     * Update asset status with history logging.
+     *
+     * @param Asset $asset
+     * @param AssetStatus $status
+     * @param string|null $notes
+     * @return Asset
+     * @throws \Exception
+     */
+    public function updateStatus(Asset $asset, AssetStatus $status, ?string $notes = null): Asset
+    {
+        return DB::transaction(function () use ($asset, $status, $notes) {
+            try {
+                if ($asset->status === $status) {
+                    return $asset;
+                }
+
+                $oldStatus = $asset->status;
+                $asset->update(['status' => $status]);
+
+                // Log History
+                AssetHistory::create([
+                    'asset_id' => $asset->id,
+                    'user_id' => Auth::id(),
+                    'location_id' => $asset->location_id,
+                    'status' => $status,
+                    'action_type' => 'status_change',
+                    'notes' => $notes ?? "Status changed from {$oldStatus->getLabel()} to {$status->getLabel()}",
+                ]);
+
+                return $asset;
+            } catch (\Exception $e) {
+                Log::error("Failed to update asset status: " . $e->getMessage());
+                throw $e;
+            }
+        });
+    }
+
+    /**
      * Delete an asset.
      *
      * @param Asset $asset

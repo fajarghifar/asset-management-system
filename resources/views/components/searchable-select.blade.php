@@ -1,51 +1,81 @@
 @props([
-    'name',
-    'label',
+    'name' => '',
+    'label' => '',
     'options' => [],
     'value' => null,
     'placeholder' => 'Select option...',
     'required' => false,
     'disabled' => false,
     'url' => null,
+    'inputClass' => 'h-10',
+    'initialLabel' => '',
 ])
 
 <div
     x-data="{
         open: false,
-        query: '',
+        query: @js($initialLabel),
         selected: @js($value),
         options: @js($options),
         isLoading: false,
+        dropdownStyle: 'display: none;',
+        repositionListener: null,
         init() {
-            // If checking existing value against local options
+            this.repositionListener = this.reposition.bind(this);
+
             if (this.selected && this.options.length > 0) {
                 const option = this.options.find(o => o.value == this.selected);
                 if (option) this.query = option.label;
             }
-
-            this.$watch('selected', (value) => {
-                 if (!value) {
-                     // Only clear query if it's not a search-based selection flow (optional)
-                     // But for now, if value is cleared externally?
-                 }
-            });
 
             this.$watch('query', (value) => {
                 if ('{{ $url }}' && value.length > 0) {
                     this.fetchOptions(value);
                 }
             });
+
+            this.$watch('open', (value) => {
+                if (value) {
+                    this.$nextTick(() => this.reposition());
+                    window.addEventListener('resize', this.repositionListener);
+                    window.addEventListener('scroll', this.repositionListener, true);
+                } else {
+                    window.removeEventListener('resize', this.repositionListener);
+                    window.removeEventListener('scroll', this.repositionListener, true);
+                }
+            });
+        },
+        reposition() {
+            if (!this.open) return;
+            const input = this.$refs.input;
+            const rect = input.getBoundingClientRect();
+            this.dropdownStyle = `position: fixed; top: ${rect.bottom}px; left: ${rect.left}px; width: ${rect.width}px; z-index: 9999;`;
         },
         async fetchOptions(search) {
             this.isLoading = true;
             try {
-                // Remove trailing slash if needed, usually route() is fine.
-                const res = await fetch('{{ $url }}?q=' + encodeURIComponent(search));
+                const urlBase = '{{ $url }}';
+                if (!urlBase) {
+                    this.isLoading = false;
+                    return;
+                }
+
+                // Dynamic Params from data attributes on the root element
+                const type = this.$el.dataset.type || '';
+                const queryParams = new URLSearchParams({ q: search, type: type });
+
+                const res = await fetch(`${urlBase}?${queryParams.toString()}`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
                 if (res.ok) {
                     this.options = await res.json();
+                } else {
+                    this.options = [];
                 }
             } catch (e) {
-                console.error(e);
+                console.error('Fetch error:', e);
+                this.options = [];
             }
             this.isLoading = false;
         },
@@ -60,26 +90,36 @@
             this.selected = option.value;
             this.query = option.label;
             this.open = false;
+            this.$dispatch('option-selected', {
+                name: '{{ $name }}',
+                value: option.value,
+                item: option
+            });
         }
     }"
     x-modelable="selected"
     class="relative"
+    wire:ignore
+    x-on:click.outside="open = false"
+    {{ $attributes }}
 >
-    <x-input-label :for="$name" :value="$label" :required="$required" />
+    @if($label)
+        <x-input-label :for="$name" :value="$label" :required="$required" />
+    @endif
 
-    <div class="relative mt-1">
-        <!-- Hidden Input for Form Submission -->
-        <input type="hidden" name="{{ $name }}" :value="selected">
+    <div class="relative {{ $label ? 'mt-1' : '' }}">
+        @if($name)
+            <input type="hidden" name="{{ $name }}" :value="selected">
+        @endif
 
-        <!-- Display Input for Search -->
         <input
+            x-ref="input"
             type="text"
             x-model.debounce.400ms="query"
             x-on:focus="!{{ $disabled ? 'true' : 'false' }} && (open = true)"
-            x-on:click.away="open = false"
             x-on:keydown.escape="open = false"
             placeholder="{{ $placeholder }}"
-            class="block w-full h-10 rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed {{ $errors->has($name) ? 'border-red-500' : '' }}"
+            class="block w-full {{ $inputClass }} px-3 py-1 rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed {{ $name && $errors->has($name) ? 'border-red-500' : '' }}"
             {{ $disabled ? 'disabled' : '' }}
         />
         <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
@@ -95,17 +135,18 @@
         </div>
     </div>
 
-    <!-- Dropdown -->
+    <!-- Dropdown (Fixed) -->
     <div
+        wire:ignore
         x-show="open && (filteredOptions.length > 0 || isLoading)"
+        :style="dropdownStyle"
         x-transition:enter="transition ease-out duration-100"
         x-transition:enter-start="transform opacity-0 scale-95"
         x-transition:enter-end="transform opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-75"
         x-transition:leave-start="transform opacity-100 scale-100"
         x-transition:leave-end="transform opacity-0 scale-95"
-        class="absolute z-10 w-full mt-1 bg-popover text-popover-foreground rounded-md shadow-lg max-h-60 overflow-auto border border-border"
-        style="display: none;"
+        class="bg-popover text-popover-foreground rounded-md shadow-lg max-h-60 overflow-auto border border-border"
     >
         <ul class="py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
             <template x-for="option in filteredOptions" :key="option.value">
@@ -119,8 +160,13 @@
                     </span>
                 </li>
             </template>
+            <li x-show="!isLoading && filteredOptions.length === 0 && query.length > 0" class="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-500">
+                No results found.
+            </li>
         </ul>
     </div>
 
-    <x-input-error :messages="$errors->get($name)" class="mt-2" />
+    @if($name)
+        <x-input-error :messages="$errors->get($name)" class="mt-2" />
+    @endif
 </div>

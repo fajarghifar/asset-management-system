@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\LocationSite;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Location extends Model
@@ -26,4 +27,13 @@ class Location extends Model
         return "{$this->site->getLabel()} - {$this->name}";
     }
 
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function consumableStocks(): HasMany
+    {
+        return $this->hasMany(ConsumableStock::class);
+    }
 }

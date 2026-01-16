@@ -10,19 +10,30 @@ class DeleteModal extends Component
     public bool $open = false;
     public string $title = 'Are you absolutely sure?';
     public string $description = 'This action cannot be undone. This will permanently delete your data.';
+    public string $confirmButtonText = 'Continue';
+    public string $confirmButtonClass = '';
     public string $component = '';
     public string $method = '';
     public array $params = [];
 
     #[On('open-delete-modal')]
-    public function open(string $component, string $method, array $params = [], string $title = '', string $description = '')
-    {
+    public function open(
+        string $component,
+        string $method,
+        array $params = [],
+        string $title = '',
+        string $description = '',
+        string $confirmButtonText = 'Continue',
+        string $confirmButtonClass = ''
+    ) {
         $this->component = $component;
         $this->method = $method;
         $this->params = $params;
 
         if ($title) $this->title = $title;
         if ($description) $this->description = $description;
+        $this->confirmButtonText = $confirmButtonText;
+        $this->confirmButtonClass = $confirmButtonClass ?: 'bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90';
 
         $this->open = true;
     }
