@@ -5,8 +5,8 @@ namespace App\Livewire\Locations;
 use App\Models\Location;
 use App\Enums\LocationSite;
 use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
 use App\Services\LocationService;
+use App\Exceptions\LocationException;
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Button;
 use PowerComponents\LivewirePowerGrid\Column;
@@ -48,7 +48,8 @@ final class LocationsTable extends PowerGridComponent
 
     public function datasource(): Builder
     {
-        return Location::query();
+        // Optimize: Select only necessary columns
+        return Location::query()->select('id', 'code', 'site', 'name', 'description', 'created_at');
     }
 
     public function relationSearch(): array
@@ -147,8 +148,10 @@ final class LocationsTable extends PowerGridComponent
                 $service->deleteLocation($location);
                 $this->dispatch('pg:eventRefresh-locations-table');
                 $this->dispatch('toast', message: "Location '{$identifier}' deleted successfully.", type: 'success');
-            } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Failed to delete location: ' . $e->getMessage(), type: 'error');
+            } catch (LocationException $e) {
+                $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+            } catch (\Throwable $e) {
+                $this->dispatch('toast', message: 'Failed to delete location: An unexpected error occurred.', type: 'error');
             }
         }
     }

@@ -2,79 +2,64 @@
 
 namespace App\Services;
 
+use App\DTOs\LocationData;
 use App\Models\Location;
+use App\Exceptions\LocationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\QueryException;
-use Exception;
-use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class LocationService
 {
     /**
      * Create a new location.
-     *
-     * @param array<string, mixed> $data
-     * @return Location
-     * @throws Exception
      */
-    public function createLocation(array $data): Location
+    public function createLocation(LocationData $data): Location
     {
         return DB::transaction(function () use ($data) {
             try {
-                return Location::create($data);
-            } catch (QueryException $e) {
-                Log::error("Database error creating location: " . $e->getMessage());
-                throw new Exception("Failed to create location. Database error occurred.");
-            } catch (Exception $e) {
-                Log::error("Error creating location: " . $e->getMessage());
-                throw new Exception("An unexpected error occurred while creating the location.");
+                return Location::create($data->toArray());
+            } catch (Throwable $e) {
+                throw LocationException::creationFailed($e->getMessage(), $e);
             }
         });
     }
 
     /**
      * Update an existing location.
-     *
-     * @param Location $location
-     * @param array<string, mixed> $data
-     * @return Location
-     * @throws Exception
      */
-    public function updateLocation(Location $location, array $data): Location
+    public function updateLocation(Location $location, LocationData $data): Location
     {
         return DB::transaction(function () use ($location, $data) {
             try {
-                $location->update($data);
+                $location->update($data->toArray());
                 return $location->refresh();
-            } catch (QueryException $e) {
-                Log::error("Database error updating location ID {$location->id}: " . $e->getMessage());
-                throw new Exception("Failed to update location. Database error occurred.");
-            } catch (Exception $e) {
-                Log::error("Error updating location ID {$location->id}: " . $e->getMessage());
-                throw new Exception("An unexpected error occurred while updating the location.");
+            } catch (Throwable $e) {
+                throw LocationException::updateFailed((string) $location->id, $e->getMessage(), $e);
             }
         });
     }
 
     /**
      * Delete a location.
-     *
-     * @param Location $location
-     * @return void
-     * @throws Exception
      */
     public function deleteLocation(Location $location): void
     {
         DB::transaction(function () use ($location) {
             try {
+                if ($location->assets()->exists()) {
+                    throw LocationException::inUse("Cannot delete location '{$location->name}' because it has associated assets.");
+                }
+
+                if ($location->consumableStocks()->exists()) {
+                    throw LocationException::inUse("Cannot delete location '{$location->name}' because it has associated consumable stocks.");
+                }
+
                 $location->delete();
-            } catch (QueryException $e) {
-                Log::error("Database error deleting location ID {$location->id}: " . $e->getMessage());
-                throw new Exception("Failed to delete location. It might be referenced by other records.");
-            } catch (Exception $e) {
-                Log::error("Error deleting location ID {$location->id}: " . $e->getMessage());
-                throw new Exception("An unexpected error occurred while deleting the location.");
+            } catch (LocationException $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                throw LocationException::deletionFailed((string) $location->id, $e->getMessage(), $e);
             }
         });
     }

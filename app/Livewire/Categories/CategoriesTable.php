@@ -5,6 +5,7 @@ namespace App\Livewire\Categories;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use App\Services\CategoryService;
+use App\Exceptions\CategoryException;
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Button;
 use PowerComponents\LivewirePowerGrid\Column;
@@ -130,6 +131,8 @@ final class CategoriesTable extends PowerGridComponent
                 $service->deleteCategory($category);
                 $this->dispatch('pg:eventRefresh-categories-table');
                 $this->dispatch('toast', message: "Category '{$name}' deleted successfully.", type: 'success');
+            } catch (CategoryException $e) {
+                $this->dispatch('toast', message: $e->getMessage(), type: 'error');
             } catch (\Exception $e) {
                 $this->dispatch('toast', message: 'Failed to delete category: ' . $e->getMessage(), type: 'error');
             }

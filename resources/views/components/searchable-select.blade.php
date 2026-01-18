@@ -18,11 +18,7 @@
         selected: @js($value),
         options: @js($options),
         isLoading: false,
-        dropdownStyle: 'display: none;',
-        repositionListener: null,
         init() {
-            this.repositionListener = this.reposition.bind(this);
-
             if (this.selected && this.options.length > 0) {
                 const option = this.options.find(o => o.value == this.selected);
                 if (option) this.query = option.label;
@@ -33,23 +29,6 @@
                     this.fetchOptions(value);
                 }
             });
-
-            this.$watch('open', (value) => {
-                if (value) {
-                    this.$nextTick(() => this.reposition());
-                    window.addEventListener('resize', this.repositionListener);
-                    window.addEventListener('scroll', this.repositionListener, true);
-                } else {
-                    window.removeEventListener('resize', this.repositionListener);
-                    window.removeEventListener('scroll', this.repositionListener, true);
-                }
-            });
-        },
-        reposition() {
-            if (!this.open) return;
-            const input = this.$refs.input;
-            const rect = input.getBoundingClientRect();
-            this.dropdownStyle = `position: fixed; top: ${rect.bottom}px; left: ${rect.left}px; width: ${rect.width}px; z-index: 9999;`;
         },
         async fetchOptions(search) {
             this.isLoading = true;
@@ -98,7 +77,7 @@
         }
     }"
     x-modelable="selected"
-    class="relative"
+    class="relative space-y-2"
     wire:ignore
     x-on:click.outside="open = false"
     {{ $attributes }}
@@ -107,7 +86,7 @@
         <x-input-label :for="$name" :value="$label" :required="$required" />
     @endif
 
-    <div class="relative {{ $label ? 'mt-1' : '' }}">
+    <div class="relative">
         @if($name)
             <input type="hidden" name="{{ $name }}" :value="selected">
         @endif
@@ -119,7 +98,7 @@
             x-on:focus="!{{ $disabled ? 'true' : 'false' }} && (open = true)"
             x-on:keydown.escape="open = false"
             placeholder="{{ $placeholder }}"
-            class="block w-full {{ $inputClass }} px-3 py-1 rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed {{ $name && $errors->has($name) ? 'border-red-500' : '' }}"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 block w-full {{ $inputClass }} {{ $name && $errors->has($name) ? 'border-red-500' : '' }}"
             {{ $disabled ? 'disabled' : '' }}
         />
         <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
@@ -135,18 +114,18 @@
         </div>
     </div>
 
-    <!-- Dropdown (Fixed) -->
+    <!-- Dropdown (Absolute) -->
     <div
         wire:ignore
         x-show="open && (filteredOptions.length > 0 || isLoading)"
-        :style="dropdownStyle"
         x-transition:enter="transition ease-out duration-100"
         x-transition:enter-start="transform opacity-0 scale-95"
         x-transition:enter-end="transform opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-75"
         x-transition:leave-start="transform opacity-100 scale-100"
         x-transition:leave-end="transform opacity-0 scale-95"
-        class="bg-popover text-popover-foreground rounded-md shadow-lg max-h-60 overflow-auto border border-border"
+        class="absolute z-50 w-full mt-1 bg-popover text-popover-foreground rounded-md shadow-lg max-h-60 overflow-auto border border-border"
+        style="display: none;"
     >
         <ul class="py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
             <template x-for="option in filteredOptions" :key="option.value">
@@ -155,7 +134,7 @@
                     class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-accent hover:text-accent-foreground"
                 >
                     <span x-text="option.label" class="block truncate" :class="{ 'font-semibold': selected == option.value, 'font-normal': selected != option.value }"></span>
-                    <span x-show="selected == option.value" class="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600 dark:text-indigo-400">
+                    <span x-show="selected == option.value" class="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600">
                         <x-heroicon-o-check class="w-5 h-5" />
                     </span>
                 </li>

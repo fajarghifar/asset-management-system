@@ -28,10 +28,10 @@
                     id="description"
                     wire:model="description"
                     rows="3"
-                    class="mt-1 block w-full rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
+                    class="block w-full rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     placeholder="Optional description..."
                 ></textarea>
-                <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                <x-input-error :messages="$errors->get('description')" />
             </div>
 
             <div class="mt-6 flex justify-end gap-3">

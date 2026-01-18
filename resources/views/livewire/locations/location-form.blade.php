@@ -16,93 +16,21 @@
                     <!-- Code -->
                     <x-form-input
                         name="code"
-                        label="Location Code"
-                        placeholder="e.g. JMP1-RIT"
+                        label="Code"
+                        placeholder="e.g. JMP2.RIT, JMP2.RMEET"
                         required
                         wire:model="code"
                     />
 
                     <!-- Site (Searchable) -->
-                    <div
-                        x-data="{
-                            open: false,
-                            query: '',
-                            selected: @entangle('site'),
-                            options: {{ \Illuminate\Support\Js::from($sites) }},
-                            init() {
-                                this.$watch('selected', (value) => {
-                                    if (!value) { this.query = ''; return; }
-                                    const option = this.options.find(o => o.value === value);
-                                    if (option) this.query = option.label;
-                                });
-                                if (this.selected) {
-                                     const option = this.options.find(o => o.value === this.selected);
-                                     if (option) this.query = option.label;
-                                }
-                            },
-                            get filteredOptions() {
-                                if (this.query === '') return this.options;
-                                return this.options.filter(option =>
-                                    option.label.toLowerCase().includes(this.query.toLowerCase())
-                                );
-                            },
-                            selectOption(option) {
-                                this.selected = option.value;
-                                this.query = option.label;
-                                this.open = false;
-                            }
-                        }"
-                        class="relative"
-                    >
-                        <x-input-label for="site" value="Site" :required="true" />
-
-                        <div class="relative mt-1">
-                            <input
-                                type="text"
-                                x-model="query"
-                                x-on:focus="open = true"
-                                x-on:click.away="open = false"
-                                x-on:keydown.escape="open = false"
-                                placeholder="Select or search a site..."
-                                class="block w-full h-10 rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
-                            />
-
-                            <!-- Chevron -->
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                <x-heroicon-o-chevron-up-down class="w-5 h-5 text-muted-foreground" />
-                            </div>
-                        </div>
-
-                        <!-- Dropdown -->
-                        <div
-                            x-show="open && filteredOptions.length > 0"
-                            x-transition:enter="transition ease-out duration-100"
-                            x-transition:enter-start="transform opacity-0 scale-95"
-                            x-transition:enter-end="transform opacity-100 scale-100"
-                            x-transition:leave="transition ease-in duration-75"
-                            x-transition:leave-start="transform opacity-100 scale-100"
-                            x-transition:leave-end="transform opacity-0 scale-95"
-                            class="absolute z-10 w-full mt-1 bg-popover text-popover-foreground rounded-md shadow-lg max-h-60 overflow-auto border border-border"
-                            style="display: none;"
-                        >
-                            <ul class="py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                <template x-for="option in filteredOptions" :key="option.value">
-                                    <li
-                                        x-on:click="selectOption(option)"
-                                        class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-accent hover:text-accent-foreground"
-                                    >
-                                        <span x-text="option.label" class="block truncate" :class="{ 'font-semibold': selected === option.value, 'font-normal': selected !== option.value }"></span>
-
-                                        <span x-show="selected === option.value" class="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600 dark:text-indigo-400">
-                                            <x-heroicon-o-check class="w-5 h-5" />
-                                        </span>
-                                    </li>
-                                </template>
-                            </ul>
-                        </div>
-
-                        <x-input-error :messages="$errors->get('site')" class="mt-2" />
-                    </div>
+                    <x-searchable-select
+                        name="site"
+                        label="Site"
+                        :options="$sites"
+                        wire:model="site"
+                        required
+                        placeholder="Select or search a site..."
+                    />
                 </div>
 
                 <!-- Name -->

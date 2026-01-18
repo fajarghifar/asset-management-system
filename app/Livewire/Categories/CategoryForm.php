@@ -2,22 +2,35 @@
 
 namespace App\Livewire\Categories;
 
-use App\Models\Category;
-use App\Services\CategoryService;
 use Livewire\Component;
+use App\Models\Category;
+use App\DTOs\CategoryData;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Validate;
+use Illuminate\Validation\Rule;
+use App\Services\CategoryService;
+use App\Exceptions\CategoryException;
 
 class CategoryForm extends Component
 {
     public bool $isEditing = false;
     public ?Category $category = null;
 
-    #[Validate('required|string|max:255')]
     public string $name = '';
 
-    #[Validate('nullable|string')]
     public string $description = '';
+
+    public function rules(): array
+    {
+        return [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->ignore($this->category?->id),
+            ],
+            'description' => ['nullable', 'string'],
+        ];
+    }
 
     public function render()
     {
@@ -45,26 +58,27 @@ class CategoryForm extends Component
     {
         $this->validate();
 
+        $data = new CategoryData(
+            name: $this->name,
+            description: $this->description,
+        );
+
         try {
             if ($this->isEditing && $this->category) {
-                $service->updateCategory($this->category, [
-                    'name' => $this->name,
-                    'description' => $this->description,
-                ]);
+                $service->updateCategory($this->category, $data);
                 $message = 'Category updated successfully.';
             } else {
-                $service->createCategory([
-                    'name' => $this->name,
-                    'description' => $this->description,
-                ]);
+                $service->createCategory($data);
                 $message = 'Category created successfully.';
             }
 
             $this->dispatch('close-modal', name: 'category-form-modal');
             $this->dispatch('pg:eventRefresh-categories-table');
             $this->dispatch('toast', message: $message, type: 'success');
-        } catch (\Exception $e) {
-            $this->addError('name', 'Error saving category: ' . $e->getMessage());
+        } catch (CategoryException $e) {
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'An unexpected error occurred.', type: 'error');
         }
     }
 }
