@@ -218,11 +218,37 @@
     <div class="space-y-4">
         <div class="flex justify-between items-center">
             <h3 class="text-lg font-medium text-foreground">Loan Items</h3>
-            <x-secondary-button @click="addItem()" type="button">
-                <x-heroicon-o-plus class="w-4 h-4 mr-2" />
-                <x-heroicon-o-plus class="w-4 h-4 mr-2" />
-                Add Item
-            </x-secondary-button>
+            <div class="flex gap-2">
+                 <!-- KIT LOADING SECTION -->
+                <div class="flex items-center gap-2" x-data="{ kitId: '', locId: '' }">
+                    <select x-model="kitId" class="h-9 w-64 rounded-md border text-sm">
+                        <option value="">Select Kit...</option>
+                        @foreach(\App\Models\Kit::where('is_active', true)->get() as $kit)
+                            <option value="{{ $kit->id }}">{{ $kit->name }}</option>
+                        @endforeach
+                    </select>
+
+                    <div class="w-64">
+                        <x-searchable-select
+                            :url="route('ajax.locations')"
+                            placeholder="Priority Loc (Opt)..."
+                            x-model="locId"
+                            @option-selected="locId = $event.detail.value"
+                            input-class="h-9 w-64 text-sm"
+                        />
+                    </div>
+
+                    <x-secondary-button @click.prevent="loadKit(kitId, locId)" x-bind:disabled="!kitId" type="button">
+                        <x-heroicon-o-archive-box-arrow-down class="w-4 h-4 mr-2" />
+                        Load Kit
+                    </x-secondary-button>
+                </div>
+
+                <x-secondary-button @click="addItem()" type="button">
+                    <x-heroicon-o-plus class="w-4 h-4 mr-2" />
+                    Add Item
+                </x-secondary-button>
+            </div>
         </div>
 
         <div class="overflow-visible border rounded-md">
@@ -350,6 +376,43 @@
                         localStorage.setItem('loan_create_draft_v2', JSON.stringify(val));
                     }
                 }, { deep: true });
+            },
+
+            async loadKit(kitId, locId) {
+                if (!kitId) return;
+
+                this.$dispatch('toast', { message: 'Loading kit items...', type: 'info' });
+
+                try {
+                    const response = await fetch(`/kits/${kitId}/resolve?location_id=${locId}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const result = await response.json();
+
+                    if (result.items && result.items.length > 0) {
+                        result.items.forEach(newItem => {
+                            // If item_id is NULL, it means not found/fallback -> User must search
+                            const isResolved = newItem.item_id !== null;
+                            const unifiedVal = isResolved ? (newItem.type === 'Asset' ? 'asset_' : 'stock_') + newItem.item_id : null;
+
+                            this.form.items.push({
+                                _key: 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2),
+                                type: newItem.type.toLowerCase(),
+                                asset_id: (isResolved && newItem.type === 'Asset') ? newItem.item_id : null,
+                                consumable_stock_id: (isResolved && newItem.type === 'Consumable') ? newItem.item_id : null,
+                                quantity_borrowed: newItem.quantity,
+                                unified_value: unifiedVal,
+                                unified_label: newItem.item_label, // Will contain "Name (Cari Manual)" or resolved label
+                            });
+                        });
+                        this.$dispatch('toast', { message: `Loaded ${result.items.length} items from kit.`, type: 'success' });
+                    } else {
+                        this.$dispatch('toast', { message: result.message || 'No items found.', type: 'warning' });
+                    }
+                } catch (error) {
+                    console.error('Kit load failed', error);
+                    this.$dispatch('toast', { message: 'Failed to load kit.', type: 'error' });
+                }
             },
 
             addItem() {

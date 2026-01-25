@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kit;
+use App\Models\Asset;
 use App\Models\Product;
 use App\Models\Location;
+use App\Enums\AssetStatus;
+use App\Enums\ProductType;
+use App\Enums\LocationSite;
 use Illuminate\Http\Request;
+use App\Models\ConsumableStock;
 use Illuminate\Http\JsonResponse;
 
 class SearchController extends Controller
@@ -26,8 +32,46 @@ class SearchController extends Controller
                 return [
                     'value' => $item->id,
                     'label' => "{$item->name} ({$item->code})",
+                    'type' => $item->type->value,
                 ];
             });
+
+        return response()->json($results);
+    }
+
+    public function productLocations(Request $request): JsonResponse
+    {
+        $productId = $request->query('product_id');
+        if (!$productId)
+            return response()->json([]);
+
+        $product = Product::find($productId);
+        if (!$product)
+            return response()->json([]);
+
+        $locations = collect();
+
+        if ($product->type === ProductType::Asset) {
+            // Find locations where assets of this product exist (regardless of status)
+            $locations = Location::whereHas('assets', function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })->get();
+        } else {
+            // Find locations where consumable stock record exists (regardless of quantity)
+            $locations = Location::whereHas('consumableStocks', function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })->get();
+        }
+
+        $results = $locations->map(function ($item) {
+            $siteLabel = $item->site instanceof LocationSite
+                ? $item->site->getLabel()
+                : $item->site;
+            return [
+                'value' => $item->id,
+                'label' => "{$siteLabel} - {$item->name}",
+            ];
+        });
 
         return response()->json($results);
     }
@@ -40,15 +84,29 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
+        // Try to match Site Enum labels
+        $siteEnum = LocationSite::cases();
+        $matchedSites = [];
+        foreach ($siteEnum as $site) {
+            if (stripos($site->getLabel(), $search) !== false) {
+                $matchedSites[] = $site->value;
+            }
+        }
+
         $results = Location::query()
             ->where('name', 'like', "%{$search}%")
-            ->orWhere('site', 'like', "%{$search}%")
+            ->orWhereIn('site', $matchedSites)
             ->take(10)
             ->get()
             ->map(function ($item) {
+                // Determine site label
+                $siteLabel = $item->site instanceof LocationSite
+                    ? $item->site->getLabel()
+                    : $item->site;
+
                 return [
                     'value' => $item->id,
-                    'label' => $item->full_name,
+                    'label' => "{$siteLabel} - {$item->name}",
                 ];
             });
 
@@ -58,16 +116,15 @@ class SearchController extends Controller
     public function assets(Request $request): JsonResponse
     {
         $search = $request->query('q');
-        \Illuminate\Support\Facades\Log::info("Searching assets: " . $search);
 
         if (!$search) {
             return response()->json([]);
         }
 
         try {
-            $results = \App\Models\Asset::query()
+            $results = Asset::query()
                 ->with(['product', 'location'])
-                ->where('status', \App\Enums\AssetStatus::InStock)
+                ->where('status', AssetStatus::InStock)
                 ->where(function ($q) use ($search) {
                     $q->where('asset_tag', 'like', "%{$search}%")
                         ->orWhere('serial_number', 'like', "%{$search}%")
@@ -85,11 +142,8 @@ class SearchController extends Controller
                     ];
                 });
 
-            \Illuminate\Support\Facades\Log::info("Found " . $results->count() . " assets.");
             return response()->json($results);
-
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Asset Search Error: " . $e->getMessage());
             return response()->json([], 500);
         }
     }
@@ -107,7 +161,7 @@ class SearchController extends Controller
 
             // Search Assets
             if (!$type || $type === 'asset' || $type === 'undefined') {
-                $assets = \App\Models\Asset::query()
+                $assets = Asset::query()
                     ->select(
                         'assets.id',
                         'assets.asset_tag',
@@ -117,7 +171,7 @@ class SearchController extends Controller
                     )
                     ->join('products', 'assets.product_id', '=', 'products.id')
                     ->leftJoin('locations', 'assets.location_id', '=', 'locations.id')
-                    ->where('assets.status', \App\Enums\AssetStatus::InStock)
+                    ->where('assets.status', AssetStatus::InStock)
                     ->where(function ($q) use ($search) {
                         $q->where('assets.asset_tag', 'like', "%{$search}%")
                             ->orWhere('assets.serial_number', 'like', "%{$search}%")
@@ -127,8 +181,8 @@ class SearchController extends Controller
                     ->limit(10)
                     ->get()
                     ->map(function ($item) {
-                        $siteLabel = $item->site ? (\App\Enums\LocationSite::tryFrom($item->site)?->getLabel() ?? $item->site) : '';
-                        $loc = $item->location_name ? "({$item->location_name}" . ($siteLabel ? " - {$siteLabel}" : "") . ")" : '';
+                        $siteLabel = $item->site ? (LocationSite::tryFrom($item->site)?->getLabel() ?? $item->site) : '';
+                        $loc = $item->location_name ? "(" . ($siteLabel ? "{$siteLabel} - " : "") . "{$item->location_name})" : '';
 
                         return [
                             'value' => 'asset_' . $item->id,
@@ -143,7 +197,7 @@ class SearchController extends Controller
 
             // Search Consumables
             if (!$type || $type === 'consumable' || $type === 'undefined') {
-                $stocks = \App\Models\ConsumableStock::query()
+                $stocks = ConsumableStock::query()
                     ->select(
                         'consumable_stocks.id',
                         'consumable_stocks.quantity',
@@ -161,8 +215,8 @@ class SearchController extends Controller
                     ->limit(10)
                     ->get()
                     ->map(function ($item) {
-                        $siteLabel = $item->site ? (\App\Enums\LocationSite::tryFrom($item->site)?->getLabel() ?? $item->site) : '';
-                        $loc = $item->location_name ? "({$item->location_name}" . ($siteLabel ? " - {$siteLabel}" : "") . ")" : '';
+                        $siteLabel = $item->site ? (LocationSite::tryFrom($item->site)?->getLabel() ?? $item->site) : '';
+                        $loc = $item->location_name ? "(" . ($siteLabel ? "{$siteLabel} - " : "") . "{$item->location_name})" : '';
 
                         return [
                             'value' => 'stock_' . $item->id,
@@ -177,8 +231,30 @@ class SearchController extends Controller
 
             return response()->json($results);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Unified Search Error: " . $e->getMessage());
             return response()->json([], 500);
         }
+    }
+
+    public function kits(Request $request): JsonResponse
+    {
+        $search = $request->query('q');
+
+        if (!$search) {
+            return response()->json([]);
+        }
+
+        $results = Kit::query()
+            ->where('is_active', true)
+            ->where('name', 'like', "%{$search}%")
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->name,
+                ];
+            });
+
+        return response()->json($results);
     }
 }

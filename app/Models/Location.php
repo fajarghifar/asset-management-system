@@ -36,4 +36,9 @@ class Location extends Model
     {
         return $this->hasMany(ConsumableStock::class);
     }
+
+    public function kitItems(): HasMany
+    {
+        return $this->hasMany(KitItem::class);
+    }
 }
