@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::view('locations', 'locations.index')->name('locations.index');
+    Route::view('users', 'users.index')->name('users.index');
     Route::view('categories', 'categories.index')->name('categories.index');
     Route::view('products', 'products.index')->name('products.index');
     Route::get('/products/import', [App\Http\Controllers\ProductImportController::class, 'create'])->name('products.import');

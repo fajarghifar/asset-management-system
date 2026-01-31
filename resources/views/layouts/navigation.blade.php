@@ -71,6 +71,12 @@
                             Locations
                         </a>
 
+                        <!-- Users Link -->
+                        <a href="{{ route('users.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('users.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
+                            <x-heroicon-o-users class="mr-2 h-4 w-4" />
+                            Users
+                        </a>
+
                         <!-- Resources Dropdown -->
                         {{-- <x-nav-dropdown>
                             <x-slot name="icon">
@@ -202,6 +208,8 @@
                         <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">Categories</a>
 
                         <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
+
+                        <a href="{{ route('users.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('users.*') ? 'text-primary' : '' }}">Users</a>
 
                         <!-- Mobile User Menu -->
                         <div class="pt-4 mt-4 border-t border-border">

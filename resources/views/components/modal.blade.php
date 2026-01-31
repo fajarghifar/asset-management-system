@@ -19,6 +19,7 @@ $maxWidth = $maxWidthClasses[$maxWidth] ?? $maxWidthClasses['2xl'];
     x-data="{ show: false }"
     x-on:open-modal.window="if ($event.detail.name === '{{ $name }}') show = true"
     x-on:close-modal.window="if ($event.detail.name === '{{ $name }}') show = false"
+    x-on:close.stop="show = false"
     x-on:keydown.escape.window="show = false"
     x-show="show"
     class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
@@ -40,10 +41,11 @@ $maxWidth = $maxWidthClasses[$maxWidth] ?? $maxWidthClasses['2xl'];
     </div>
 
     <!-- Modal Content -->
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto" x-on:click="show = false">
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <div
                 x-show="show"
+                x-on:click.stop
                 class="transform overflow-hidden rounded-lg bg-card text-left shadow-xl transition-all sm:w-full {{ $maxWidth }}"
                 x-transition:enter="ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
