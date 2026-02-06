@@ -3,10 +3,10 @@
         <!-- Custom Header -->
         <div class="mb-6 space-y-1.5 text-center sm:text-left">
             <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                {{ $isEditing ? 'Edit Category' : 'Create Category' }}
+                {{ $isEditing ? __('Edit Category') : __('Create Category') }}
             </h3>
             <p class="text-sm text-muted-foreground">
-                {{ $isEditing ? 'Make changes to your category here. Click save when you\'re done.' : 'Add a new category. Click save when you\'re done.' }}
+                {{ $isEditing ? __('Make changes to your category here. Click save when you\'re done.') : __('Add a new category. Click save when you\'re done.') }}
             </p>
         </div>
 
@@ -14,10 +14,10 @@
             <!-- Name -->
             <x-form-input
                 name="name"
-                label="Name"
+                label="{{ __('Name') }}"
                 type="text"
                 wire:model="name"
-                placeholder="e.g. Laptops"
+                placeholder="{{ __('e.g. Laptops') }}"
                 required
             />
 
@@ -29,7 +29,7 @@
                     wire:model="description"
                     rows="3"
                     class="block w-full rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
-                    placeholder="Optional description..."
+                    placeholder="{{ __('Optional description...') }}"
                 ></textarea>
                 <x-input-error :messages="$errors->get('description')" />
             </div>

@@ -15,20 +15,38 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            'Komputer & Laptop',
-            'Aksesoris Komputer',
-            'Perangkat Jaringan',
-            'Keamanan & CCTV',
-            'Peralatan Kerja',
-            'Suku Cadang',
+            [
+                'name' => 'Komputer & Laptop',
+                'description' => 'Perangkat komputasi utama seperti PC Desktop, Laptop, dan Workstation.',
+            ],
+            [
+                'name' => 'Perangkat Jaringan',
+                'description' => 'Infrastruktur jaringan termasuk Router, Switch, Modem, dan Access Point.',
+            ],
+            [
+                'name' => 'Keamanan & CCTV',
+                'description' => 'Sistem keamanan, kamera pengawas, dan perangkat kontrol akses.',
+            ],
+            [
+                'name' => 'Suku Cadang',
+                'description' => 'Komponen pengganti dan sparepart untuk perbaikan perangkat keras.',
+            ],
+            [
+                'name' => 'Aksesoris Komputer',
+                'description' => 'Perangkat tambahan seperti Mouse, Keyboard, Headset, dan adaptor.',
+            ],
+            [
+                'name' => 'Peralatan Kerja',
+                'description' => 'Alat-alat teknis untuk pemeliharaan dan perbaikan seperti Obeng, Tang, dan Multitester.',
+            ],
         ];
 
-        foreach ($categories as $name) {
+        foreach ($categories as $category) {
             Category::firstOrCreate(
-                ['slug' => Str::slug($name)],
+                ['slug' => Str::slug($category['name'])],
                 [
-                    'name' => $name,
-                    'description' => 'Kategori untuk ' . $name
+                    'name' => $category['name'],
+                    'description' => $category['description'],
                 ]
             );
         }

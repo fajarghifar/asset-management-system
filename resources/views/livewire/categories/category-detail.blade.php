@@ -6,11 +6,11 @@
                 <div class="mb-6 space-y-1.5 text-center sm:text-left">
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                            Category Details
+                            {{ __('Category Details') }}
                         </h3>
                     </div>
                     <p class="text-sm text-muted-foreground">
-                        Detailed information about the category {{ $category->name }}.
+                        {{ __('Detailed information about the category :name.', ['name' => $category->name]) }}
                     </p>
                 </div>
 
@@ -18,7 +18,7 @@
                     <!-- Name -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Name
+                            {{ __('Name') }}
                         </label>
                         <p class="text-sm text-foreground">{{ $category->name }}</p>
                     </div>
@@ -26,7 +26,7 @@
                     <!-- Slug -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Slug
+                            {{ __('Slug') }}
                         </label>
                         <p class="text-sm text-muted-foreground">{{ $category->slug }}</p>
                     </div>
@@ -34,7 +34,7 @@
                     <!-- Description -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Description
+                            {{ __('Description') }}
                         </label>
                         <p class="text-sm text-muted-foreground leading-relaxed">
                             {{ $category->description ?? '-' }}
@@ -44,7 +44,7 @@
                     <!-- Created At -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Created At
+                            {{ __('Created At') }}
                         </label>
                         <p class="text-sm text-muted-foreground">{{ $category->created_at->format('d M Y') }}</p>
                     </div>
