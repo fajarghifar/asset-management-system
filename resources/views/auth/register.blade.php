@@ -1,8 +1,8 @@
 <x-guest-layout title="Register">
     <div class="space-y-6">
         <div class="space-y-2 text-center">
-            <h1 class="text-2xl font-semibold tracking-tight">Create an account</h1>
-            <p class="text-sm text-muted-foreground">Enter your details below to create your account</p>
+            <h1 class="text-2xl font-semibold tracking-tight">{{ __('Create an account') }}</h1>
+            <p class="text-sm text-muted-foreground">{{ __('Enter your details below to create your account') }}</p>
         </div>
 
         <form method="POST" action="{{ route('register') }}">
@@ -11,7 +11,7 @@
             <!-- Name -->
             <x-form-input
                 name="name"
-                label="Name"
+                label="{{ __('Name') }}"
                 type="text"
                 :value="old('name')"
                 required
@@ -24,7 +24,7 @@
             <div class="mt-4">
                 <x-form-input
                     name="username"
-                    label="Username"
+                    label="{{ __('Username') }}"
                     type="text"
                     :value="old('username')"
                     required
@@ -37,7 +37,7 @@
             <div class="mt-4">
                 <x-form-input
                     name="email"
-                    label="Email"
+                    label="{{ __('Email') }}"
                     type="email"
                     :value="old('email')"
                     required
@@ -50,7 +50,7 @@
             <div class="mt-4">
                 <x-form-input
                     name="password"
-                    label="Password"
+                    label="{{ __('Password') }}"
                     type="password"
                     required
                     autocomplete="new-password"
@@ -62,7 +62,7 @@
             <div class="mt-4">
                 <x-form-input
                     name="password_confirmation"
-                    label="Confirm Password"
+                    label="{{ __('Confirm Password') }}"
                     type="password"
                     required
                     autocomplete="new-password"
@@ -77,9 +77,9 @@
             </div>
 
             <div class="mt-4 text-center text-sm">
-                Already have an account?
+                {{ __('Already have an account?') }}
                 <a href="{{ route('login') }}" class="underline text-primary">
-                    Log in
+                    {{ __('Log in') }}
                 </a>
             </div>
         </form>

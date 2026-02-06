@@ -4,8 +4,8 @@
 
     <div class="space-y-6">
         <div class="space-y-2 text-center">
-            <h1 class="text-2xl font-semibold tracking-tight">Login</h1>
-            <p class="text-sm text-muted-foreground">Enter your username below to login to your account</p>
+            <h1 class="text-2xl font-semibold tracking-tight">{{ __('Login') }}</h1>
+            <p class="text-sm text-muted-foreground">{{ __('Enter your username below to login to your account') }}</p>
         </div>
 
         <form method="POST" action="{{ route('login') }}">
@@ -14,7 +14,7 @@
             <!-- Username -->
             <x-form-input
                 name="username"
-                label="Username"
+                label="{{ __('Username') }}"
                 type="text"
                 :value="old('username')"
                 required
@@ -52,9 +52,9 @@
             </div>
 
             <div class="mt-4 text-center text-sm">
-                Don't have an account?
+                {{ __("Don't have an account?") }}
                 <a href="{{ route('register') }}" class="underline text-primary">
-                    Sign up
+                    {{ __('Sign up') }}
                 </a>
             </div>
         </form>

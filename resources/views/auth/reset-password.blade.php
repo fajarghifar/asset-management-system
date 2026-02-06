@@ -1,8 +1,8 @@
 <x-guest-layout title="Reset Password">
     <div class="space-y-6">
         <div class="space-y-2 text-center">
-            <h1 class="text-2xl font-semibold tracking-tight">Reset Password</h1>
-            <p class="text-sm text-muted-foreground">Enter your new password below.</p>
+            <h1 class="text-2xl font-semibold tracking-tight">{{ __('Reset Password') }}</h1>
+            <p class="text-sm text-muted-foreground">{{ __('Enter your new password below.') }}</p>
         </div>
 
         <form method="POST" action="{{ route('password.store') }}">
