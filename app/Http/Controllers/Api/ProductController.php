@@ -11,10 +11,16 @@ class ProductController extends Controller
 {
     public function search(Request $request)
     {
+        $type = $request->query('type');
         $search = $request->query('q');
 
         return Product::query()
-            ->where('type', ProductType::Consumable) // Filter for Consumables only
+            ->when($type, function ($query, $type) {
+                return $query->where('type', $type);
+            }, function ($query) {
+                // Default to Consumable if no type specified (backward compatibility)
+                return $query->where('type', ProductType::Consumable);
+            })
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -27,7 +33,7 @@ class ProductController extends Controller
             ->map(function ($product) {
                 return [
                     'value' => $product->id,
-                    'text' => "{$product->name} ({$product->code})",
+                    'text' => $product->name,
                 ];
             });
     }

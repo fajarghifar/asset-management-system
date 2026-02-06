@@ -1,12 +1,12 @@
-<x-modal name="move-asset-modal" :title="'Move Asset'" maxWidth="lg">
+<x-modal name="move-asset-modal" :title="__('Move Asset')" maxWidth="lg">
     <div class="p-6">
         @if($asset)
             <div class="mb-6">
                 <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                    Move Asset
+                    {{ __('Move Asset') }}
                 </h3>
                 <p class="text-sm text-muted-foreground mt-1">
-                    Transfer <strong>{{ $asset->asset_tag }}</strong> to a new location.
+                    {{ __('Transfer') }} <strong>{{ $asset->asset_tag }}</strong> {{ __('to a new location.') }}
                 </p>
             </div>
 
@@ -14,7 +14,7 @@
 
                 <!-- Current Location -->
                 <div class="space-y-1">
-                    <x-input-label value="Current Location" />
+                    <x-input-label value="{{ __('Current Location') }}" />
                     <div class="p-2 border border-border bg-muted rounded-md text-sm text-muted-foreground">
                         {{ $asset->location->full_name }}
                     </div>
@@ -22,15 +22,14 @@
 
                 <!-- New Location -->
                 <div>
-                    <x-input-label for="move_location_id" value="New Location" required />
-                    <select id="move_location_id" wire:model="location_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-input bg-background focus:ring-ring focus:border-ring sm:text-sm rounded-md shadow-sm">
-                        <option value="">Select Destination...</option>
-                        @foreach($locationOptions as $option)
-                            <option value="{{ $option['value'] }}">
-                                {{ $option['label'] }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-input-label for="move_location_id" value="{{ __('New Location') }}" required />
+                    <x-tom-select
+                        id="move_location_id"
+                        wire:model="location_id"
+                        :options="$locationOptions"
+                        placeholder="{{ __('Select Destination...') }}"
+                        class="mt-1"
+                    />
                     <x-input-error :messages="$errors->get('location_id')" class="mt-2" />
                 </div>
 
@@ -38,16 +37,17 @@
                 <div>
                     <x-form-input
                         name="recipient_name"
-                        label="Recipient / PIC Name"
+                        label="{{ __('Recipient / PIC Name') }}"
                         wire:model="recipient_name"
-                        placeholder="Who is receiving this?"
+                        placeholder="{{ __('Who is receiving this?') }}"
+                        required
                     />
                 </div>
 
                 <!-- Notes -->
                 <div>
-                    <x-input-label for="move_notes" value="Notes" />
-                    <textarea id="move_notes" wire:model="notes" rows="3" class="mt-1 block w-full border-input bg-background focus:ring-ring focus:border-ring rounded-md shadow-sm sm:text-sm" placeholder="Reason for movement..."></textarea>
+                    <x-input-label for="move_notes" value="{{ __('Notes') }}" />
+                    <textarea id="move_notes" wire:model="notes" rows="3" class="mt-1 block w-full border-input bg-background focus:ring-ring focus:border-ring rounded-md shadow-sm sm:text-sm" placeholder="{{ __('Reason for movement...') }}"></textarea>
                     <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                 </div>
 
@@ -65,7 +65,7 @@
             </form>
         @else
             <div class="py-4 text-center text-muted-foreground">
-                <div class="animate-pulse">Loading...</div>
+                <div class="animate-pulse">{{ __('Loading...') }}</div>
             </div>
         @endif
     </div>

@@ -19,7 +19,7 @@
                         name="product_id"
                         wire:model="product_id"
                         id="product_id_select"
-                        :url="route('api.products.search')"
+                        :url="route('api.products.search', ['type' => 'consumable'])"
                         :options="$productOptions"
                         placeholder="{{ __('Search Product...') }}"
                         required

@@ -59,23 +59,26 @@
                             </x-slot>
                         </x-nav-dropdown>
 
-                        <!-- Categories Link -->
-                        <a href="{{ route('categories.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('categories.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
-                            <x-heroicon-o-tag class="mr-2 h-4 w-4" />
-                            {{ __('Categories') }}
-                        </a>
-
-                        <!-- Locations Link -->
-                        <a href="{{ route('locations.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('locations.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
-                            <x-heroicon-o-map-pin class="mr-2 h-4 w-4" />
-                            {{ __('Locations') }}
-                        </a>
-
-                        <!-- Users Link -->
-                        <a href="{{ route('users.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('users.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
-                            <x-heroicon-o-users class="mr-2 h-4 w-4" />
-                            {{ __('Users') }}
-                        </a>
+                        <!-- Settings Dropdown -->
+                        <x-nav-dropdown active="{{ request()->routeIs(['categories.*', 'locations.*', 'users.*']) }}">
+                            <x-slot name="icon">
+                                <x-heroicon-o-cog-6-tooth class="mr-2 h-4 w-4" />
+                            </x-slot>
+                            <x-slot name="trigger">
+                                {{ __('Settings') }}
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                                    {{ __('Categories') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('locations.index')" :active="request()->routeIs('locations.*')">
+                                    {{ __('Locations') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                                    {{ __('Users') }}
+                                </x-dropdown-link>
+                            </x-slot>
+                        </x-nav-dropdown>
 
                         <!-- Resources Dropdown -->
                         {{-- <x-nav-dropdown>
@@ -205,11 +208,20 @@
                             </div>
                         </div>
 
-                        <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">{{ __('Categories') }}</a>
-
-                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">{{ __('Locations') }}</a>
-
-                        <a href="{{ route('users.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('users.*') ? 'text-primary' : '' }}">{{ __('Users') }}</a>
+                        <!-- Mobile Settings Accordion -->
+                        <div x-data="{ expanded: {{ request()->routeIs(['categories.*', 'locations.*', 'users.*']) ? 'true' : 'false' }} }" class="border-b-0">
+                            <button @click="expanded = !expanded" class="flex flex-1 items-center justify-between py-0 font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180 w-full text-left text-md {{ request()->routeIs(['categories.*', 'locations.*', 'users.*']) ? 'text-primary' : '' }}">
+                                {{ __('Settings') }}
+                                <x-heroicon-o-chevron-down :class="{'rotate-180': expanded}" class="h-4 w-4 shrink-0 transition-transform duration-200" />
+                            </button>
+                            <div x-show="expanded" x-collapse>
+                                <div class="mt-2 flex flex-col gap-2 pl-4 border-l border-border ml-2">
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}" href="{{ route('categories.index') }}">{{ __('Categories') }}</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}" href="{{ route('locations.index') }}">{{ __('Locations') }}</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('users.*') ? 'text-primary' : '' }}" href="{{ route('users.index') }}">{{ __('Users') }}</a>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Mobile User Menu -->
                         <div class="pt-4 mt-4 border-t border-border">

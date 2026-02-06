@@ -4,7 +4,8 @@
             <h2 class="font-semibold text-xl text-foreground leading-tight">
                 {{ __('Import Assets') }}
             </h2>
-            <x-secondary-button tag="a" href="{{ route('assets.index') }}">
+            <x-secondary-button href="{{ route('assets.index') }}" tag="a">
+                <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 {{ __('Back to List') }}
             </x-secondary-button>
         </div>

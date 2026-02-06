@@ -41,10 +41,10 @@ final class AssetHistoriesTable extends PowerGridComponent
         return PowerGrid::fields()
             ->add('id')
             ->add('created_at_formatted', fn ($history) => $history->created_at->format('d M Y H:i'))
-            ->add('action_type_label', fn ($history) => ucfirst(str_replace('_', ' ', $history->action_type)))
+            ->add('action_type_label', fn($history) => __('history.action.' . $history->action_type))
             ->add('recipient_name', fn ($history) => $history->recipient_name ?? '-')
             ->add('location_name', fn ($history) => $history->location?->full_name ?? '-')
-            ->add('user_name', fn ($history) => $history->user?->name ?? 'System')
+            ->add('user_name', fn($history) => $history->user?->name ?? __('System'))
             ->add('notes_truncated', fn ($history) => str($history->notes)->limit(30))
             ->add('status_label', function ($history) {
                 if (!$history->status) return '-';
@@ -72,24 +72,24 @@ final class AssetHistoriesTable extends PowerGridComponent
     public function columns(): array
     {
         return [
-            Column::make('Date', 'created_at_formatted', 'created_at')
+            Column::make(__('Date'), 'created_at_formatted', 'created_at')
                 ->sortable(),
 
-            Column::make('Action', 'action_type_label', 'action_type')
+            Column::make(__('Action'), 'action_type_label', 'action_type')
                 ->sortable()
                 ->searchable(),
 
-            Column::make('Status', 'status_label', 'status')
+            Column::make(__('Status'), 'status_label', 'status')
                 ->sortable(),
 
-            Column::make('Location', 'location_name'),
+            Column::make(__('Location'), 'location_name'),
 
-            Column::make('User', 'user_name'),
+            Column::make(__('User'), 'user_name'),
 
-            Column::make('Recipient', 'recipient_name')
+            Column::make(__('Recipient'), 'recipient_name')
                 ->searchable(),
 
-            Column::make('Notes', 'notes')
+            Column::make(__('Notes'), 'notes')
                 ->bodyAttribute('whitespace-normal min-w-[300px] text-justify')
                 ->sortable(),
         ];

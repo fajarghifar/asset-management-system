@@ -71,7 +71,7 @@ final class ConsumableStocksTable extends PowerGridComponent
     {
         return PowerGrid::fields()
             ->add('id')
-            ->add('product_name', fn($stock) => $stock->product->name . ' (' . $stock->product->code . ')')
+            ->add('product_name', fn($stock) => $stock->product->name)
             ->add('location_site', fn ($stock) => $stock->location->site->getLabel())
             ->add('location_name', fn ($stock) => $stock->location->name)
             ->add('quantity')
@@ -101,34 +101,31 @@ final class ConsumableStocksTable extends PowerGridComponent
                 ->searchable()
                 ->visibleInExport(false),
 
-            Column::make('Product', 'product_name', 'product_id')
-                ->sortable()
-                ->searchable()
-                ->visibleInExport(false),
+
 
             // Export Columns
 
-            Column::make(__('Code Product'), 'product_code_export')
+            Column::make(__('Product Code'), 'product_code_export')
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Name Product'), 'product_name_export')
+            Column::make(__('Product Name'), 'product_name_export')
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Location Site'), 'location_site', 'location_id')
+            Column::make(__('Site'), 'location_site', 'location_id')
                 ->sortable()
                 ->visibleInExport(false),
 
-            Column::make(__('Code Location'), 'location_code_export')
+            Column::make(__('Location Code'), 'location_code_export')
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Name Location'), 'location_name_export')
+            Column::make(__('Location Name'), 'location_name_export')
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Location Name'), 'location_name', 'location_id')
+            Column::make(__('Location'), 'location_name', 'location_id')
                 ->sortable()
                 ->visibleInExport(false),
 

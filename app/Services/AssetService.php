@@ -40,7 +40,7 @@ class AssetService
                 $this->logHistory(
                     asset: $asset,
                     actionType: 'checkin',
-                    notes: 'Initial asset registration',
+                    notes: __('Initial asset registration'),
                     newLocationId: $asset->location_id,
                     newStatus: $asset->status
                 );
@@ -71,14 +71,14 @@ class AssetService
                 $this->logHistory(
                     asset: $asset,
                     actionType: 'status_change',
-                    notes: $notes ?? "Status changed to {$status->getLabel()}",
+                    notes: $notes ?? __('Status changed to :status', ['status' => $status->getLabel()]),
                     newStatus: $status
                 );
 
                 return $asset->refresh();
 
             } catch (Throwable $e) {
-                throw AssetException::updateFailed((string) $asset->id, "Status update failed: " . $e->getMessage(), $e);
+                throw AssetException::updateFailed((string) $asset->id, __('Status update failed: ') . $e->getMessage(), $e);
             }
         });
     }
@@ -113,7 +113,7 @@ class AssetService
                     $this->logHistory(
                         asset: $asset,
                         actionType: $actionType,
-                        notes: $data->history_notes ?? 'Asset updated',
+                        notes: $data->history_notes ?? __('Asset updated'),
                         recipientName: $data->recipient_name,
                         newLocationId: $newLocationId,
                         newStatus: $newStatus
@@ -168,7 +168,7 @@ class AssetService
     /**
      * Generate a unique asset tag.
      */
-    private function generateAssetTag(): string
+    public function generateAssetTag(): string
     {
         do {
             $randomCode = strtoupper(\Illuminate\Support\Str::random(4));

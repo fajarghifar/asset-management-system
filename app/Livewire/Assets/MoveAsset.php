@@ -23,19 +23,31 @@ class MoveAsset extends Component
     {
         return [
             'location_id' => 'required|exists:locations,id|different:asset.location_id',
-            'recipient_name' => 'nullable|string|max:255',
+            'recipient_name' => 'required|string|max:255',
             'notes' => 'nullable|string',
+        ];
+    }
+
+    public function validationAttributes()
+    {
+        return [
+            'location_id' => __('Location'),
+            'recipient_name' => __('Recipient'),
+            'notes' => __('Notes'),
         ];
     }
 
     public function mount()
     {
-        $this->locationOptions = Location::orderBy('name')->get()->map(function ($location) {
-            return [
-                'value' => $location->id,
-                'label' => $location->full_name,
-            ];
-        })->toArray();
+        $this->locationOptions = Location::orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(function ($location) {
+                return [
+                    'value' => $location->id,
+                    'text' => $location->full_name, // Changed from label to text for TomSelect
+                ];
+            })->toArray();
     }
 
     #[On('move-asset')]
@@ -67,12 +79,12 @@ class MoveAsset extends Component
 
             $this->dispatch('close-modal', name: 'move-asset-modal');
             $this->dispatch('pg:eventRefresh-assets-table');
-            $this->dispatch('toast', message: 'Asset moved successfully.', type: 'success');
+            $this->dispatch('toast', message: __('Asset moved successfully.'), type: 'success');
 
         } catch (AssetException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         } catch (\Throwable $e) {
-            $this->dispatch('toast', message: 'Failed to move asset.', type: 'error');
+            $this->dispatch('toast', message: __('Failed to move asset.'), type: 'error');
         }
     }
 

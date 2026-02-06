@@ -15,13 +15,13 @@ enum AssetStatus: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::InStock => 'In Stock',
-            self::Loaned => 'Loaned',
-            self::Installed => 'Installed',
-            self::Maintenance => 'Under Maintenance',
-            self::Broken => 'Broken',
-            self::Lost => 'Lost',
-            self::Disposed => 'Disposed',
+            self::InStock => __('In Stock'),
+            self::Loaned => __('Loaned'),
+            self::Installed => __('Installed'),
+            self::Maintenance => __('Under Maintenance'),
+            self::Broken => __('Broken'),
+            self::Lost => __('Lost'),
+            self::Disposed => __('Disposed'),
         };
     }
 

@@ -1,8 +1,8 @@
-<x-app-layout title="Assets">
+<x-app-layout title="{{ __('Assets') }}">
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
-                {{ __('Assets Management') }}
+                {{ __('Assets') }}
             </h2>
             <div class="flex items-center gap-2">
                 <x-secondary-button tag="a" href="{{ route('assets.import') }}">
@@ -11,7 +11,7 @@
                 </x-secondary-button>
                 <x-primary-button tag="a" href="{{ route('assets.create') }}">
                     <x-heroicon-o-plus class="w-4 h-4 mr-2" />
-                    {{ __('Create Asset') }}
+                    {{ __('Create New Asset') }}
                 </x-primary-button>
             </div>
         </div>

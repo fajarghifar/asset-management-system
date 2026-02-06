@@ -51,7 +51,7 @@ class ConsumableStockForm extends Component
             ->orderBy('name')
             ->limit(20)
             ->get()
-            ->map(fn($p) => ['value' => $p->id, 'text' => "{$p->name} ({$p->code})"])
+            ->map(fn($p) => ['value' => $p->id, 'text' => $p->name])
             ->toArray();
 
         $this->locationOptions = Location::orderBy('site')
@@ -73,7 +73,7 @@ class ConsumableStockForm extends Component
 
         // Populate options for the selected items so the component can display the label
         $this->productOptions = [
-            ['value' => $stock->product->id, 'text' => $stock->product->name . ' (' . $stock->product->code . ')']
+            ['value' => $stock->product->id, 'text' => $stock->product->name]
         ];
 
         $this->locationOptions = [

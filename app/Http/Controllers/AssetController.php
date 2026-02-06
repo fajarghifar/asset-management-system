@@ -28,35 +28,7 @@ class AssetController extends Controller
 
     public function create(): View
     {
-        $products = Product::orderBy('name')->get(['id', 'name', 'code']);
-        $locations = Location::orderBy('name')->get();
-
-        return view('assets.create', [
-            'products' => $products,
-            'locations' => $locations,
-            'statuses' => AssetStatus::cases(),
-        ]);
-    }
-
-    public function store(StoreAssetRequest $request): RedirectResponse
-    {
-        $data = $request->validated();
-
-        if ($request->hasFile('image_path')) {
-            $data['image_path'] = $request->file('image_path')->store('assets', 'public');
-        }
-
-        try {
-            $assetData = AssetData::fromArray($data);
-            $asset = $this->assetService->createAsset($assetData);
-
-            return redirect()->route('assets.show', ['asset' => $asset->id])
-                ->with('success', 'Asset created successfully.');
-        } catch (AssetException $e) {
-            return back()->withInput()->with('error', $e->getMessage());
-        } catch (\Throwable $e) {
-            return back()->withInput()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
-        }
+        return view('assets.create');
     }
 
     public function show(Asset $asset): View
@@ -70,43 +42,9 @@ class AssetController extends Controller
 
     public function edit(Asset $asset): View
     {
-        $products = Product::orderBy('name')->get(['id', 'name', 'code']);
-        $locations = Location::orderBy('name')->get();
-
         return view('assets.edit', [
             'asset' => $asset,
-            'products' => $products,
-            'locations' => $locations,
-            'statuses' => AssetStatus::cases(),
         ]);
-    }
-
-    public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
-    {
-        $data = $request->validated();
-
-        if ($request->hasFile('image_path')) {
-            // Delete old image if exists
-            if ($asset->image_path) {
-                Storage::disk('public')->delete($asset->image_path);
-            }
-            $data['image_path'] = $request->file('image_path')->store('assets', 'public');
-        }
-
-        $data['product_id'] = $data['product_id'] ?? $asset->product_id;
-        $data['location_id'] = $data['location_id'] ?? $asset->location_id;
-
-        try {
-            $assetData = AssetData::fromArray($data);
-            $this->assetService->updateAsset($asset, $assetData);
-
-            return redirect()->route('assets.show', ['asset' => $asset->id])
-                ->with('success', 'Asset updated successfully.');
-        } catch (AssetException $e) {
-            return back()->withInput()->with('error', $e->getMessage());
-        } catch (\Throwable $e) {
-            return back()->withInput()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
-        }
     }
 
     public function destroy(Asset $asset): RedirectResponse
@@ -119,12 +57,12 @@ class AssetController extends Controller
             $this->assetService->deleteAsset($asset);
 
             return redirect()->route('assets.index')
-                ->with('success', 'Asset deleted successfully.');
+                ->with('success', __('Asset deleted successfully.'));
 
         } catch (AssetException $e) {
             return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
-            return back()->with('error', 'Cannot delete asset. It may have related history records.');
+            return back()->with('error', __('Cannot delete asset. It may have related history records.'));
         }
     }
 }

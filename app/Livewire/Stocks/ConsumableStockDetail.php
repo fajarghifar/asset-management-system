@@ -19,7 +19,7 @@ class ConsumableStockDetail extends Component
     public function show(ConsumableStock $stock)
     {
         $this->stock = $stock->load(['product', 'location']);
-        $this->dispatch('open-modal', name: 'stock-detail-modal');
+        $this->dispatch('open-modal', name: 'consumable-stock-detail-modal');
     }
 
     public function closeModal()
