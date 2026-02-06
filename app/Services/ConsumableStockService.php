@@ -76,7 +76,7 @@ class ConsumableStockService
         DB::transaction(function () use ($stock) {
             try {
                 if ($stock->quantity > 0) {
-                    throw new ConsumableStockException("Cannot delete stock with remaining quantity ({$stock->quantity}). Please adjust quantity to 0 first.", 422);
+                    throw new ConsumableStockException(__("Cannot delete stock with remaining quantity (:quantity). Please adjust quantity to 0 first.", ['quantity' => $stock->quantity]), 422);
                 }
 
                 $stock->delete();

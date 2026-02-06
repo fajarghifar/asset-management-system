@@ -33,7 +33,7 @@ class ProductForm extends Component
     public function mount()
     {
         $this->categoryOptions = Category::orderBy('name')->get()->map(function($c) {
-            return ['value' => $c->id, 'label' => $c->name];
+            return ['value' => $c->id, 'text' => $c->name];
         })->toArray();
 
         foreach (ProductType::cases() as $type) {

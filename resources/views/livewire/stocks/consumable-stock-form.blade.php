@@ -3,47 +3,51 @@
         <!-- Custom Header -->
         <div class="mb-6 space-y-1.5 text-center sm:text-left">
             <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                {{ $isEditing ? 'Edit Stock' : 'Create Stock' }}
+                {{ $isEditing ? __('Edit Stock') : __('Create Stock') }}
             </h3>
             <p class="text-sm text-muted-foreground">
-                {{ $isEditing ? 'Update stock quantity and thresholds.' : 'Add new stock for a product at a location.' }}
+                {{ $isEditing ? __('Update stock quantity and thresholds.') : __('Add new stock for a product at a location.') }}
             </p>
         </div>
 
         <form wire:submit="save" class="space-y-4">
-            <div class="space-y-4" x-data="{ productId: @entangle('product_id'), locationId: @entangle('location_id') }">
+            <div class="space-y-4">
                 <!-- Product (Searchable) -->
-                <div>
-                    <x-searchable-select
+                <div class="space-y-2">
+                    <x-input-label for="product_id_select" value="{{ __('Product') }}" required />
+                    <x-tom-select
                         name="product_id"
-                        label="Product"
-                        x-model="productId"
-                        :url="route('ajax.products')"
+                        wire:model="product_id"
+                        id="product_id_select"
+                        :url="route('api.products.search')"
                         :options="$productOptions"
-                        placeholder="Search Product..."
+                        placeholder="{{ __('Search Product...') }}"
                         required
                         :disabled="$isEditing"
                     />
                     @if($isEditing)
-                        <p class="text-xs text-muted-foreground mt-1">Product cannot be changed while editing.</p>
+                        <p class="text-xs text-muted-foreground mt-1">{{ __('Product cannot be changed while editing.') }}</p>
                     @endif
+                    <x-input-error :messages="$errors->get('product_id')" />
                 </div>
 
                 <!-- Location (Searchable) -->
-                <div>
-                    <x-searchable-select
+                <div class="space-y-2">
+                    <x-input-label for="location_id_select" value="{{ __('Location') }}" required />
+                    <x-tom-select
                         name="location_id"
-                        label="Location"
-                        x-model="locationId"
-                        :url="route('ajax.locations')"
+                        wire:model="location_id"
+                        id="location_id_select"
+                        :url="route('api.locations.search')"
                         :options="$locationOptions"
-                        placeholder="Search Location..."
+                        placeholder="{{ __('Search Location...') }}"
                         required
                         :disabled="$isEditing"
                     />
                     @if($isEditing)
-                        <p class="text-xs text-muted-foreground mt-1">Location cannot be changed while editing.</p>
+                        <p class="text-xs text-muted-foreground mt-1">{{ __('Location cannot be changed while editing.') }}</p>
                     @endif
+                    <x-input-error :messages="$errors->get('location_id')" />
                 </div>
             </div>
 
@@ -51,7 +55,7 @@
                 <!-- Quantity -->
                 <x-form-input
                     name="quantity"
-                    label="Quantity"
+                    label="{{ __('Quantity') }}"
                     type="number"
                     wire:model="quantity"
                     placeholder="0"
@@ -62,7 +66,7 @@
                 <!-- Min Quantity -->
                 <x-form-input
                     name="min_quantity"
-                    label="Minimum Stock Alert"
+                    label="{{ __('Minimum Stock Alert') }}"
                     type="number"
                     wire:model="min_quantity"
                     placeholder="0"

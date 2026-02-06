@@ -11,6 +11,14 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class ProductSeeder extends Seeder
 {
+    private int $sequence = 0;
+    private string $year;
+
+    public function __construct()
+    {
+        $this->year = date('Y');
+    }
+
     /**
      * Run the database seeds.
      */
@@ -37,6 +45,17 @@ class ProductSeeder extends Seeder
             'MAINT' => $getCatId('Suku Cadang'),
         ];
 
+        // Initialize Sequence
+        $prefix = "PRD.{$this->year}.";
+        $latest = Product::where('code', 'like', "{$prefix}%")
+            ->orderByRaw('LENGTH(code) DESC')
+            ->orderBy('code', 'desc')
+            ->first();
+
+        if ($latest) {
+            $this->sequence = (int) str_replace($prefix, '', $latest->code);
+        }
+
         DB::transaction(function () use ($catMap) {
             foreach ($this->getProductDefinitions() as $groupKey => $def) {
                 $categoryId = $catMap[$def['category_key']] ?? null;
@@ -59,11 +78,29 @@ class ProductSeeder extends Seeder
     private function seedBatch(array $items, ProductType $type, int $categoryId, bool $isLoanable = true): void
     {
         $now = now();
-        $data = [];
+        $prefix = "PRD.{$this->year}.";
 
-        foreach ($items as $code => $name) {
-            $data[] = [
-                'code' => strtoupper(trim($code)),
+        foreach ($items as $name) {
+            // Check if product with this name already exists to avoid duplicates
+            $existing = Product::where('name', $name)->first();
+
+            if ($existing) {
+                // Determine if we need to update it (e.g. category changed)
+                // For now, we just skip or update category/loanable status
+                $existing->update([
+                    'type' => $type->value,
+                    'category_id' => $categoryId,
+                    'can_be_loaned' => $isLoanable,
+                    'updated_at' => $now,
+                ]);
+                continue;
+            }
+
+            $this->sequence++;
+            $code = $prefix . str_pad($this->sequence, 3, '0', STR_PAD_LEFT);
+
+            Product::create([
+                'code' => $code,
                 'name' => $name,
                 'type' => $type->value,
                 'category_id' => $categoryId,
@@ -71,16 +108,10 @@ class ProductSeeder extends Seeder
                 'description' => "Initial Import ({$type->getLabel()})",
                 'created_at' => $now,
                 'updated_at' => $now,
-            ];
+            ]);
         }
 
-        Product::upsert(
-            $data,
-            ['code'],
-            ['name', 'type', 'category_id', 'can_be_loaned', 'description', 'updated_at']
-        );
-
-        $this->command->info("✅ Seeded " . count($data) . " items | Type: {$type->name}");
+        $this->command->info("✅ Batch Processed | Type: {$type->name}");
     }
 
     private function getProductDefinitions(): array
@@ -92,26 +123,26 @@ class ProductSeeder extends Seeder
                 'category_key' => 'TOOLS',
                 'loanable' => true,
                 'items' => [
-                    'TANGPT' => 'Tang Potong',
-                    'TANGLC' => 'Tang Lancip',
-                    'TANGBS' => 'Tang Biasa',
-                    'TPKCL' => 'Tang Potong Kecil',
-                    'TLKCL' => 'Tang Lancip Kecil',
-                    'TBKCL' => 'Tang Biasa Kecil',
-                    'CRIMP' => 'Tang Crimping',
-                    'GNTBS' => 'Gunting Besar',
-                    'GNTKC' => 'Gunting Kecil',
-                    'CUTTER' => 'Pisau Cutter',
-                    'GERGAJ' => 'Gergaji Kecil',
-                    'OBLPT' => 'Obeng Set Laptop',
-                    'OB115' => 'Obeng Set 115 in 1',
-                    'OBKNG' => 'Obeng Kuning',
-                    'OBSTD' => 'Obeng Standar',
-                    'TOOLKT' => 'Toolkit Satu Set',
-                    'TKPALU' => 'Toolkit Set Lengkap',
-                    'GLUEGN' => 'Alat Lem Tembak (Glue Gun)',
-                    'BLOWER' => 'Blower / Heat Gun',
-                    'SUNTIK' => 'Suntikan Besar (Refill)',
+                    'Tang Potong',
+                    'Tang Lancip',
+                    'Tang Biasa',
+                    'Tang Potong Kecil',
+                    'Tang Lancip Kecil',
+                    'Tang Biasa Kecil',
+                    'Tang Crimping',
+                    'Gunting Besar',
+                    'Gunting Kecil',
+                    'Pisau Cutter',
+                    'Gergaji Kecil',
+                    'Obeng Set Laptop',
+                    'Obeng Set 115 in 1',
+                    'Obeng Kuning',
+                    'Obeng Standar',
+                    'Toolkit Satu Set',
+                    'Toolkit Set Lengkap',
+                    'Alat Lem Tembak (Glue Gun)',
+                    'Blower / Heat Gun',
+                    'Suntikan Besar (Refill)',
                 ]
             ],
             'TESTING' => [
@@ -119,11 +150,11 @@ class ProductSeeder extends Seeder
                 'category_key' => 'TEST',
                 'loanable' => true,
                 'items' => [
-                    'LANTST' => 'LAN Tester',
-                    'MULTI' => 'Multi Meter Digital',
-                    'OPM' => 'Optical Power Meter (OPM)',
-                    'PSTEST' => 'Power Supply Tester',
-                    'WTRPAS' => 'Waterpass',
+                    'LAN Tester',
+                    'Multi Meter Digital',
+                    'Optical Power Meter (OPM)',
+                    'Power Supply Tester',
+                    'Waterpass',
                 ]
             ],
             'NETWORK_HW' => [
@@ -131,9 +162,9 @@ class ProductSeeder extends Seeder
                 'category_key' => 'NET',
                 'loanable' => true,
                 'items' => [
-                    'HT' => 'Handy Talky (HT)',
-                    'IPPHON' => 'Fanvil (IP Phone)',
-                    'POE' => 'POE Injector',
+                    'Handy Talky (HT)',
+                    'Fanvil (IP Phone)',
+                    'POE Injector',
                 ]
             ],
             'POWER' => [
@@ -141,7 +172,7 @@ class ProductSeeder extends Seeder
                 'category_key' => 'POWR',
                 'loanable' => false,
                 'items' => [
-                    'UPS' => 'UPS 600VA',
+                    'UPS 600VA',
                 ]
             ],
             'COMPONENTS' => [
@@ -149,13 +180,13 @@ class ProductSeeder extends Seeder
                 'category_key' => 'COMP',
                 'loanable' => false,
                 'items' => [
-                    'WD500' => 'Harddisk WD 500GB',
-                    'SGT500' => 'Harddisk Seagate 500GB',
-                    'WD320' => 'Harddisk WD 320GB',
-                    'SGT1TB' => 'Harddisk Seagate 1TB',
-                    'SGT250' => 'Harddisk Seagate 250GB',
-                    'HDDLAP' => 'Harddisk Laptop (General)',
-                    'MOBO' => 'Motherboard PC',
+                    'Harddisk WD 500GB',
+                    'Harddisk Seagate 500GB',
+                    'Harddisk WD 320GB',
+                    'Harddisk Seagate 1TB',
+                    'Harddisk Seagate 250GB',
+                    'Harddisk Laptop (General)',
+                    'Motherboard PC',
                 ]
             ],
             'PERIPHERALS' => [
@@ -163,25 +194,24 @@ class ProductSeeder extends Seeder
                 'category_key' => 'PERI',
                 'loanable' => true,
                 'items' => [
-                    'STB' => 'STB (Set Top Box)',
-                    'HDDEXT' => 'Harddisk External',
-                    'KEYMIN' => 'Keyboard Mini',
-                    'HEADLP' => 'Lampu Kepala',
-                    'CNHDMI' => 'Converter HDMI to USB',
-                    'CNVGA' => 'Converter VGA to USB',
+                    'STB (Set Top Box)',
+                    'Harddisk External',
+                    'Keyboard Mini',
+                    'Lampu Kepala',
+                    'Converter HDMI to USB',
+                    'Converter VGA to USB',
                 ]
             ],
-
             // Consumables
             'NET_CONSUMABLES' => [
                 'type' => ProductType::Consumable,
                 'category_key' => 'NET',
                 'loanable' => true,
                 'items' => [
-                    'RJ45' => 'Konektor RJ45',
-                    'RJ11' => 'Konektor RJ11',
-                    'FEMALE' => 'Konektor Female',
-                    'RG4' => 'Kabel RG4 / Coaxial',
+                    'Konektor RJ45',
+                    'Konektor RJ11',
+                    'Konektor Female',
+                    'Kabel RG4 / Coaxial',
                 ]
             ],
             'MAINTENANCE' => [
@@ -189,10 +219,10 @@ class ProductSeeder extends Seeder
                 'category_key' => 'MAINT',
                 'loanable' => true,
                 'items' => [
-                    'CLKIT' => 'Cleaning Kit',
-                    'PASTA' => 'Pasta Processor (Thermal Paste)',
-                    'CMOS' => 'Baterai CMOS 2032',
-                    'JACKDC' => 'Jack DC Male',
+                    'Cleaning Kit',
+                    'Pasta Processor (Thermal Paste)',
+                    'Baterai CMOS 2032',
+                    'Jack DC Male',
                 ]
             ],
         ];

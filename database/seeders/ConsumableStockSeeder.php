@@ -15,23 +15,23 @@ class ConsumableStockSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $itemNameToCode = $this->getItemMappings();
         $locationAliasToSite = [
             'TGS' => LocationSite::TGS,
             'BT Store' => LocationSite::BT,
             'JMP' => LocationSite::JMP2,
         ];
 
-        // Prefetch Dependencies
-        $products = Product::whereIn('code', array_unique($itemNameToCode))
+        // Gather all item names from raw data
+        $rawData = $this->getRawData();
+        $itemNames = array_column($rawData, 'item');
+
+        // Prefetch Products by Name
+        $products = Product::whereIn('name', $itemNames)
             ->where('type', ProductType::Consumable)
             ->get()
-            ->keyBy('code');
+            ->keyBy('name');
 
         if ($products->isEmpty()) {
             $this->command->error('No Consumable products found. Run ProductSeeder first.');
@@ -40,17 +40,15 @@ class ConsumableStockSeeder extends Seeder
 
         $allLocations = Location::all();
         $locationLookup = $this->resolveLocations($allLocations, $locationAliasToSite);
-        $rawData = $this->getRawData();
 
         $totalConsumables = 0;
-        $skipped = 0;
 
         foreach ($rawData as $row) {
-            $itemName = trim($row['item']);
-            $productCode = $itemNameToCode[$itemName] ?? null;
+            $itemName = $row['item'];
 
-            if (!$productCode || !$products->has($productCode)) {
-                continue; // Skip unknown or non-consumable items
+            if (!$products->has($itemName)) {
+                $this->command->warn("⚠️ Product not found: $itemName");
+                continue;
             }
 
             $location = $locationLookup[$row['location']] ?? null;
@@ -63,7 +61,7 @@ class ConsumableStockSeeder extends Seeder
             if ($qty <= 0)
                 continue;
 
-            $product = $products->get($productCode);
+            $product = $products->get($itemName);
 
             // Upsert / Increment Stock
             $stock = ConsumableStock::firstOrNew([
@@ -72,7 +70,7 @@ class ConsumableStockSeeder extends Seeder
             ]);
 
             $stock->quantity = ($stock->quantity ?? 0) + $qty;
-            $stock->min_quantity = $stock->min_quantity ?? 5; // Default threshold
+            $stock->min_quantity = $stock->min_quantity ?? 5;
             $stock->save();
 
             $totalConsumables += $qty;
@@ -100,33 +98,17 @@ class ConsumableStockSeeder extends Seeder
         return $lookup;
     }
 
-    private function getItemMappings(): array
-    {
-        return [
-            'CLEANING KIT' => 'CLKIT',
-            'BATERAI CIMOS' => 'CMOS',
-            'JACK DC FEMALE' => 'FEMALE',
-            'JACK DC MALE' => 'JACKDC',
-            'PASTA' => 'PASTA',
-            'RG 4' => 'RG4',
-            'KONEKTOR RJ45' => 'RJ45',
-            'RJ11' => 'RJ11',
-            // Note: Assets like KEYBOARD MINI, MOTHERBOARD, etc. are intentionally omitted
-            // as they should be handled by AssetSeeder if managed as Assets.
-        ];
-    }
-
     private function getRawData(): array
     {
         return [
-            ['item' => 'CLEANING KIT', 'location' => 'TGS', 'qty' => 1],
-            ['item' => 'KONEKTOR RJ45', 'location' => 'JMP', 'qty' => 163],
-            ['item' => 'BATERAI CIMOS', 'location' => 'JMP', 'qty' => 8],
-            ['item' => 'RJ11', 'location' => 'JMP', 'qty' => 61],
-            ['item' => 'PASTA', 'location' => 'JMP', 'qty' => 5],
-            ['item' => 'JACK DC FEMALE', 'location' => 'JMP', 'qty' => 23],
-            ['item' => 'JACK DC MALE', 'location' => 'JMP', 'qty' => 27],
-            ['item' => 'RG 4', 'location' => 'JMP', 'qty' => 1],
+            ['item' => 'Cleaning Kit', 'location' => 'TGS', 'qty' => 1],
+            ['item' => 'Konektor RJ45', 'location' => 'JMP', 'qty' => 163],
+            ['item' => 'Baterai CMOS 2032', 'location' => 'JMP', 'qty' => 8],
+            ['item' => 'Konektor RJ11', 'location' => 'JMP', 'qty' => 61],
+            ['item' => 'Pasta Processor (Thermal Paste)', 'location' => 'JMP', 'qty' => 5],
+            ['item' => 'Konektor Female', 'location' => 'JMP', 'qty' => 23],
+            ['item' => 'Jack DC Male', 'location' => 'JMP', 'qty' => 27],
+            ['item' => 'Kabel RG4 / Coaxial', 'location' => 'JMP', 'qty' => 1],
         ];
     }
 }

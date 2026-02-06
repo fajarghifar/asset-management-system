@@ -22,7 +22,7 @@ class CategoryController extends Controller
             ->map(function ($category) {
                 return [
                     'value' => $category->id,
-                    'label' => $category->name,
+                    'text' => $category->name,
                 ];
             });
     }

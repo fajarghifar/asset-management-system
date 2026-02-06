@@ -7,6 +7,9 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Locked;
 use Illuminate\Validation\Rule;
 use App\Models\ConsumableStock;
+use App\Models\Product;
+use App\Models\Location;
+use App\Enums\ProductType;
 use App\DTOs\ConsumableStockData;
 use App\Services\ConsumableStockService;
 use App\Exceptions\ConsumableStockException;
@@ -30,7 +33,7 @@ class ConsumableStockForm extends Component
 
     public function mount()
     {
-        // No heavy loading here
+        $this->loadInitialOptions();
     }
 
     #[On('create-stock')]
@@ -38,7 +41,25 @@ class ConsumableStockForm extends Component
     {
         $this->reset(['stockId', 'product_id', 'location_id', 'quantity', 'min_quantity', 'productOptions', 'locationOptions']);
         $this->isEditing = false;
+
         $this->dispatch('open-modal', name: 'consumable-stock-form-modal');
+    }
+
+    private function loadInitialOptions()
+    {
+        $this->productOptions = Product::where('type', ProductType::Consumable)
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(fn($p) => ['value' => $p->id, 'text' => "{$p->name} ({$p->code})"])
+            ->toArray();
+
+        $this->locationOptions = Location::orderBy('site')
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(fn($l) => ['value' => $l->id, 'text' => "{$l->site->getLabel()} - {$l->name}"])
+            ->toArray();
     }
 
     #[On('edit-stock')]
@@ -52,15 +73,25 @@ class ConsumableStockForm extends Component
 
         // Populate options for the selected items so the component can display the label
         $this->productOptions = [
-            ['value' => $stock->product->id, 'label' => $stock->product->name . ' (' . $stock->product->code . ')']
+            ['value' => $stock->product->id, 'text' => $stock->product->name . ' (' . $stock->product->code . ')']
         ];
 
         $this->locationOptions = [
-            ['value' => $stock->location->id, 'label' => $stock->location->name . ' (' . $stock->location->code . ')']
+            ['value' => $stock->location->id, 'text' => $stock->location->name . ' (' . $stock->location->code . ')']
         ];
 
         $this->isEditing = true;
         $this->dispatch('open-modal', name: 'consumable-stock-form-modal');
+    }
+
+    public function validationAttributes()
+    {
+        return [
+            'product_id' => __('Product'),
+            'location_id' => __('Location'),
+            'quantity' => __('Quantity'),
+            'min_quantity' => __('Minimum Quantity'),
+        ];
     }
 
     public function save(ConsumableStockService $service)
@@ -78,7 +109,7 @@ class ConsumableStockForm extends Component
             'min_quantity' => ['required', 'integer', 'min:0'],
         ];
 
-        $this->validate($rules);
+        $this->validate($rules, [], $this->validationAttributes());
 
         try {
             $data = new ConsumableStockData(
@@ -91,10 +122,10 @@ class ConsumableStockForm extends Component
             if ($this->isEditing) {
                 $stock = ConsumableStock::findOrFail($this->stockId);
                 $service->updateStock($stock, $data);
-                $message = 'Stock updated successfully.';
+                $message = __('Stock updated successfully.');
             } else {
                 $service->createStock($data);
-                $message = 'Stock created successfully.';
+                $message = __('Stock created successfully.');
             }
 
             $this->dispatch('close-modal', name: 'consumable-stock-form-modal');
@@ -104,7 +135,7 @@ class ConsumableStockForm extends Component
         } catch (ConsumableStockException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         } catch (\Throwable $e) {
-            $this->dispatch('toast', message: 'An unexpected error occurred.', type: 'error');
+            $this->dispatch('toast', message: __('An unexpected error occurred.'), type: 'error');
         }
     }
 

@@ -63,7 +63,7 @@
     >
         <option value="">{{ $placeholder }}</option>
         @foreach($options as $option)
-            <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+            <option value="{{ $option['value'] }}">{{ $option['text'] ?? $option['label'] }}</option>
         @endforeach
     </select>
 </div>
