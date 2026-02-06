@@ -6,11 +6,11 @@
                 <div class="mb-6 space-y-1.5 text-center sm:text-left">
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                            Product Details
+                            {{ __('Product Details') }}
                         </h3>
                     </div>
                     <p class="text-sm text-muted-foreground">
-                        Detailed information about the product {{ $product->name }}.
+                        {{ __('Detailed information about the product :name.', ['name' => $product->name]) }}
                     </p>
                 </div>
 
@@ -18,7 +18,7 @@
                     <!-- Name & Code -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Code
+                            {{ __('Code') }}
                         </label>
                         <p class="text-sm text-muted-foreground">{{ $product->code }}</p>
                     </div>
@@ -26,7 +26,7 @@
                     <!-- Name -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Name
+                            {{ __('Name') }}
                         </label>
                         <p class="text-sm text-foreground">{{ $product->name }}</p>
                     </div>
@@ -35,13 +35,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Category
+                                {{ __('Category') }}
                             </label>
                             <p class="text-sm text-foreground">{{ $product->category->name }}</p>
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Type
+                                {{ __('Type') }}
                             </label>
                             <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
                                 {{ $product->type->getLabel() }}
@@ -52,15 +52,15 @@
                     <!-- Loanable Status -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Available for Loan
+                            {{ __('Available for Loan') }}
                         </label>
                         <div class="flex items-center">
                             @if($product->can_be_loaned)
                                 <x-heroicon-o-check-circle class="w-5 h-5 text-green-500 mr-1.5" />
-                                <span class="text-sm text-green-700 dark:text-green-400">Yes, can be loaned</span>
+                                <span class="text-sm text-green-700 dark:text-green-400">{{ __('Yes, can be loaned') }}</span>
                             @else
                                 <x-heroicon-o-x-circle class="w-5 h-5 text-red-500 mr-1.5" />
-                                <span class="text-sm text-red-700 dark:text-red-400">No, internal use only</span>
+                                <span class="text-sm text-red-700 dark:text-red-400">{{ __('No, internal use only') }}</span>
                             @endif
                         </div>
                     </div>
@@ -68,7 +68,7 @@
                     <!-- Description -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Description
+                            {{ __('Description') }}
                         </label>
                         <p class="text-sm text-muted-foreground leading-relaxed">
                             {{ $product->description ?? '-' }}

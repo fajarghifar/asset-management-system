@@ -16,20 +16,20 @@
                 <div class="p-6 text-card-foreground">
 
                     <div class="mb-6">
-                        <h3 class="text-lg font-medium">Instructions</h3>
+                        <h3 class="text-lg font-medium">{{ __('Instructions') }}</h3>
                         <ul class="list-disc list-inside mt-2 text-sm text-muted-foreground">
-                            <li>File must be an Excel file (.xlsx, .xls).</li>
-                            <li>First row should be the header row.</li>
-                            <li>Columns order: <strong>Code, Name, Type (Asset/Consumable), Category Name, Loanable (Yes/No), Description</strong>.</li>
-                            <li>Duplicate Property Codes will be skipped.</li>
-                            <li>Categories will be created if they do not exist.</li>
+                            <li>{{ __('File must be an Excel file (.xlsx, .xls).') }}</li>
+                            <li>{{ __('First row should be the header row.') }}</li>
+                            <li>{!! __('Columns order: Code, Name, Type (Asset/Consumable), Category Name, Loanable (Yes/No), Description.') !!}</li>
+                            <li>{{ __('Duplicate Property Codes will be skipped.') }}</li>
+                            <li>{{ __('Categories will be created if they do not exist.') }}</li>
                         </ul>
                     </div>
 
                     <div class="mb-6">
                         <a href="{{ asset('templates/products_template.xlsx') }}" download class="text-sm text-primary hover:underline flex items-center gap-1">
                             <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
-                            Download Excel Template
+                            {{ __('Download Excel Template') }}
                         </a>
                     </div>
 

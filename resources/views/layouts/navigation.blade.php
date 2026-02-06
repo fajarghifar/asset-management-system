@@ -17,7 +17,7 @@
                         <!-- Dashboard Link -->
                         <a href="{{ route('dashboard') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('dashboard') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
                             <x-heroicon-o-squares-2x2 class="mr-2 h-4 w-4" />
-                            Dashboard
+                            {{ __('Dashboard') }}
                         </a>
 
                         <!-- Loans Dropdown -->
@@ -26,14 +26,14 @@
                                 <x-heroicon-o-document-text class="mr-2 h-4 w-4" />
                             </x-slot>
                             <x-slot name="trigger">
-                                Loans
+                                {{ __('Loans') }}
                             </x-slot>
                             <x-slot name="content">
                                 <x-dropdown-link :href="route('loans.index')" :active="request()->routeIs('loans.*')">
-                                    Loan List
+                                    {{ __('Loan List') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="route('kits.index')" :active="request()->routeIs('kits.*')">
-                                    Asset Kits
+                                    {{ __('Asset Kits') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
@@ -44,17 +44,17 @@
                                 <x-heroicon-o-archive-box class="mr-2 h-4 w-4" />
                             </x-slot>
                             <x-slot name="trigger">
-                                Products
+                                {{ __('Products') }}
                             </x-slot>
                             <x-slot name="content">
                                 <x-dropdown-link :href="route('products.index')" :active="request()->routeIs('products.*')">
-                                    Products
+                                    {{ __('Products') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
-                                    Assets
+                                    {{ __('Assets') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="route('stocks.index')" :active="request()->routeIs('stocks.*')">
-                                    Stocks
+                                    {{ __('Stocks') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
@@ -62,19 +62,19 @@
                         <!-- Categories Link -->
                         <a href="{{ route('categories.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('categories.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
                             <x-heroicon-o-tag class="mr-2 h-4 w-4" />
-                            Categories
+                            {{ __('Categories') }}
                         </a>
 
                         <!-- Locations Link -->
                         <a href="{{ route('locations.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('locations.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
                             <x-heroicon-o-map-pin class="mr-2 h-4 w-4" />
-                            Locations
+                            {{ __('Locations') }}
                         </a>
 
                         <!-- Users Link -->
                         <a href="{{ route('users.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('users.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
                             <x-heroicon-o-users class="mr-2 h-4 w-4" />
-                            Users
+                            {{ __('Users') }}
                         </a>
 
                         <!-- Resources Dropdown -->
@@ -168,24 +168,24 @@
                             <span class="text-lg font-semibold">{{ config('app.name') }}</span>
                         </a>
                         <button @click="mobileMenuOpen = false" class="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                            <span class="sr-only">Close</span>
+                            <span class="sr-only">{{ __('Close') }}</span>
                             <x-heroicon-o-x-mark class="h-4 w-4" />
                         </button>
                     </div>
 
                     <div class="flex w-full flex-col gap-4">
-                        <a href="{{ route('dashboard') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('dashboard') ? 'text-primary' : '' }}">Dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('dashboard') ? 'text-primary' : '' }}">{{ __('Dashboard') }}</a>
 
                         <!-- Mobile Loans Accordion -->
                         <div x-data="{ expanded: {{ request()->routeIs(['loans.*', 'kits.*']) ? 'true' : 'false' }} }" class="border-b-0">
                             <button @click="expanded = !expanded" class="flex flex-1 items-center justify-between py-0 font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180 w-full text-left text-md {{ request()->routeIs(['loans.*', 'kits.*']) ? 'text-primary' : '' }}">
-                                Loans
+                                {{ __('Loans') }}
                                 <x-heroicon-o-chevron-down :class="{'rotate-180': expanded}" class="h-4 w-4 shrink-0 transition-transform duration-200" />
                             </button>
                             <div x-show="expanded" x-collapse>
                                 <div class="mt-2 flex flex-col gap-2 pl-4 border-l border-border ml-2">
-                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('loans.index') ? 'text-primary' : '' }}" href="{{ route('loans.index') }}">Loan List</a>
-                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('kits.index') ? 'text-primary' : '' }}" href="{{ route('kits.index') }}">Asset Kits</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('loans.index') ? 'text-primary' : '' }}" href="{{ route('loans.index') }}">{{ __('Loan List') }}</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('kits.index') ? 'text-primary' : '' }}" href="{{ route('kits.index') }}">{{ __('Asset Kits') }}</a>
                                 </div>
                             </div>
                         </div>
@@ -193,35 +193,35 @@
                         <!-- Mobile Products Accordion -->
                         <div x-data="{ expanded: {{ request()->routeIs('products.*') ? 'true' : 'false' }} }" class="border-b-0">
                             <button @click="expanded = !expanded" class="flex flex-1 items-center justify-between py-0 font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180 w-full text-left text-md {{ request()->routeIs('products.*') ? 'text-primary' : '' }}">
-                                Products
+                                {{ __('Products') }}
                                 <x-heroicon-o-chevron-down :class="{'rotate-180': expanded}" class="h-4 w-4 shrink-0 transition-transform duration-200" />
                             </button>
                             <div x-show="expanded" x-collapse>
                                 <div class="mt-2 flex flex-col gap-2 pl-4 border-l border-border ml-2">
-                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('products.index') ? 'text-primary' : '' }}" href="{{ route('products.index') }}">Products</a>
-                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('assets.*') ? 'text-primary' : '' }}" href="{{ route('assets.index') }}">Assets</a>
-                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('stocks.index') ? 'text-primary' : '' }}" href="{{ route('stocks.index') }}">Stocks</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('products.index') ? 'text-primary' : '' }}" href="{{ route('products.index') }}">{{ __('Products') }}</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('assets.*') ? 'text-primary' : '' }}" href="{{ route('assets.index') }}">{{ __('Assets') }}</a>
+                                    <a class="text-sm font-medium hover:underline py-1 {{ request()->routeIs('stocks.index') ? 'text-primary' : '' }}" href="{{ route('stocks.index') }}">{{ __('Stocks') }}</a>
                                 </div>
                             </div>
                         </div>
 
-                        <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">Categories</a>
+                        <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">{{ __('Categories') }}</a>
 
-                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
+                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">{{ __('Locations') }}</a>
 
-                        <a href="{{ route('users.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('users.*') ? 'text-primary' : '' }}">Users</a>
+                        <a href="{{ route('users.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('users.*') ? 'text-primary' : '' }}">{{ __('Users') }}</a>
 
                         <!-- Mobile User Menu -->
                         <div class="pt-4 mt-4 border-t border-border">
                             <div class="font-medium text-base text-foreground mb-2">{{ Auth::user()->name }}</div>
                             <div class="flex flex-col gap-3">
                                 <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full">
-                                    Profile
+                                    {{ __('Profile') }}
                                 </a>
                                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                                     @csrf
                                     <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 w-full">
-                                        Log Out
+                                        {{ __('Log Out') }}
                                     </button>
                                 </form>
                             </div>

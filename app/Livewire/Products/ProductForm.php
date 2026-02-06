@@ -91,6 +91,23 @@ class ProductForm extends Component
         ];
     }
 
+    public function validationAttributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'code' => __('Code'),
+            'description' => __('Description'),
+            'type' => __('Type'),
+            'category_id' => __('Category'),
+            'can_be_loaned' => __('Loanable'),
+        ];
+    }
+
+    public function generateCode(ProductService $service): void
+    {
+        $this->code = $service->generateCode();
+    }
+
     public function save(ProductService $service): void
     {
         $this->validate();
@@ -107,10 +124,10 @@ class ProductForm extends Component
         try {
             if ($this->isEditing && $this->product) {
                 $service->updateProduct($this->product, $data);
-                $message = 'Product updated successfully.';
+                $message = __('Product updated successfully.');
             } else {
                 $service->createProduct($data);
-                $message = 'Product created successfully.';
+                $message = __('Product created successfully.');
             }
 
             $this->dispatch('close-modal', name: 'product-form-modal');
@@ -119,7 +136,7 @@ class ProductForm extends Component
         } catch (ProductException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         } catch (\Throwable $e) {
-            $this->dispatch('toast', message: 'An unexpected error occurred.', type: 'error');
+            $this->dispatch('toast', message: __('An unexpected error occurred.'), type: 'error');
         }
     }
 }

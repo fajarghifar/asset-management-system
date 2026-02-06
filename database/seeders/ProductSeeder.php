@@ -16,24 +16,25 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        $categories = Category::all()->pluck('id', 'slug');
+        $categories = Category::all()->pluck('id', 'name');
 
         if ($categories->isEmpty()) {
             throw new \Exception("❌ ERROR: Categories empty. Run CategorySeeder first!");
         }
 
-        $getCatId = fn($slug) => $categories[$slug]
-            ?? throw new \Exception("❌ ERROR: Slug '$slug' not found in database.");
+        $getCatId = fn($name) => $categories[$name]
+            ?? throw new \Exception("❌ ERROR: Category '$name' not found in database.");
 
         // Define Category Map
         $catMap = [
-            'TOOLS' => $getCatId('peralatan-kerja'),
-            'TEST' => $getCatId('peralatan-kerja'),
-            'NET' => $getCatId('perangkat-jaringan'),
-            'COMP' => $getCatId('komputer-laptop'),
-            'PERI' => $getCatId('aksesoris-komputer'),
-            'POWR' => $getCatId('aksesoris-komputer'),
-            'MAINT' => $getCatId('suku-cadang'),
+            'TOOLS' => $getCatId('Peralatan Kerja'),
+            'TEST' => $getCatId('Peralatan Kerja'),
+            'NET' => $getCatId('Perangkat Jaringan'),
+            'CCTV' => $getCatId('Keamanan & CCTV'),
+            'COMP' => $getCatId('Komputer & Laptop'),
+            'PERI' => $getCatId('Aksesoris Komputer'),
+            'POWR' => $getCatId('Aksesoris Komputer'),
+            'MAINT' => $getCatId('Suku Cadang'),
         ];
 
         DB::transaction(function () use ($catMap) {

@@ -10,8 +10,8 @@ enum ProductType: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::Asset => 'Asset',
-            self::Consumable => 'Consumable',
+            self::Asset => __('Asset'),
+            self::Consumable => __('Consumable'),
         };
     }
 

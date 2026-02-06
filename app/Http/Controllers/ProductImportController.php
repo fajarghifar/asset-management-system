@@ -88,7 +88,7 @@ class ProductImportController extends Controller
 
                     if ($validator->fails()) {
                         $stats['failed']++;
-                        $stats['errors'][] = "Row {$rowIndex}: " . implode(', ', $validator->errors()->all());
+                        $stats['errors'][] = __("Row :row: :message", ['row' => $rowIndex, 'message' => implode(', ', $validator->errors()->all())]);
                         continue;
                     }
 
@@ -121,14 +121,18 @@ class ProductImportController extends Controller
             DB::commit();
             $reader->close();
 
-            $message = "Import completed. Imported: {$stats['imported']}, Skipped: {$stats['skipped']}, Failed: {$stats['failed']}.";
+            $message = __("Import completed. Imported: :imported, Skipped: :skipped, Failed: :failed.", [
+                'imported' => $stats['imported'],
+                'skipped' => $stats['skipped'],
+                'failed' => $stats['failed'],
+            ]);
 
             if (!empty($stats['errors'])) {
                 // Log detailed errors or show them?
                 // For now, let's flash a few errors if any
                 Log::warning('Import Errors', $stats['errors']);
                 if (count($stats['errors']) > 0) {
-                    $message .= " Check logs for details. First error: " . $stats['errors'][0];
+                    $message .= __(" Check logs for details. First error: :error", ['error' => $stats['errors'][0]]);
                 }
             }
 
@@ -138,7 +142,7 @@ class ProductImportController extends Controller
             DB::rollBack();
             $reader->close();
             Log::error('Import Failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Import failed: ' . $e->getMessage());
+            return back()->with('error', __("Import failed: :message", ['message' => $e->getMessage()]));
         }
     }
 }
