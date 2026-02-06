@@ -6,11 +6,11 @@
                 <div class="mb-6 space-y-1.5 text-center sm:text-left">
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                            Location Details
+                            {{ __('Location Details') }}
                         </h3>
                     </div>
                     <p class="text-sm text-muted-foreground">
-                        Detailed information about the location {{ $location->code }}.
+                        {{ __('Detailed information about the location :code.', ['code' => $location->code]) }}
                     </p>
                 </div>
 
@@ -19,14 +19,14 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Code
+                                {{ __('Code') }}
                             </label>
                             <p class="text-sm text-muted-foreground">{{ $location->code }}</p>
                         </div>
 
                         <div class="space-y-1">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Site
+                                {{ __('Site') }}
                             </label>
                             <p class="text-sm text-muted-foreground">{{ $location->site }}</p>
                         </div>
@@ -35,7 +35,7 @@
                     <!-- Name -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Name
+                            {{ __('Name') }}
                         </label>
                         <p class="text-sm text-foreground">{{ $location->name }}</p>
                     </div>
@@ -43,7 +43,7 @@
                     <!-- Description -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Description
+                            {{ __('Description') }}
                         </label>
                         <p class="text-sm text-muted-foreground leading-relaxed">
                             {{ $location->description ?? '-' }}
@@ -53,7 +53,7 @@
                     <!-- Created At -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Created At
+                            {{ __('Created At') }}
                         </label>
                         <p class="text-sm text-muted-foreground">{{ $location->created_at->format('d M Y') }}</p>
                     </div>

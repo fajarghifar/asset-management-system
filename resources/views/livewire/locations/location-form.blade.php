@@ -4,10 +4,10 @@
             <!-- Custom Header -->
             <div class="mb-6 space-y-1.5 text-center sm:text-left">
                 <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                    {{ $isEditing ? 'Edit Location' : 'Create Location' }}
+                    {{ $isEditing ? __('Edit Location') : __('Create Location') }}
                 </h3>
                 <p class="text-sm text-muted-foreground">
-                    {{ $isEditing ? 'Make changes to your location here. Click save when you\'re done.' : 'Add a new location to your workspace. Click save when you\'re done.' }}
+                    {{ $isEditing ? __('Make changes to your location here. Click save when you\'re done.') : __('Add a new location to your workspace. Click save when you\'re done.') }}
                 </p>
             </div>
 
@@ -16,8 +16,8 @@
                     <!-- Code -->
                     <x-form-input
                         name="code"
-                        label="Code"
-                        placeholder="e.g. JMP2.RIT, JMP2.RMEET"
+                        label="{{ __('Code') }}"
+                        placeholder="{{ __('e.g. JMP2.RIT, JMP2.RMEET') }}"
                         required
                         wire:model="code"
                     />
@@ -25,32 +25,32 @@
                     <!-- Site (Searchable) -->
                     <x-searchable-select
                         name="site"
-                        label="Site"
+                        label="{{ __('Site') }}"
                         :options="$sites"
                         wire:model="site"
                         required
-                        placeholder="Select or search a site..."
+                        placeholder="{{ __('Select or search a site...') }}"
                     />
                 </div>
 
                 <!-- Name -->
                 <x-form-input
                     name="name"
-                    label="Name"
-                    placeholder="e.g. IT Room"
+                    label="{{ __('Name') }}"
+                    placeholder="{{ __('e.g. IT Room') }}"
                     required
                     wire:model="name"
                 />
 
                 <!-- Description -->
                 <div>
-                    <x-input-label for="description" value="Description" />
+                    <x-input-label for="description" :value="__('Description')" />
                     <textarea
                         id="description"
                         wire:model="description"
                         rows="3"
                         class="mt-1 block w-full rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
-                        placeholder="Optional description..."
+                        placeholder="{{ __('Optional description...') }}"
                     ></textarea>
                     <x-input-error :messages="$errors->get('description')" class="mt-2" />
                 </div>

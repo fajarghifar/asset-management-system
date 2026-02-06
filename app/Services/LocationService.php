@@ -48,11 +48,11 @@ class LocationService
         DB::transaction(function () use ($location) {
             try {
                 if ($location->assets()->exists()) {
-                    throw LocationException::inUse("Cannot delete location '{$location->name}' because it has associated assets.");
+                    throw LocationException::inUse(__("Cannot delete location ':name' because it has associated assets.", ['name' => $location->name]));
                 }
 
                 if ($location->consumableStocks()->exists()) {
-                    throw LocationException::inUse("Cannot delete location '{$location->name}' because it has associated consumable stocks.");
+                    throw LocationException::inUse(__("Cannot delete location ':name' because it has associated consumable stocks.", ['name' => $location->name]));
                 }
 
                 $location->delete();

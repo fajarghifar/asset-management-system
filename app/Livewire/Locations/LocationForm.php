@@ -56,10 +56,10 @@ class LocationForm extends Component
     public function validationAttributes(): array
     {
         return [
-            'code' => 'Location Code',
-            'site' => 'Site',
-            'name' => 'Location Name',
-            'description' => 'Description',
+            'code' => __('Code'),
+            'site' => __('Site'),
+            'name' => __('Name'),
+            'description' => __('Description'),
         ];
     }
 
@@ -105,10 +105,10 @@ class LocationForm extends Component
         try {
             if ($this->isEditing && $this->location) {
                 $service->updateLocation($this->location, $data);
-                $message = 'Location updated successfully.';
+                $message = __('Location updated successfully.');
             } else {
                 $service->createLocation($data);
-                $message = 'Location created successfully.';
+                $message = __('Location created successfully.');
             }
 
             $this->dispatch('close-modal', name: 'location-form-modal');
@@ -119,7 +119,7 @@ class LocationForm extends Component
         } catch (LocationException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         } catch (\Throwable $e) {
-            $this->dispatch('toast', message: 'An unexpected error occurred.', type: 'error');
+            $this->dispatch('toast', message: __('An unexpected error occurred.'), type: 'error');
         }
     }
 }
