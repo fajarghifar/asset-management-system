@@ -230,7 +230,7 @@
 
                     <div class="w-64">
                         <x-searchable-select
-                            :url="route('ajax.locations')"
+                            :url="route('api.locations.search')"
                             placeholder="Priority Loc (Opt)..."
                             x-model="locId"
                             @option-selected="locId = $event.detail.value"

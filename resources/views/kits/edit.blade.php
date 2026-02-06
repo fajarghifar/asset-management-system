@@ -1,4 +1,4 @@
-<x-app-layout title="Edit Kit">
+<x-app-layout title="{{ __('Edit Kit') }}">
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
@@ -6,7 +6,7 @@
             </h2>
             <x-secondary-button href="{{ route('kits.index') }}" tag="a">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                Back to List
+                {{ __('Back to List') }}
             </x-secondary-button>
         </div>
     </x-slot>

@@ -1,4 +1,4 @@
-<x-app-layout title="Create Kit">
+<x-app-layout title="{{ __('Create Kit') }}">
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
@@ -6,7 +6,7 @@
             </h2>
             <x-secondary-button href="{{ route('kits.index') }}" tag="a">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                Back to List
+                {{ __('Back to List') }}
             </x-secondary-button>
         </div>
     </x-slot>
@@ -16,8 +16,8 @@
             <div class="bg-card text-card-foreground shadow-sm sm:rounded-lg border border-border p-6">
                 <!-- Header -->
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium leading-6 text-foreground">Kit Information</h3>
-                    <p class="mt-1 text-sm text-muted-foreground">Define a new kit and its components.</p>
+                    <h3 class="text-lg font-medium leading-6 text-foreground">{{ __('Kit Information') }}</h3>
+                    <p class="mt-1 text-sm text-muted-foreground">{{ __('Define a new kit and its components.') }}</p>
                 </div>
 
                 @include('kits.form')

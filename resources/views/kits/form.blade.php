@@ -126,7 +126,7 @@
                     x-model="form.is_active"
                     class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 >
-                <label for="is_active" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Active</label>
+                <label for="is_active" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{{ __('Active') }}</label>
             </div>
         </div>
 
@@ -146,10 +146,10 @@
     <!-- Items -->
     <div class="space-y-4">
         <div class="flex justify-between items-center">
-            <h3 class="text-lg font-medium text-foreground">Kit Items</h3>
+            <h3 class="text-lg font-medium text-foreground">{{ __('Kit Items') }}</h3>
             <x-secondary-button @click="addItem()" type="button">
                 <x-heroicon-o-plus class="w-4 h-4 mr-2" />
-                Add Product
+                {{ __('Add Product') }}
             </x-secondary-button>
         </div>
 
@@ -157,11 +157,11 @@
             <table class="w-full text-sm text-left">
                 <thead class="bg-muted text-muted-foreground uppercase text-xs">
                     <tr>
-                        <th class="px-4 py-3 min-w-[200px]">Product / Asset</th>
-                        <th class="px-4 py-3 min-w-[200px]">Location (Optional)</th>
-                        <th class="px-4 py-3 w-24">Qty</th>
-                        <th class="px-4 py-3">Notes</th>
-                        <th class="px-4 py-3 w-16 text-center">Action</th>
+                        <th class="px-4 py-3 min-w-[200px]">{{ __('Product / Asset') }}</th>
+                        <th class="px-4 py-3 min-w-[200px]">{{ __('Location (Optional)') }}</th>
+                        <th class="px-4 py-3 w-24">{{ __('Qty') }}</th>
+                        <th class="px-4 py-3">{{ __('Notes') }}</th>
+                        <th class="px-4 py-3 w-16 text-center">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
@@ -171,26 +171,26 @@
                             <input type="hidden" :name="`items[${index}][location_id]`" :value="item.location_id">
 
                             <td class="px-4 py-3 align-top">
-                                <x-searchable-select
-                                    :url="route('ajax.products')"
-                                    placeholder="Search Product..."
+                                <x-tom-select
+                                    :url="route('api.products.search') . '?type=all'"
+                                    placeholder="{{ __('Search Product...') }}"
                                     x-model="item.product_id"
-                                    x-init="$watch('item.product_label', v => query = v); query = item.product_label"
-                                    input-class="h-9 w-full"
+                                    class="w-full"
+                                    x-bind:data-initial-label="item.product_label"
                                     @option-selected="handleProductSelect(index, $event.detail)"
                                 />
                             </td>
 
                             <td class="px-4 py-3 align-top">
-                                <x-searchable-select
-                                    :url="route('ajax.locations')"
-                                    placeholder="Select Location"
+                                <x-tom-select
+                                    :url="route('api.locations.search')"
+                                    placeholder="{{ __('Select Location') }}"
                                     x-model="item.location_id"
-                                    x-init="$watch('item.location_label', v => query = v); query = item.location_label"
-                                    input-class="h-9 w-full"
+                                    class="w-full"
+                                    x-bind:data-initial-label="item.location_label"
                                     @option-selected="
                                         item.location_id = $event.detail.value;
-                                        item.location_label = $event.detail.item.label;
+                                        item.location_label = $event.detail.item.text;
                                     "
                                 />
                             </td>
@@ -213,7 +213,7 @@
                                     :name="`items[${index}][notes]`"
                                     x-model="item.notes"
                                     class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Optional notes"
+                                    placeholder="{{ __('Optional notes') }}"
                                 />
                             </td>
 
@@ -228,7 +228,7 @@
             </table>
              <template x-if="form.items.length === 0">
                  <div class="px-4 py-8 text-center text-muted-foreground">
-                    No items defined. Click "Add Product" to start building this kit.
+                    {{ __('No items defined. Click "Add Product" to start building this kit.') }}
                 </div>
             </template>
         </div>
@@ -237,11 +237,11 @@
     <!-- Actions -->
     <div class="flex items-center justify-end gap-4 pt-4 border-t border-border">
         <x-secondary-button tag="a" href="{{ route('kits.index') }}">
-            Cancel
+            {{ __('Cancel') }}
         </x-secondary-button>
         <x-primary-button type="submit">
             <x-heroicon-o-check class="w-4 h-4 mr-2" />
-            {{ $isEdit ? 'Update Kit' : 'Create Kit' }}
+            {{ $isEdit ? __('Update Kit') : __('Create Kit') }}
         </x-primary-button>
     </div>
 </form>
@@ -280,7 +280,7 @@
             handleProductSelect(index, details) {
                 const item = this.form.items[index];
                 item.product_id = details.value;
-                item.product_label = details.item.label;
+                item.product_label = details.item.text;
                 item.product_type = details.item.type; // Set type from search result
 
                 // Handle Asset Quantity Lock

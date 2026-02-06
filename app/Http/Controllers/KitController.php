@@ -31,7 +31,7 @@ class KitController extends Controller
         $data = KitData::fromArray($request->validated());
         $this->kitService->createKit($data);
 
-        return redirect()->route('kits.index')->with('success', 'Kit created successfully.');
+        return redirect()->route('kits.index')->with('success', __('Kit created successfully.'));
     }
 
     public function show(Kit $kit)
@@ -52,13 +52,13 @@ class KitController extends Controller
         $data = KitData::fromArray($request->validated());
         $this->kitService->updateKit($kit, $data);
 
-        return redirect()->route('kits.index')->with('success', 'Kit updated successfully.');
+        return redirect()->route('kits.index')->with('success', __('Kit updated successfully.'));
     }
 
     public function destroy(Kit $kit)
     {
         $this->kitService->deleteKit($kit);
-        return redirect()->route('kits.index')->with('success', 'Kit deleted successfully.');
+        return redirect()->route('kits.index')->with('success', __('Kit deleted successfully.'));
     }
 
     /**

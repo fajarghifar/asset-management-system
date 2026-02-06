@@ -15,29 +15,8 @@ use Illuminate\Http\JsonResponse;
 
 class SearchController extends Controller
 {
-    public function products(Request $request): JsonResponse
-    {
-        $search = $request->query('q');
-
-        if (!$search) {
-            return response()->json([]);
-        }
-
-        $results = Product::query()
-            ->where('name', 'like', "%{$search}%")
-            ->orWhere('code', 'like', "%{$search}%")
-            ->take(10)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'value' => $item->id,
-                    'label' => "{$item->name} ({$item->code})",
-                    'type' => $item->type->value,
-                ];
-            });
-
-        return response()->json($results);
-    }
+    // products logic moved to Api\ProductController
+    // public function products(Request $request): JsonResponse { ... }
 
     public function productLocations(Request $request): JsonResponse
     {
@@ -69,49 +48,15 @@ class SearchController extends Controller
                 : $item->site;
             return [
                 'value' => $item->id,
-                'label' => "{$siteLabel} - {$item->name}",
+                'text' => "{$siteLabel} - {$item->name}",
             ];
         });
 
         return response()->json($results);
     }
 
-    public function locations(Request $request): JsonResponse
-    {
-        $search = $request->query('q');
-
-        if (!$search) {
-            return response()->json([]);
-        }
-
-        // Try to match Site Enum labels
-        $siteEnum = LocationSite::cases();
-        $matchedSites = [];
-        foreach ($siteEnum as $site) {
-            if (stripos($site->getLabel(), $search) !== false) {
-                $matchedSites[] = $site->value;
-            }
-        }
-
-        $results = Location::query()
-            ->where('name', 'like', "%{$search}%")
-            ->orWhereIn('site', $matchedSites)
-            ->take(10)
-            ->get()
-            ->map(function ($item) {
-                // Determine site label
-                $siteLabel = $item->site instanceof LocationSite
-                    ? $item->site->getLabel()
-                    : $item->site;
-
-                return [
-                    'value' => $item->id,
-                    'label' => "{$siteLabel} - {$item->name}",
-                ];
-            });
-
-        return response()->json($results);
-    }
+    // locations logic moved to Api\LocationController
+    // public function locations(Request $request): JsonResponse { ... }
 
     public function assets(Request $request): JsonResponse
     {

@@ -42,8 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/kits/{kit}/resolve', [KitController::class, 'resolve'])->name('kits.resolve');
 
     // Search Routes (AJAX)
-    Route::get('/ajax/products', [SearchController::class, 'products'])->name('ajax.products');
-    Route::get('/ajax/locations', [SearchController::class, 'locations'])->name('ajax.locations');
+    // ajax.products & ajax.locations replaced by API routes
     Route::get('/ajax/kits', [SearchController::class, 'kits'])->name('ajax.kits');
     Route::get('/ajax/assets', [SearchController::class, 'assets'])->name('ajax.assets');
     Route::get('/ajax/stocks', [SearchController::class, 'stocks'])->name('ajax.stocks');

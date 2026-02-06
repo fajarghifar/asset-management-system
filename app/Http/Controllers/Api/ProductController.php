@@ -16,15 +16,17 @@ class ProductController extends Controller
 
         return Product::query()
             ->when($type, function ($query, $type) {
-                return $query->where('type', $type);
+                if ($type !== 'all') {
+                    return $query->where('type', $type);
+                }
+                return $query;
             }, function ($query) {
                 // Default to Consumable if no type specified (backward compatibility)
                 return $query->where('type', ProductType::Consumable);
             })
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('code', 'like', "%{$search}%");
+                    $q->where('name', 'like', "%{$search}%");
                 });
             })
             ->orderBy('name')
@@ -34,6 +36,7 @@ class ProductController extends Controller
                 return [
                     'value' => $product->id,
                     'text' => $product->name,
+                    'type' => $product->type->value,
                 ];
             });
     }
