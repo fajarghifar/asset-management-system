@@ -36,7 +36,7 @@ class LocationException extends Exception
         return new self(__("Failed to delete location: System error occurred."), 500, $previous);
     }
 
-    public static function inUse(string $message = null): self
+    public static function inUse(?string $message = null): self
     {
         return new self($message ?? __("Location is currently in use and cannot be deleted."), 409);
     }
