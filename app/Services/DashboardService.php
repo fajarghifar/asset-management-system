@@ -85,7 +85,7 @@ class DashboardService
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $monthKey = $date->format('Y-m');
-            $labels[] = $date->format('F Y');
+            $labels[] = $date->translatedFormat('F Y');
 
             $record = $loans->firstWhere('new_date', $monthKey);
             $data[] = $record ? $record->total : 0;

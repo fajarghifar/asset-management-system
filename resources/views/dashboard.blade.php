@@ -13,7 +13,7 @@
                 <!-- Total Assets -->
                 <div class="bg-card text-card-foreground p-4 rounded-lg shadow-sm border border-border">
                     <div class="flex flex-col">
-                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Assets</span>
+                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ __('Total Assets') }}</span>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-bold">{{ number_format($stats['total_assets']) }}</span>
                             <x-heroicon-o-cube class="w-4 h-4 text-blue-500" />
@@ -24,7 +24,7 @@
                 <!-- Maintenance -->
                 <div class="bg-card text-card-foreground p-4 rounded-lg shadow-sm border border-border">
                     <div class="flex flex-col">
-                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Under Maintenance</span>
+                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ __('Under Maintenance') }}</span>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-bold">{{ number_format($stats['maintenance_assets']) }}</span>
                             <x-heroicon-o-wrench-screwdriver class="w-4 h-4 text-purple-500" />
@@ -35,7 +35,7 @@
                 <!-- Active Loans -->
                 <div class="bg-card text-card-foreground p-4 rounded-lg shadow-sm border border-border">
                     <div class="flex flex-col">
-                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Loans</span>
+                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ __('Active Loans') }}</span>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-bold">{{ number_format($stats['active_loans']) }}</span>
                             <x-heroicon-o-clipboard-document-list class="w-4 h-4 text-amber-500" />
@@ -46,7 +46,7 @@
                 <!-- Pending Loans -->
                 <div class="bg-card text-card-foreground p-4 rounded-lg shadow-sm border border-border">
                     <div class="flex flex-col">
-                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending Requests</span>
+                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ __('Pending Requests') }}</span>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-bold">{{ number_format($stats['pending_loans']) }}</span>
                             <x-heroicon-o-clock class="w-4 h-4 text-sky-500" />
@@ -57,7 +57,7 @@
                 <!-- Overdue Loans -->
                 <div class="bg-card text-card-foreground p-4 rounded-lg shadow-sm border border-border">
                     <div class="flex flex-col">
-                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider text-red-600">Overdue Loans</span>
+                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider text-red-600">{{ __('Overdue Loans') }}</span>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-bold text-red-600">{{ number_format($stats['overdue_loans']) }}</span>
                             <x-heroicon-o-exclamation-circle class="w-4 h-4 text-red-600" />
@@ -68,7 +68,7 @@
                 <!-- Low Stock -->
                 <div class="bg-card text-card-foreground p-4 rounded-lg shadow-sm border border-border">
                     <div class="flex flex-col">
-                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider text-red-500">Low Stock Items</span>
+                        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider text-red-500">{{ __('Low Stock Items') }}</span>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-bold text-red-500">{{ number_format($stats['low_stock_count']) }}</span>
                             <x-heroicon-o-exclamation-triangle class="w-4 h-4 text-red-500" />
@@ -81,7 +81,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Loan Status Distribution (Doughnut) -->
                 <div class="lg:col-span-1 bg-card text-card-foreground p-6 rounded-lg shadow-sm border border-border flex flex-col">
-                    <h3 class="text-lg font-semibold mb-4">Loan Status Breakdown</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ __('Loan Status Breakdown') }}</h3>
                     <div class="relative flex-1 min-h-[250px]"> <!-- Ensure height -->
                         <canvas id="loanStatusChart"></canvas>
                     </div>
@@ -89,7 +89,7 @@
 
                 <!-- Asset Status Distribution (Doughnut) -->
                 <div class="lg:col-span-1 bg-card text-card-foreground p-6 rounded-lg shadow-sm border border-border flex flex-col">
-                    <h3 class="text-lg font-semibold mb-4">Asset Status Breakdown</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ __('Asset Status Breakdown') }}</h3>
                     <div class="relative flex-1 min-h-[250px]">
                         <canvas id="assetStatusChart"></canvas>
                     </div>
@@ -97,7 +97,7 @@
 
                 <!-- Loans Trend (Line Chart for variety) -->
                 <div class="lg:col-span-1 bg-card text-card-foreground p-6 rounded-lg shadow-sm border border-border flex flex-col">
-                    <h3 class="text-lg font-semibold mb-4">Loan Requests Trend</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ __('Loan Requests Trend') }}</h3>
                     <div class="relative flex-1 min-h-[250px]">
                         <canvas id="loanTrendChart"></canvas>
                     </div>
@@ -105,21 +105,21 @@
             </div>
 
             <!-- Secondary Grid: Recent Activity & Low Stock List -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-6">
                 <!-- Recent Activity -->
                 <div class="bg-card text-card-foreground rounded-lg shadow-sm border border-border overflow-hidden">
                     <div class="p-6 border-b border-border">
-                        <h3 class="text-lg font-semibold">Recent Activity</h3>
+                        <h3 class="text-lg font-semibold">{{ __('Recent Activity') }}</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-muted text-muted-foreground text-xs uppercase">
                                 <tr>
-                                    <th class="px-6 py-3">Code</th>
-                                    <th class="px-6 py-3">Borrower</th>
-                                    <th class="px-6 py-3">Status</th>
-                                    <th class="px-6 py-3 text-right">Time</th>
-                                    <th class="px-6 py-3 text-center">Action</th>
+                                    <th class="px-6 py-3">{{ __('Code') }}</th>
+                                    <th class="px-6 py-3">{{ __('Borrower') }}</th>
+                                    <th class="px-6 py-3">{{ __('Status') }}</th>
+                                    <th class="px-6 py-3 text-right">{{ __('Time') }}</th>
+                                    <th class="px-6 py-3 text-center">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
@@ -128,10 +128,16 @@
                                         <td class="px-6 py-4 font-medium text-xs">{{ $loan->code }}</td>
                                         <td class="px-6 py-4 font-medium">{{ $loan->borrower_name }}</td>
                                         <td class="px-6 py-4">
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                                                {{ $loan->status === \App\Enums\LoanStatus::Approved ? 'bg-green-100 text-green-800' :
-                                                    ($loan->status === \App\Enums\LoanStatus::Pending ? 'bg-yellow-100 text-yellow-800' :
-                                                    ($loan->status === \App\Enums\LoanStatus::Overdue ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) }}">
+                                            @php
+                                                $colorClasses = match($loan->status) {
+                                                    \App\Enums\LoanStatus::Approved => 'bg-green-100 text-green-800',
+                                                    \App\Enums\LoanStatus::Pending => 'bg-yellow-100 text-yellow-800',
+                                                    \App\Enums\LoanStatus::Rejected, \App\Enums\LoanStatus::Overdue => 'bg-red-100 text-red-800',
+                                                    \App\Enums\LoanStatus::Closed => 'bg-gray-100 text-gray-800',
+                                                    default => 'bg-gray-100 text-gray-800',
+                                                };
+                                            @endphp
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $colorClasses }}">
                                                 {{ $loan->status->getLabel() }}
                                             </span>
                                         </td>
@@ -139,14 +145,14 @@
                                             {{ $loan->created_at->diffForHumans() }}
                                         </td>
                                         <td class="px-6 py-4 text-center">
-                                            <a href="{{ route('loans.show', $loan) }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="View Details">
+                                            <a href="{{ route('loans.show', $loan) }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="{{ __('View Details') }}">
                                                 <x-heroicon-o-eye class="w-5 h-5 mx-auto" />
                                             </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-muted-foreground">No recent activity.</td>
+                                        <td colspan="5" class="px-6 py-4 text-center text-muted-foreground">{{ __('No recent activity.') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -157,20 +163,20 @@
                 <!-- Low Stock Items -->
                 <div class="bg-card text-card-foreground rounded-lg shadow-sm border border-border overflow-hidden">
                     <div class="p-6 border-b border-border flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-red-600 dark:text-red-400">Low Stock Alerts</h3>
+                        <h3 class="text-lg font-semibold text-red-600 dark:text-red-400">{{ __('Low Stock Alerts') }}</h3>
                         @if($stats['low_stock_count'] > 0)
-                            <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ $stats['low_stock_count'] }} Items</span>
+                            <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ $stats['low_stock_count'] }} {{ __('Items') }}</span>
                         @endif
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-muted text-muted-foreground text-xs uppercase">
                                 <tr>
-                                    <th class="px-6 py-3">Product</th>
-                                    <th class="px-6 py-3">Location</th>
-                                    <th class="px-6 py-3 text-center">Qty</th>
-                                    <th class="px-6 py-3 text-center">Min. Stock</th>
-                                    <th class="px-6 py-3 text-center">Action</th>
+                                    <th class="px-6 py-3">{{ __('Product') }}</th>
+                                    <th class="px-6 py-3">{{ __('Location') }}</th>
+                                    <th class="px-6 py-3 text-center">{{ __('Qty') }}</th>
+                                    <th class="px-6 py-3 text-center">{{ __('Min. Stock') }}</th>
+                                    <th class="px-6 py-3 text-center">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
@@ -183,14 +189,14 @@
                                         <td class="px-6 py-4 text-center font-bold text-red-600">{{ $stock->quantity }}</td>
                                         <td class="px-6 py-4 text-center text-muted-foreground">{{ $stock->min_quantity }}</td>
                                         <td class="px-6 py-4 text-center">
-                                            <a href="{{ route('products.index') }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="View Products">
+                                            <a href="{{ route('products.index') }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="{{ __('View Products') }}">
                                                 <x-heroicon-o-eye class="w-5 h-5 mx-auto" />
                                             </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-green-600 font-medium">All stock levels are healthy!</td>
+                                        <td colspan="5" class="px-6 py-4 text-center text-green-600 font-medium">{{ __('All stock levels are healthy!') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>
