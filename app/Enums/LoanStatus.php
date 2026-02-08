@@ -13,11 +13,11 @@ enum LoanStatus: string
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Pending => 'Pending',
-            self::Approved => 'Approved',
-            self::Rejected => 'Rejected',
-            self::Closed => 'Closed',
-            self::Overdue => 'Overdue',
+            self::Pending => __('Pending'),
+            self::Approved => __('Approved'),
+            self::Rejected => __('Rejected'),
+            self::Closed => __('Closed'),
+            self::Overdue => __('Overdue'),
         };
     }
 

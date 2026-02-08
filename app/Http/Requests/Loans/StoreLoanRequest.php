@@ -48,4 +48,21 @@ class StoreLoanRequest extends FormRequest
             'items.*.quantity_borrowed' => ['required', 'integer', 'min:1'],
         ];
     }
+    public function attributes(): array
+    {
+        return [
+            'user_id' => __('User'),
+            'borrower_name' => __('Borrower Name'),
+            'purpose' => __('Purpose of Loan'),
+            'loan_date' => __('Loan Date'),
+            'due_date' => __('Due Date'),
+            'notes' => __('Notes'),
+            'proof_image' => __('Proof Image'),
+            'items' => __('Loan Items'),
+            'items.*.type' => __('Item Type'),
+            'items.*.asset_id' => __('Asset'),
+            'items.*.consumable_stock_id' => __('Consumable Stock'),
+            'items.*.quantity_borrowed' => __('Quantity'),
+        ];
+    }
 }

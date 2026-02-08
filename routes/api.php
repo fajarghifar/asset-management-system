@@ -26,3 +26,5 @@ Route::prefix('products')->name('api.products.')->group(function () {
 Route::prefix('locations')->name('api.locations.')->group(function () {
     Route::get('/search', [LocationController::class, 'search'])->name('search');
 });
+
+Route::get('/loans/items/search', App\Http\Controllers\Api\LoanItemSearchController::class)->name('api.loans.items.search');

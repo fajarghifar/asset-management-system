@@ -38,4 +38,20 @@ class UpdateLoanRequest extends FormRequest
             'items.*.notes' => ['nullable', 'string'],
         ];
     }
+    public function attributes(): array
+    {
+        return [
+            'borrower_name' => __('Borrower Name'),
+            'purpose' => __('Purpose of Loan'),
+            'loan_date' => __('Loan Date'),
+            'due_date' => __('Due Date'),
+            'notes' => __('Notes'),
+            'items' => __('Loan Items'),
+            'items.*.type' => __('Item Type'),
+            'items.*.asset_id' => __('Asset'),
+            'items.*.consumable_stock_id' => __('Consumable Stock'),
+            'items.*.quantity_borrowed' => __('Quantity'),
+            'items.*.notes' => __('Notes'),
+        ];
+    }
 }

@@ -7,11 +7,11 @@
             <div class="flex items-center gap-2">
                 <x-secondary-button href="{{ route('loans.index') }}" tag="a">
                     <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                    Back to List
+                    {{ __('Back to List') }}
                 </x-secondary-button>
                 <x-primary-button href="{{ route('loans.show', $loan) }}" tag="a">
                     <x-heroicon-o-eye class="w-4 h-4 mr-2" />
-                    View Details
+                    {{ __('View Details') }}
                 </x-primary-button>
             </div>
         </div>

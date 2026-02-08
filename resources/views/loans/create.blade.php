@@ -6,7 +6,7 @@
             </h2>
             <x-secondary-button href="{{ route('loans.index') }}" tag="a">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                Back to List
+                {{ __('Back to List') }}
             </x-secondary-button>
         </div>
     </x-slot>

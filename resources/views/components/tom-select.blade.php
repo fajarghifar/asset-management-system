@@ -18,9 +18,12 @@
                 this.$nextTick(() => {
                     if (this.tom || this.$el.tomselect) return;
 
+                    // Handle Initial Search (Unresolved Items) - Prepare Data
+                    const initialSearch = this.$el.getAttribute('data-initial-search');
+
                     let config = {
                         items: this.value ? [this.value] : [],
-                        placeholder: '{{ $placeholder }}',
+                        placeholder: (initialSearch && !this.value) ? initialSearch : '{{ $placeholder }}',
                         valueField: 'value',
                         labelField: 'text',
                         searchField: ['text'],
@@ -39,6 +42,12 @@
                         },
                         onItemRemove: (value) => {
                             this.value = null;
+                            if (initialSearch) {
+                                // If removed, revert placeholder to the initial product name
+                                // We can't easily change config.placeholder on the fly without plugin access,
+                                // but TomSelect usually reverts to original placeholder if empty.
+                                // Since we initialized with dynamic placeholder, it should persist.
+                            }
                         },
                         onClear: () => {
                             this.value = null;
@@ -54,8 +63,34 @@
 
                     if ('{{ $url }}') {
                         config.load = (query, callback) => {
-                            const url = '{{ $url }}' + ( '{{ $url }}'.includes('?') ? '&' : '?' ) + 'q=' + encodeURIComponent(query);
-                            fetch(url)
+                            let url = '{{ $url }}' + ( '{{ $url }}'.includes('?') ? '&' : '?' ) + 'q=' + encodeURIComponent(query);
+
+                            // Check for dynamic params
+                            const dataParams = this.$el.getAttribute('data-params');
+                            if (dataParams) {
+                                try {
+                                    const params = JSON.parse(dataParams);
+                                    const queryString = new URLSearchParams(params).toString();
+                                    url += '&' + queryString;
+                                } catch (e) {
+                                    console.error('Invalid data-params JSON', e);
+                                }
+                            }
+
+                            // Get CSRF Token
+                            const csrfToken = document.cookie
+                                .split('; ')
+                                .find(row => row.startsWith('XSRF-TOKEN='))
+                                ?.split('=')[1];
+
+                            fetch(url, {
+                                credentials: 'include',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-XSRF-TOKEN': decodeURIComponent(csrfToken || '')
+                                }
+                            })
                                 .then(response => {
                                     if (!response.ok) throw new Error('Network response was not ok');
                                     return response.json();
@@ -75,9 +110,20 @@
                         };
                     }
 
-                    if (!this.$el.tomselect) {
-                        this.tom = new TomSelect(this.$el, config);
-                    }
+                    this.tom = new TomSelect(this.$el, config);
+
+                    // Handle Initial Search (Unresolved Items) - Search on Focus
+                    this.tom.on('focus', () => {
+                        // Only trigger if no value selected and search box is empty
+                        if (initialSearch && !this.value && this.tom.getValue() === '') {
+                             // Use setTimeout to ensure focus is fully handled
+                            setTimeout(() => {
+                                if (!this.tom) return;
+                                this.tom.setTextboxValue(initialSearch);
+                                this.tom.search(initialSearch);
+                            }, 50);
+                        }
+                    });
 
                     this.$watch('value', (newValue) => {
                         if (!this.tom) return;

@@ -20,8 +20,8 @@
              // ... existing edit logic ...
             $isAsset = $item->type === \App\Enums\LoanItemType::Asset;
             $productName = $isAsset
-                ? ($item->asset?->product?->name ?? 'Unknown')
-                : ($item->consumableStock?->product?->name ?? 'Unknown');
+                ? ($item->asset?->product?->name ?? __('Unknown'))
+                : ($item->consumableStock?->product?->name ?? __('Unknown'));
 
              // Construct Label: Product (Tag/Qty) (Location - Site)
             $location = $isAsset ? $item->asset?->location : $item->consumableStock?->location;
@@ -102,14 +102,14 @@
     @method($method)
 
     @if ($errors->any())
-        <div class="rounded-md bg-red-50 p-4 border border-red-200 mb-6" x-init="$dispatch('toast', { message: 'Validation failed. Please check the form.', type: 'error' })">
+        <div class="rounded-md bg-red-50 p-4 border border-red-200 mb-6" x-init="$dispatch('toast', { message: '{{ __('Validation failed. Please check the form.') }}', type: 'error' })">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <x-heroicon-s-x-circle class="h-5 w-5 text-red-400" />
                 </div>
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-red-800">
-                        There were problems with your submission:
+                        {{ __('There were problems with your submission:') }}
                     </h3>
                     <div class="mt-2 text-sm text-red-700">
                         <ul role="list" class="list-disc leading-tight pl-5 space-y-1">
@@ -126,7 +126,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Borrower -->
         <div class="space-y-4">
-            <h3 class="text-md font-medium text-foreground">Borrower Details</h3>
+            <h3 class="text-md font-medium text-foreground">{{ __('Borrower Details') }}</h3>
             <div>
                 <x-input-label for="borrower_name" :value="__('Borrower Name')" class="after:content-['*'] after:ml-0.5 after:text-red-500" />
                 <x-text-input
@@ -162,7 +162,7 @@
 
         <!-- Terms -->
         <div class="space-y-4">
-            <h3 class="text-md font-medium text-foreground">Loan Terms</h3>
+            <h3 class="text-md font-medium text-foreground">{{ __('Loan Terms') }}</h3>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <x-input-label for="loan_date" :value="__('Loan Date')" class="after:content-['*'] after:ml-0.5 after:text-red-500" />
@@ -217,36 +217,35 @@
     <!-- Items -->
     <div class="space-y-4">
         <div class="flex justify-between items-center">
-            <h3 class="text-lg font-medium text-foreground">Loan Items</h3>
+            <h3 class="text-lg font-medium text-foreground">{{ __('Loan Items') }}</h3>
             <div class="flex gap-2">
                  <!-- KIT LOADING SECTION -->
                 <div class="flex items-center gap-2" x-data="{ kitId: '', locId: '' }">
-                    <select x-model="kitId" class="h-9 w-64 rounded-md border text-sm">
-                        <option value="">Select Kit...</option>
+                    <select x-model="kitId" class="flex h-9 w-64 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">{{ __('Select Kit...') }}</option>
                         @foreach(\App\Models\Kit::where('is_active', true)->get() as $kit)
                             <option value="{{ $kit->id }}">{{ $kit->name }}</option>
                         @endforeach
                     </select>
 
                     <div class="w-64">
-                        <x-searchable-select
+                         <x-tom-select
                             :url="route('api.locations.search')"
-                            placeholder="Priority Loc (Opt)..."
+                            placeholder="{{ __('Priority Loc (Opt)...') }}"
                             x-model="locId"
                             @option-selected="locId = $event.detail.value"
-                            input-class="h-9 w-64 text-sm"
                         />
                     </div>
 
                     <x-secondary-button @click.prevent="loadKit(kitId, locId)" x-bind:disabled="!kitId" type="button">
                         <x-heroicon-o-archive-box-arrow-down class="w-4 h-4 mr-2" />
-                        Load Kit
+                        {{ __('Load Kit') }}
                     </x-secondary-button>
                 </div>
 
                 <x-secondary-button @click="addItem()" type="button">
                     <x-heroicon-o-plus class="w-4 h-4 mr-2" />
-                    Add Item
+                    {{ __('Add Item') }}
                 </x-secondary-button>
             </div>
         </div>
@@ -255,10 +254,10 @@
             <table class="w-full text-sm text-left">
                 <thead class="bg-muted text-muted-foreground uppercase text-xs">
                     <tr>
-                        <th class="px-4 py-3 w-32">Type</th>
-                        <th class="px-4 py-3 min-w-[300px]">Item (Search)</th>
-                        <th class="px-4 py-3 w-24">Qty</th>
-                        <th class="px-4 py-3 w-16 text-center">Action</th>
+                        <th class="px-4 py-3 w-32">{{ __('Type') }}</th>
+                        <th class="px-4 py-3 min-w-[300px]">{{ __('Item (Search)') }}</th>
+                        <th class="px-4 py-3 w-24">{{ __('Qty') }}</th>
+                        <th class="px-4 py-3 w-16 text-center">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
@@ -276,23 +275,22 @@
                                     @change="item.unified_value = null; item.unified_label = ''; item.asset_id = null; item.consumable_stock_id = null; if(item.type === 'asset') item.quantity_borrowed = 1;"
                                     class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="asset">Asset</option>
-                                    <option value="consumable">Consumable</option>
+                                    <option value="asset">{{ __('Asset') }}</option>
+                                    <option value="consumable">{{ __('Consumable') }}</option>
                                 </select>
                             </td>
 
                             <!-- Search Input (Dynamic URL based on Type) -->
                             <td class="px-4 py-3 align-top">
                                 <div class="w-full">
-                                    <x-searchable-select
-                                        :url="route('ajax.unified')"
-                                        :params="['type' => '']"
+                                    <x-tom-select
+                                        :url="route('api.loans.items.search')"
                                         x-bind:data-params="JSON.stringify({ type: item.type })"
-                                        x-effect="$el.setAttribute('data-params', JSON.stringify({ type: item.type })); $dispatch('params-updated', { type: item.type })"
-                                        placeholder="Search Asset or Consumable..."
+                                        x-bind:placeholder="!item.unified_value ? item.unified_label : '{{ __('Search Asset or Consumable...') }}'"
                                         x-model="item.unified_value"
-                                        x-init="$watch('item.unified_label', v => query = v); query = item.unified_label; $watch('item.type', v => params = { type: v })"
-                                        input-class="h-9 w-full"
+                                        x-bind:data-initial-label="item.unified_label"
+                                        x-bind:data-initial-search="!item.unified_value ? item.unified_label : ''"
+                                        class="w-full"
                                         @option-selected="updateItem(index, $event.detail)"
                                     />
                                 </div>
@@ -321,7 +319,7 @@
             </table>
             <template x-if="form.items.length === 0">
                  <div class="px-4 py-8 text-center text-muted-foreground">
-                    No items added. Click "Add Item" to start.
+                     {{ __('No items added. Click "Add Item" to start.') }}
                 </div>
             </template>
         </div>
@@ -331,11 +329,11 @@
     <div class="flex items-center justify-end gap-4 pt-4 border-t border-border">
         <x-secondary-button tag="a" href="{{ route('loans.index') }}">
             <x-heroicon-o-x-mark class="w-4 h-4 mr-2" />
-            Cancel
+            {{ __('Cancel') }}
         </x-secondary-button>
         <x-primary-button type="submit">
             <x-heroicon-o-check class="w-4 h-4 mr-2" />
-            {{ $isEdit ? 'Update Loan' : 'Create Loan' }}
+            {{ $isEdit ? __('Update Loan') : __('Create Loan') }}
         </x-primary-button>
     </div>
 </form>
@@ -381,7 +379,7 @@
             async loadKit(kitId, locId) {
                 if (!kitId) return;
 
-                this.$dispatch('toast', { message: 'Loading kit items...', type: 'info' });
+                this.$dispatch('toast', { message: '{{ __('Loading kit items...') }}', type: 'info' });
 
                 try {
                     const response = await fetch(`/kits/${kitId}/resolve?location_id=${locId}`, {
@@ -393,7 +391,9 @@
                         result.items.forEach(newItem => {
                             // If item_id is NULL, it means not found/fallback -> User must search
                             const isResolved = newItem.item_id !== null;
-                            const unifiedVal = isResolved ? (newItem.type === 'Asset' ? 'asset_' : 'stock_') + newItem.item_id : null;
+                            const unifiedVal = isResolved
+                                ? (newItem.type === 'Asset' ? 'asset_' : 'stock_') + newItem.item_id
+                                : null;
 
                             this.form.items.push({
                                 _key: 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2),
@@ -402,16 +402,16 @@
                                 consumable_stock_id: (isResolved && newItem.type === 'Consumable') ? newItem.item_id : null,
                                 quantity_borrowed: newItem.quantity,
                                 unified_value: unifiedVal,
-                                unified_label: newItem.item_label, // Will contain "Name (Cari Manual)" or resolved label
+                                unified_label: newItem.item_label, // Will contain "Product Name" or resolved format
                             });
                         });
-                        this.$dispatch('toast', { message: `Loaded ${result.items.length} items from kit.`, type: 'success' });
+                        this.$dispatch('toast', { message: `{{ __('Loaded :count items from kit.', ['count' => '${result.items.length}']) }}`.replace(':count', result.items.length), type: 'success' });
                     } else {
-                        this.$dispatch('toast', { message: result.message || 'No items found.', type: 'warning' });
+                        this.$dispatch('toast', { message: result.message || '{{ __('No items found.') }}', type: 'warning' });
                     }
                 } catch (error) {
                     console.error('Kit load failed', error);
-                    this.$dispatch('toast', { message: 'Failed to load kit.', type: 'error' });
+                    this.$dispatch('toast', { message: '{{ __('Failed to load kit.') }}', type: 'error' });
                 }
             },
 
@@ -435,9 +435,14 @@
                 const data = eventDetail.item;
                 const item = this.form.items[index];
 
-                item.type = data.type;
+                // item.type is already set by the select input, but we might want to double check logic
+                // unified search returns type, so we can ensure consistency
+                if (data.type) {
+                     item.type = data.type;
+                }
+
                 item.unified_value = eventDetail.value;
-                item.unified_label = data.label; // Label now contains location
+                item.unified_label = data.text; // Label now contains location (was .label, now .text)
 
                 if (data.type === 'asset') {
                     item.asset_id = data.id;

@@ -75,7 +75,7 @@ class LoanService
     {
         return DB::transaction(function () use ($loan, $data) {
             if ($loan->status !== LoanStatus::Pending) {
-                throw LoanException::updateFailed("Cannot edit loan that is not in Pending status.");
+                throw LoanException::updateFailed(__("Cannot edit loan that is not in Pending status."));
             }
 
             try {
@@ -130,7 +130,7 @@ class LoanService
     {
         DB::transaction(function () use ($loan) {
             if ($loan->status !== LoanStatus::Pending) {
-                throw LoanException::approveFailed("Loan status must be pending to approve. Current status: {$loan->status->value}");
+                throw LoanException::approveFailed(__("Loan status must be pending to approve. Current status: :status", ['status' => $loan->status->value]));
             }
 
             try {
@@ -141,13 +141,13 @@ class LoanService
                             if ($asset->status !== AssetStatus::InStock) {
                                 throw LoanException::assetUnavailable($asset->asset_tag, $asset->status->getLabel());
                             }
-                            $this->assetService->updateStatus($asset, AssetStatus::Loaned, "Loan Approved: {$loan->code}");
+                            $this->assetService->updateStatus($asset, AssetStatus::Loaned, __("Loan Approved: :code", ['code' => $loan->code]));
                         }
                     } elseif ($item->type === LoanItemType::Consumable) {
                         $stock = ConsumableStock::where('id', $item->consumable_stock_id)->lockForUpdate()->first();
                         if ($stock) {
                             if ($stock->quantity < $item->quantity_borrowed) {
-                                throw LoanException::insufficientStock($stock->product?->name ?? 'Unknown', $item->quantity_borrowed, $stock->quantity);
+                                throw LoanException::insufficientStock($stock->product?->name ?? __('Unknown'), $item->quantity_borrowed, $stock->quantity);
                             }
 
                             $stockDto = new ConsumableStockData(
@@ -175,7 +175,7 @@ class LoanService
     public function rejectLoan(Loan $loan, ?string $reason = null): void
     {
         if ($loan->status !== LoanStatus::Pending) {
-            throw LoanException::rejectFailed("Only pending loans can be rejected.");
+            throw LoanException::rejectFailed(__("Only pending loans can be rejected."));
         }
 
         try {
@@ -191,7 +191,7 @@ class LoanService
     public function restoreLoan(Loan $loan): void
     {
         if ($loan->status !== LoanStatus::Rejected) {
-            throw LoanException::restoreFailed("Only rejected loans can be restored.");
+            throw LoanException::restoreFailed(__("Only rejected loans can be restored."));
         }
 
         try {
@@ -235,7 +235,7 @@ class LoanService
 
                         $remainingToReturn = $item->quantity_borrowed - $item->quantity_returned;
                         if ($qtyReturning > $remainingToReturn) {
-                            throw LoanException::returnFailed("Cannot return more than borrowed/remaining quantity for item ID {$itemId}.");
+                            throw LoanException::returnFailed(__("Cannot return more than borrowed/remaining quantity for item ID :id.", ['id' => $itemId]));
                         }
 
                         if ($qtyReturning > 0) {
@@ -283,7 +283,7 @@ class LoanService
 
         $asset = Asset::find($assetId);
         if (!$asset) {
-            throw LoanException::createFailed("Asset not found with ID: {$assetId}");
+            throw LoanException::createFailed(__("Asset not found with ID: :id", ['id' => $assetId]));
         }
         if ($asset->status !== AssetStatus::InStock) {
             throw LoanException::assetUnavailable($asset->asset_tag, $asset->status->getLabel());
@@ -298,17 +298,17 @@ class LoanService
 
         $stock = ConsumableStock::find($stockId);
         if (!$stock) {
-            throw LoanException::createFailed("Stock item not found.");
+            throw LoanException::createFailed(__("Stock item not found."));
         }
         if ($stock->quantity < $qty) {
-            throw LoanException::insufficientStock($stock->product?->name ?? 'Unknown Item', $qty, $stock->quantity);
+            throw LoanException::insufficientStock($stock->product?->name ?? __('Unknown Item'), $qty, $stock->quantity);
         }
     }
 
     public function deleteLoan(Loan $loan): void
     {
         if ($loan->status !== LoanStatus::Pending && $loan->status !== LoanStatus::Rejected) {
-            throw LoanException::deletionFailed("Only Pending or Rejected loans can be deleted.");
+            throw LoanException::deletionFailed(__("Only Pending or Rejected loans can be deleted."));
         }
 
         DB::transaction(function () use ($loan) {

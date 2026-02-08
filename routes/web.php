@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\AssetController;
-use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AssetImportController;
+use App\Http\Controllers\ProductImportController;
+use App\Http\Controllers\ConsumableStockImportController;
 
 Route::get('/', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -21,13 +23,13 @@ Route::middleware('auth')->group(function () {
     Route::view('users', 'users.index')->name('users.index');
     Route::view('categories', 'categories.index')->name('categories.index');
     Route::view('products', 'products.index')->name('products.index');
-    Route::get('/products/import', [App\Http\Controllers\ProductImportController::class, 'create'])->name('products.import');
-    Route::post('/products/import', [App\Http\Controllers\ProductImportController::class, 'store'])->name('products.import.store');
+    Route::get('/products/import', [ProductImportController::class, 'create'])->name('products.import');
+    Route::post('/products/import', [ProductImportController::class, 'store'])->name('products.import.store');
     Route::view('stocks', 'stocks.index')->name('stocks.index');
-    Route::get('/stocks/import', [App\Http\Controllers\ConsumableStockImportController::class, 'create'])->name('stocks.import');
-    Route::post('/stocks/import', [App\Http\Controllers\ConsumableStockImportController::class, 'store'])->name('stocks.import.store');
-    Route::get('/assets/import', [App\Http\Controllers\AssetImportController::class, 'create'])->name('assets.import');
-    Route::post('/assets/import', [App\Http\Controllers\AssetImportController::class, 'store'])->name('assets.import.store');
+    Route::get('/stocks/import', [ConsumableStockImportController::class, 'create'])->name('stocks.import');
+    Route::post('/stocks/import', [ConsumableStockImportController::class, 'store'])->name('stocks.import.store');
+    Route::get('/assets/import', [AssetImportController::class, 'create'])->name('assets.import');
+    Route::post('/assets/import', [AssetImportController::class, 'store'])->name('assets.import.store');
     Route::resource('assets', AssetController::class);
 
     // Loan Management
@@ -40,14 +42,6 @@ Route::middleware('auth')->group(function () {
     // Kit Routes
     Route::resource('kits', KitController::class);
     Route::get('/kits/{kit}/resolve', [KitController::class, 'resolve'])->name('kits.resolve');
-
-    // Search Routes (AJAX)
-    // ajax.products & ajax.locations replaced by API routes
-    Route::get('/ajax/kits', [SearchController::class, 'kits'])->name('ajax.kits');
-    Route::get('/ajax/assets', [SearchController::class, 'assets'])->name('ajax.assets');
-    Route::get('/ajax/stocks', [SearchController::class, 'stocks'])->name('ajax.stocks');
-    Route::get('/ajax/unified', [SearchController::class, 'unified'])->name('ajax.unified');
-    Route::get('/ajax/product-locations', [SearchController::class, 'productLocations'])->name('ajax.product-locations');
 });
 
 require __DIR__.'/auth.php';

@@ -49,12 +49,12 @@ class LoanController extends Controller
             $this->loanService->createLoan($loanData);
 
             return redirect()->route('loans.index')
-                ->with('success', 'Loan created successfully.');
+                ->with('success', __('Loan created successfully.'));
 
         } catch (LoanException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return back()->withInput()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+            return back()->withInput()->with('error', __('An unexpected error occurred: :message', ['message' => $e->getMessage()]));
         }
     }
 
@@ -68,11 +68,11 @@ class LoanController extends Controller
     {
         try {
             $this->loanService->approveLoan($loan);
-            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Loan approved successfully.');
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', __('Loan approved successfully.'));
         } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return back()->with('error', 'Approval failed: ' . $e->getMessage());
+            return back()->with('error', __('Approval failed: :message', ['message' => $e->getMessage()]));
         }
     }
 
@@ -80,11 +80,11 @@ class LoanController extends Controller
     {
         try {
             $this->loanService->rejectLoan($loan);
-            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Loan rejected.');
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', __('Loan rejected.'));
         } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return back()->with('error', 'Rejection failed: ' . $e->getMessage());
+            return back()->with('error', __('Rejection failed: :message', ['message' => $e->getMessage()]));
         }
     }
 
@@ -92,11 +92,11 @@ class LoanController extends Controller
     {
         try {
             $this->loanService->restoreLoan($loan);
-            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Loan restored to Pending.');
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', __('Loan restored to Pending.'));
         } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return back()->with('error', 'Restore failed: ' . $e->getMessage());
+            return back()->with('error', __('Restore failed: :message', ['message' => $e->getMessage()]));
         }
     }
 
@@ -108,11 +108,11 @@ class LoanController extends Controller
 
         try {
             $this->loanService->returnItems($loan, $request->input('items'));
-            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Items returned successfully.');
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', __('Items returned successfully.'));
         } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return back()->with('error', 'Return failed: ' . $e->getMessage());
+            return back()->with('error', __('Return failed: :message', ['message' => $e->getMessage()]));
         }
     }
 
@@ -120,7 +120,7 @@ class LoanController extends Controller
     {
         if ($loan->status !== LoanStatus::Pending) {
             return redirect()->route('loans.show', ['loan' => $loan->id])
-                ->with('error', 'Only pending loans can be edited.');
+                ->with('error', __('Only pending loans can be edited.'));
         }
 
         $loan->load([
@@ -136,7 +136,7 @@ class LoanController extends Controller
     public function update(UpdateLoanRequest $request, Loan $loan): RedirectResponse
     {
         if ($loan->status !== LoanStatus::Pending) {
-            return back()->with('error', 'Only pending loans can be edited.');
+            return back()->with('error', __('Only pending loans can be edited.'));
         }
 
         try {
@@ -158,11 +158,11 @@ class LoanController extends Controller
             $this->loanService->updateLoan($loan, $loanData);
 
             return redirect()->route('loans.show', ['loan' => $loan->id])
-                ->with('success', 'Loan updated successfully.');
+                ->with('success', __('Loan updated successfully.'));
         } catch (LoanException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         } catch (Throwable $e) {
-            return back()->withInput()->with('error', 'Failed to update loan: ' . $e->getMessage());
+            return back()->withInput()->with('error', __('Failed to update loan: :message', ['message' => $e->getMessage()]));
         }
     }
 }
