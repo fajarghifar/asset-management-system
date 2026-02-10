@@ -1,9 +1,8 @@
-<div>
-    <x-modal name="location-detail-modal" :title="''" maxWidth="lg">
+    <x-modal name="location-detail-modal" :title="''">
         @if($location)
             <div class="p-6">
-                <!-- Custom Header -->
-                <div class="mb-6 space-y-1.5 text-center sm:text-left">
+                <!-- Header -->
+                <div class="mb-6 space-y-1.5 text-center sm:text-left border-b border-gray-200 pb-4">
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
                             {{ __('Location Details') }}
@@ -14,53 +13,50 @@
                     </p>
                 </div>
 
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <!-- Code & Site -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                {{ __('Code') }}
-                            </label>
-                            <p class="text-sm text-muted-foreground">{{ $location->code }}</p>
+                            <label class="text-sm font-medium leading-none text-muted-foreground">{{ __('Code') }}</label>
+                            <p class="text-sm text-foreground font-medium">{{ $location->code }}</p>
                         </div>
 
                         <div class="space-y-1">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                {{ __('Site') }}
-                            </label>
-                            <p class="text-sm text-muted-foreground">{{ $location->site }}</p>
+                            <label class="text-sm font-medium leading-none text-muted-foreground">{{ __('Site') }}</label>
+                            <p class="text-sm text-foreground font-medium">{{ $location->site }}</p>
                         </div>
                     </div>
 
                     <!-- Name -->
                     <div class="space-y-1">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {{ __('Name') }}
-                        </label>
-                        <p class="text-sm text-foreground">{{ $location->name }}</p>
+                        <label class="text-sm font-medium leading-none text-muted-foreground">{{ __('Name') }}</label>
+                        <p class="text-sm text-foreground font-medium">{{ $location->name }}</p>
                     </div>
 
                     <!-- Description -->
                     <div class="space-y-1">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {{ __('Description') }}
-                        </label>
-                        <p class="text-sm text-muted-foreground leading-relaxed">
+                        <label class="text-sm font-medium leading-none text-muted-foreground">{{ __('Description') }}</label>
+                        <p class="text-sm text-foreground font-medium">
                             {{ $location->description ?? '-' }}
                         </p>
                     </div>
 
-                    <!-- Created At -->
-                    <div class="space-y-1">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {{ __('Created At') }}
-                        </label>
-                        <p class="text-sm text-muted-foreground">{{ $location->created_at->format('d M Y') }}</p>
+                    <!-- Meta -->
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div class="space-y-1">
+                            <label class="text-sm font-medium leading-none text-muted-foreground">{{ __('Created At') }}</label>
+                            <p class="text-sm text-foreground font-medium">{{ $location->created_at?->format('d M Y, H:i') ?? '-' }}</p>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-sm font-medium leading-none text-muted-foreground">{{ __('Last Updated') }}</label>
+                            <p class="text-sm text-foreground font-medium">{{ $location->updated_at?->format('d M Y, H:i') ?? '-' }}</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Footer Actions -->
-                <div class="mt-6 flex items-center justify-end gap-x-2">
+                <div class="mt-6 flex items-center justify-end gap-x-2 pt-4 border-t border-gray-200">
                     <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'location-detail-modal' })">
                         {{ __('Close') }}
                     </x-secondary-button>
@@ -77,4 +73,3 @@
             </div>
         @endif
     </x-modal>
-</div>

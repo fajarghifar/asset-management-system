@@ -21,5 +21,11 @@
                 {{ __('Email Password Reset Link') }}
             </x-primary-button>
         </div>
+
+        <div class="mt-4 text-center text-sm">
+            <a href="{{ route('login') }}" class="underline text-muted-foreground hover:text-foreground">
+                {{ __('Back to Login') }}
+            </a>
+        </div>
     </form>
 </x-guest-layout>
