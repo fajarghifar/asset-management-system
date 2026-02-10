@@ -208,64 +208,97 @@ class LoanService
     {
         DB::transaction(function () use ($loan, $returnDetails) {
             try {
+                $hasUpdates = false;
+
                 foreach ($returnDetails as $itemId => $returnData) {
-                    $item = $loan->items()->find($itemId);
+                    // Lock the item row to prevent race conditions during return
+                    $item = $loan->items()->where('id', $itemId)->lockForUpdate()->first();
 
                     if (!$item || $item->loan_id !== $loan->id) {
                         continue;
                     }
 
+                    // Handles Asset Return
                     if ($item->type === LoanItemType::Asset) {
-                        if (!empty($returnData['is_returned'])) {
+                        if (!empty($returnData['is_returned']) && is_null($item->returned_at)) {
                             $asset = Asset::where('id', $item->asset_id)->lockForUpdate()->first();
+
+                            // Only return if it's currently marked as Loaned
                             if ($asset && $asset->status === AssetStatus::Loaned) {
                                 $this->assetService->updateStatus($asset, AssetStatus::InStock, "Returned from Loan: {$loan->code}");
                             }
+
                             $item->update([
                                 'quantity_returned' => 1,
                                 'returned_at' => now(),
                             ]);
+                            $hasUpdates = true;
                         }
-                    } elseif ($item->type === LoanItemType::Consumable) {
+                    }
+                    // Handles Consumable Return
+                    elseif ($item->type === LoanItemType::Consumable) {
                         $qtyReturning = (int) ($returnData['quantity_returned'] ?? 0);
 
-                        if ($qtyReturning < 0) {
+                        if ($qtyReturning <= 0) {
                             continue;
                         }
 
                         $remainingToReturn = $item->quantity_borrowed - $item->quantity_returned;
+
+                        // Strict Validation
                         if ($qtyReturning > $remainingToReturn) {
-                            throw LoanException::returnFailed(__("Cannot return more than borrowed/remaining quantity for item ID :id.", ['id' => $itemId]));
+                            throw LoanException::returnFailed(__("Cannot return :qty. Only :remaining remaining for item ID :id.", [
+                                'qty' => $qtyReturning,
+                                'remaining' => $remainingToReturn,
+                                'id' => $itemId
+                            ]));
                         }
 
-                        if ($qtyReturning > 0) {
-                            $stock = ConsumableStock::where('id', $item->consumable_stock_id)->lockForUpdate()->first();
-                            if ($stock) {
-                                $stockDto = new ConsumableStockData(
-                                    product_id: $stock->product_id,
-                                    location_id: $stock->location_id,
-                                    quantity: $stock->quantity + $qtyReturning,
-                                    min_quantity: $stock->min_quantity
-                                );
+                        // Restore Stock
+                        $stock = ConsumableStock::where('id', $item->consumable_stock_id)->lockForUpdate()->first();
+                        if ($stock) {
+                            $stockDto = new ConsumableStockData(
+                                product_id: $stock->product_id,
+                                location_id: $stock->location_id,
+                                quantity: $stock->quantity + $qtyReturning,
+                                min_quantity: $stock->min_quantity
+                            );
 
-                                $this->stockService->updateStock($stock, $stockDto);
-                            }
+                            $this->stockService->updateStock($stock, $stockDto);
                         }
 
+                        // Update Loan Item
                         $item->increment('quantity_returned', $qtyReturning);
-                        $item->update(['returned_at' => now()]);
+
+                        // If fully returned, mark returned_at
+                        if (($item->quantity_returned + $qtyReturning) >= $item->quantity_borrowed) {
+                            $item->update(['returned_at' => now()]);
+                        } else {
+                            // Partial return, still update timestamp for tracking
+                             $item->update(['updated_at' => now()]);
+                        }
+
+                        $hasUpdates = true;
                     }
                 }
 
-                $loan->refresh();
+                if ($hasUpdates) {
+                    $loan->refresh();
 
-                $allSettled = $loan->items->every(fn($i) => !is_null($i->returned_at));
+                    // Check if ALL items are fully returned
+                    $allSettled = $loan->items->every(function ($i) {
+                         if ($i->type === LoanItemType::Asset) {
+                             return !is_null($i->returned_at);
+                         }
+                         return $i->quantity_returned >= $i->quantity_borrowed;
+                    });
 
-                if ($allSettled) {
-                    $loan->update([
-                        'status' => LoanStatus::Closed,
-                        'returned_date' => now()
-                    ]);
+                    if ($allSettled) {
+                        $loan->update([
+                            'status' => LoanStatus::Closed,
+                            'returned_date' => now()
+                        ]);
+                    }
                 }
             } catch (LoanException $e) {
                 throw $e;

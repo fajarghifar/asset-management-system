@@ -6,8 +6,12 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\AssetImportController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\ProductImportController;
+use App\Http\Controllers\Api\LoanItemSearchController;
 use App\Http\Controllers\ConsumableStockImportController;
 
 Route::get('/', [DashboardController::class, 'index'])
@@ -42,6 +46,19 @@ Route::middleware('auth')->group(function () {
     // Kit Routes
     Route::resource('kits', KitController::class);
     Route::get('/kits/{kit}/resolve', [KitController::class, 'resolve'])->name('kits.resolve');
+
+    // AJAX Search Routes
+    Route::prefix('categories')->name('api.categories.')->group(function () {
+        Route::get('/search', [CategoryController::class, 'search'])->name('search');
+    });
+    Route::prefix('products')->name('api.products.')->group(function () {
+        Route::get('/search', [ProductController::class, 'search'])->name('search');
+    });
+    Route::prefix('locations')->name('api.locations.')->group(function () {
+        Route::get('/search', [LocationController::class, 'search'])->name('search');
+    });
+
+    Route::get('/loans/items/search', LoanItemSearchController::class)->name('api.loans.items.search');
 });
 
 require __DIR__.'/auth.php';
