@@ -1,10 +1,10 @@
 <x-app-layout title="Edit Profile">
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Profile') }}
             </h2>
-            <x-secondary-button href="{{ route('dashboard') }}" tag="a">
+            <x-secondary-button href="{{ route('dashboard') }}" tag="a" class="w-full sm:w-auto justify-center">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 {{ __('Back to Dashboard') }}
             </x-secondary-button>

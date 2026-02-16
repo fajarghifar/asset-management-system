@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::view('users', 'users.index')->name('users.index');
     Route::view('categories', 'categories.index')->name('categories.index');
     Route::view('products', 'products.index')->name('products.index');
+    Route::get('/products/import/template', [ProductImportController::class, 'downloadTemplate'])->name('products.import.template');
     Route::get('/products/import', [ProductImportController::class, 'create'])->name('products.import');
     Route::post('/products/import', [ProductImportController::class, 'store'])->name('products.import.store');
     Route::view('stocks', 'stocks.index')->name('stocks.index');

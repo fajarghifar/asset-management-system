@@ -58,6 +58,12 @@
     "This is a secure area of the application. Please confirm your password before continuing.": "Ini adalah area aplikasi yang aman. Harap konfirmasi kata sandi Anda sebelum melanjutkan.",
     "Username": "Nama Pengguna",
     "Verify Email": "Verifikasi Email",
+    "Logging in...": "Sedang masuk...",
+    "Registering...": "Mendaftar...",
+    "Sending...": "Mengirim...",
+    "Resetting...": "Mengatur ulang...",
+    "Confirming...": "Mengonfirmasi...",
+    "Back to Login": "Kembali ke Masuk",
 
     "_comment_category": "=== KATEGORI / CATEGORY ===",
     "Add a new category. Click save when you're done.": "Tambahkan kategori baru. Klik simpan jika sudah selesai.",

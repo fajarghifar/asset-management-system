@@ -5,7 +5,7 @@
             <p class="text-sm text-muted-foreground">{{ __('Enter your details below to create your account') }}</p>
         </div>
 
-        <form method="POST" action="{{ route('register') }}">
+        <form method="POST" action="{{ route('register') }}" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
 
             <!-- Name -->
@@ -71,8 +71,10 @@
             </div>
 
             <div class="flex items-center justify-end mt-4">
-                <x-primary-button class="w-full">
-                    {{ __('Register') }}
+                <x-primary-button class="w-full" ::disabled="submitting">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 mr-2 animate-spin" x-show="submitting" />
+                    <span x-show="!submitting">{{ __('Register') }}</span>
+                    <span x-show="submitting">{{ __('Registering...') }}</span>
                 </x-primary-button>
             </div>
 

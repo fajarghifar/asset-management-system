@@ -14,12 +14,14 @@
         @endif
 
         <div class="mt-4 flex items-center justify-between flex-col space-y-4">
-            <form method="POST" action="{{ route('verification.send') }}" class="w-full">
+            <form method="POST" action="{{ route('verification.send') }}" class="w-full" x-data="{ submitting: false }" @submit="submitting = true">
                 @csrf
 
                 <div>
-                    <x-primary-button class="w-full">
-                        {{ __('Resend Verification Email') }}
+                    <x-primary-button class="w-full" ::disabled="submitting">
+                        <x-heroicon-o-arrow-path class="w-4 h-4 mr-2 animate-spin" x-show="submitting" />
+                        <span x-show="!submitting">{{ __('Resend Verification Email') }}</span>
+                        <span x-show="submitting">{{ __('Sending...') }}</span>
                     </x-primary-button>
                 </div>
             </form>

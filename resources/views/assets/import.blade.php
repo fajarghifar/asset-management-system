@@ -1,10 +1,10 @@
 <x-app-layout title="Import Assets">
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
                 {{ __('Import Assets') }}
             </h2>
-            <x-secondary-button href="{{ route('assets.index') }}" tag="a">
+            <x-secondary-button href="{{ route('assets.index') }}" tag="a" class="w-full sm:w-auto justify-center">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 {{ __('Back to List') }}
             </x-secondary-button>

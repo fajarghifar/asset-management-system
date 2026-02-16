@@ -6,7 +6,7 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('password.email') }}">
+    <form method="POST" action="{{ route('password.email') }}" x-data="{ submitting: false }" @submit="submitting = true">
         @csrf
 
         <!-- Email Address -->
@@ -17,8 +17,10 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <x-primary-button class="w-full">
-                {{ __('Email Password Reset Link') }}
+            <x-primary-button class="w-full" ::disabled="submitting">
+                <x-heroicon-o-arrow-path class="w-4 h-4 mr-2 animate-spin" x-show="submitting" />
+                <span x-show="!submitting">{{ __('Email Password Reset Link') }}</span>
+                <span x-show="submitting">{{ __('Sending...') }}</span>
             </x-primary-button>
         </div>
 

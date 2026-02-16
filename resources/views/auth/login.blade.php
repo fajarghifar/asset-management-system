@@ -8,7 +8,7 @@
             <p class="text-sm text-muted-foreground">{{ __('Enter your username below to login to your account') }}</p>
         </div>
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
 
             <!-- Username -->
@@ -46,8 +46,10 @@
             </div>
 
             <div class="flex items-center justify-end mt-4">
-                <x-primary-button class="w-full">
-                    {{ __('Log in') }}
+                <x-primary-button class="w-full" ::disabled="submitting">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 mr-2 animate-spin" x-show="submitting" />
+                    <span x-show="!submitting">{{ __('Log in') }}</span>
+                    <span x-show="submitting">{{ __('Logging in...') }}</span>
                 </x-primary-button>
             </div>
 

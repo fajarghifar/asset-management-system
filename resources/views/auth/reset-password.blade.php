@@ -5,7 +5,7 @@
             <p class="text-sm text-muted-foreground">{{ __('Enter your new password below.') }}</p>
         </div>
 
-        <form method="POST" action="{{ route('password.store') }}">
+        <form method="POST" action="{{ route('password.store') }}" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
 
             <!-- Password Reset Token -->
@@ -32,9 +32,11 @@
                 <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
             </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <x-primary-button class="w-full">
-                    {{ __('Reset Password') }}
+        <div class="flex items-center justify-end mt-4">
+                <x-primary-button class="w-full" ::disabled="submitting">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 mr-2 animate-spin" x-show="submitting" />
+                    <span x-show="!submitting">{{ __('Reset Password') }}</span>
+                    <span x-show="submitting">{{ __('Resetting...') }}</span>
                 </x-primary-button>
             </div>
         </form>

@@ -1,10 +1,10 @@
 <x-app-layout title="Import Products">
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
                 {{ __('Import Products') }}
             </h2>
-            <x-secondary-button tag="a" href="{{ route('products.index') }}">
+            <x-secondary-button tag="a" href="{{ route('products.index') }}" class="w-full sm:w-auto justify-center">
                 {{ __('Back to List') }}
             </x-secondary-button>
         </div>
@@ -27,7 +27,8 @@
                     </div>
 
                     <div class="mb-6">
-                        <a href="{{ asset('templates/products_template.xlsx') }}" download class="text-sm text-primary hover:underline flex items-center gap-1">
+                    <div class="mb-6">
+                        <a href="{{ route('products.import.template') }}" class="text-sm text-primary hover:underline flex items-center gap-1">
                             <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
                             {{ __('Download Excel Template') }}
                         </a>
