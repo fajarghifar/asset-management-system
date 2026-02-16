@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Stocks;
 
-use App\Models\Product;
 use App\Enums\LocationSite;
 use App\Models\ConsumableStock;
 use App\Services\ConsumableStockService;
@@ -47,10 +46,19 @@ final class ConsumableStocksTable extends PowerGridComponent
         ];
     }
 
-    public function datasource(): Builder
+    public function datasource()
     {
         return ConsumableStock::query()
-            ->with(['product', 'location']);
+            ->join('products', 'consumable_stocks.product_id', '=', 'products.id')
+            ->join('locations', 'consumable_stocks.location_id', '=', 'locations.id')
+            ->select(
+                'consumable_stocks.*',
+                'products.name as product_name',
+                'products.code as product_code',
+                'locations.name as location_name',
+                'locations.code as location_code',
+                'locations.site as location_site'
+            );
     }
 
     public function relationSearch(): array
@@ -60,10 +68,10 @@ final class ConsumableStocksTable extends PowerGridComponent
                 'name',
                 'code',
             ],
-            'location' => [
-                'name',
-                'code',
-            ],
+            // 'location' => [
+            //     'name',
+            //     'code',
+            // ],
         ];
     }
 
@@ -71,9 +79,9 @@ final class ConsumableStocksTable extends PowerGridComponent
     {
         return PowerGrid::fields()
             ->add('id')
-            ->add('product_name', fn($stock) => $stock->product->name)
-            ->add('location_site', fn ($stock) => $stock->location->site->getLabel())
-            ->add('location_name', fn ($stock) => $stock->location->name)
+            ->add('product_name')
+            ->add('location_site', fn($stock) => LocationSite::tryFrom($stock->location_site)?->getLabel())
+            ->add('location_name')
             ->add('quantity')
             ->add('min_quantity')
             ->add('status_label', function ($stock) {
@@ -83,10 +91,10 @@ final class ConsumableStocksTable extends PowerGridComponent
                 return '<div class="flex items-center justify-center text-green-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5"><path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd" /></svg></div>';
             })
             // Export Fields
-            ->add('product_code_export', fn($stock) => $stock->product->code)
-            ->add('product_name_export', fn($stock) => $stock->product->name)
-            ->add('location_code_export', fn($stock) => $stock->location->code)
-            ->add('location_name_export', fn($stock) => $stock->location->name)
+            ->add('product_code_export', fn($stock) => $stock->product_code)
+            ->add('product_name_export', fn($stock) => $stock->product_name)
+            ->add('location_code_export', fn($stock) => $stock->location_code)
+            ->add('location_name_export', fn($stock) => $stock->location_name)
             ->add('updated_at_formatted', fn ($stock) => $stock->updated_at->format('d/m/Y H:i'));
     }
 
@@ -96,15 +104,11 @@ final class ConsumableStocksTable extends PowerGridComponent
             Column::make('ID', 'id')
                 ->hidden(),
 
-            Column::make(__('Product'), 'product_name', 'product_id')
+            Column::make(__('Product'), 'product_name')
                 ->sortable()
-                ->searchable()
                 ->visibleInExport(false),
 
-
-
             // Export Columns
-
             Column::make(__('Product Code'), 'product_code_export')
                 ->hidden()
                 ->visibleInExport(true),
@@ -113,7 +117,7 @@ final class ConsumableStocksTable extends PowerGridComponent
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Site'), 'location_site', 'location_id')
+            Column::make(__('Site'), 'location_site')
                 ->sortable()
                 ->visibleInExport(false),
 
@@ -125,7 +129,7 @@ final class ConsumableStocksTable extends PowerGridComponent
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Location'), 'location_name', 'location_id')
+            Column::make(__('Location'), 'location_name')
                 ->sortable()
                 ->visibleInExport(false),
 
@@ -145,20 +149,27 @@ final class ConsumableStocksTable extends PowerGridComponent
     public function filters(): array
     {
         return [
-            Filter::multiSelect('product_name', 'product_id')
-                ->dataSource(Product::all())
-                ->optionLabel('name')
-                ->optionValue('id'),
+            Filter::multiSelectAsync('product_name', 'product_id')
+                ->url(route('ajax.products.consumables.search'))
+                ->method('POST')
+                ->optionValue('value')
+                ->optionLabel('text'),
 
-            Filter::select('location_site', 'location_site')
+            Filter::multiSelectAsync('location_name', 'location_id')
+                ->url(route('ajax.locations.search'))
+                ->method('POST')
+                ->optionValue('value')
+                ->optionLabel('text'),
+
+            Filter::multiSelect('location_site', 'location_site')
                 ->dataSource(collect(LocationSite::cases())->map(fn($site) => [
                     'value' => $site->value,
                     'label' => $site->getLabel(),
                 ])->toArray())
                 ->optionLabel('label')
                 ->optionValue('value')
-                ->builder(function (Builder $query, string $value) {
-                    return $query->whereHas('location', fn($q) => $q->where('site', $value));
+                ->builder(function (Builder $query, array $values) {
+                    return $query->whereHas('location', fn($q) => $q->whereIn('site', $values));
                 }),
         ];
     }
@@ -171,6 +182,12 @@ final class ConsumableStocksTable extends PowerGridComponent
                 ->class('bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md flex items-center justify-center')
                 ->dispatch('show-stock', ['stock' => $row->id])
                 ->tooltip(__('View Details')),
+
+            Button::add('move')
+                ->slot('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>')
+                ->class('bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded-md flex items-center justify-center')
+                ->dispatch('move-stock', ['stock' => $row->id])
+                ->tooltip(__('Move Stock')),
 
             Button::add('edit')
                 ->slot('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>')

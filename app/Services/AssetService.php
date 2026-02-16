@@ -7,6 +7,7 @@ use App\Models\Asset;
 use App\DTOs\AssetData;
 use App\Models\AssetHistory;
 use App\Enums\AssetStatus;
+use App\Enums\AssetHistoryAction;
 use App\Exceptions\AssetException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +40,7 @@ class AssetService
                 // Log Initial History
                 $this->logHistory(
                     asset: $asset,
-                    actionType: 'checkin',
+                    actionType: AssetHistoryAction::Checkin,
                     notes: __('Initial asset registration'),
                     newLocationId: $asset->location_id,
                     newStatus: $asset->status
@@ -70,7 +71,7 @@ class AssetService
 
                 $this->logHistory(
                     asset: $asset,
-                    actionType: 'status_change',
+                    actionType: AssetHistoryAction::StatusChange,
                     notes: $notes ?? __('Status changed to :status', ['status' => $status->getLabel()]),
                     newStatus: $status
                 );
@@ -93,6 +94,20 @@ class AssetService
                 // Lock for concurrency
                 $asset->refresh()->lockForUpdate();
 
+                if ($asset->status === AssetStatus::Loaned && $data->status !== AssetStatus::Loaned) {
+                    throw AssetException::updateFailed(
+                        (string) $asset->id,
+                        __('Status of a loaned asset cannot be changed manually. Please return the asset first.')
+                    );
+                }
+
+                if ($asset->status !== AssetStatus::Loaned && $data->status === AssetStatus::Loaned) {
+                    throw AssetException::updateFailed(
+                        (string) $asset->id,
+                        __('Status cannot be manually changed to Loaned. Please use the Loans module.')
+                    );
+                }
+
                 $oldStatus = $asset->status;
                 $oldLocationId = $asset->location_id;
 
@@ -103,12 +118,17 @@ class AssetService
                 $newStatus = $asset->status;
                 $newLocationId = $asset->location_id;
 
-                if ($oldStatus !== $newStatus || $oldLocationId !== $newLocationId) {
-                    $actionType = 'update';
-                    if ($oldStatus !== $newStatus)
-                        $actionType = 'status_change';
-                    elseif ($oldLocationId !== $newLocationId)
-                        $actionType = 'movement';
+                $changes = $asset->getChanges();
+                unset($changes['updated_at']);
+
+                if (!empty($changes)) {
+                    $actionType = AssetHistoryAction::Update;
+
+                    if ($oldStatus !== $newStatus) {
+                        $actionType = AssetHistoryAction::StatusChange;
+                    } elseif ($oldLocationId !== $newLocationId) {
+                        $actionType = AssetHistoryAction::Movement;
+                    }
 
                     $this->logHistory(
                         asset: $asset,
@@ -148,7 +168,7 @@ class AssetService
      */
     private function logHistory(
         Asset $asset,
-        string $actionType,
+        AssetHistoryAction $actionType,
         string $notes,
         ?int $newLocationId = null,
         ?AssetStatus $newStatus = null,
@@ -160,7 +180,7 @@ class AssetService
             'location_id' => $newLocationId ?? $asset->location_id,
             'status' => $newStatus ?? $asset->status,
             'recipient_name' => $recipientName,
-            'action_type' => $actionType,
+            'action_type' => $actionType->value,
             'notes' => $notes,
         ]);
     }

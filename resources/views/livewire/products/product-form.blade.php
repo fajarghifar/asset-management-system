@@ -1,7 +1,7 @@
-<x-modal name="product-form-modal" :title="''" maxWidth="2xl">
+<x-modal name="product-form-modal" :title="''">
     <div class="p-6">
         <!-- Custom Header -->
-        <div class="mb-6 space-y-1.5 text-center sm:text-left">
+        <div class="mb-6 space-y-1.5 text-center sm:text-left border-b border-gray-200 pb-4">
             <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
                 {{ $isEditing ? __('Edit Product') : __('Create Product') }}
             </h3>
@@ -11,7 +11,6 @@
         </div>
 
         <form wire:submit="save" class="space-y-4">
-            <!-- Code -->
             <!-- Code -->
             <div class="space-y-2">
                 <x-input-label for="code" value="{{ __('Code') }}" required />
@@ -45,13 +44,15 @@
             />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Category (Searchable) -->
+                <!-- Category (Tom Select) -->
                 <div class="space-y-2">
                     <x-input-label for="category_id" value="{{ __('Category') }}" required />
                     <x-tom-select
                         id="category_id"
                         wire:model="category_id"
                         :options="$categoryOptions"
+                        :url="route('ajax.categories.search')"
+                        method="POST"
                         placeholder="{{ __('Select category...') }}"
                     />
                     <x-input-error :messages="$errors->get('category_id')" />
@@ -60,16 +61,12 @@
                 <!-- Type -->
                 <div class="space-y-2">
                     <x-input-label for="type" value="{{ __('Type') }}" required />
-                    <select
+                    <x-tom-select
                         id="type"
                         wire:model="type"
-                        class="flex w-full h-10 px-3 py-2 text-sm bg-transparent border rounded-md border-input ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <option value="" disabled>{{ __('Select a type...') }}</option>
-                        @foreach($typeOptions as $option)
-                            <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
-                        @endforeach
-                    </select>
+                        :options="$typeOptions"
+                        placeholder="{{ __('Select a type...') }}"
+                    />
                     <x-input-error :messages="$errors->get('type')" />
                 </div>
             </div>
@@ -82,7 +79,7 @@
                     wire:model="can_be_loaned"
                     class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 >
-                <label for="can_be_loaned" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label for="can_be_loaned" class="text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {{ __('Can be loaned?') }}
                 </label>
                 <x-input-error :messages="$errors->get('can_be_loaned')" />
@@ -95,20 +92,24 @@
                     id="description"
                     wire:model="description"
                     rows="3"
-                    class="block w-full rounded-md border-input bg-background shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
+                    class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="{{ __('Optional description...') }}"
                 ></textarea>
                 <x-input-error :messages="$errors->get('description')" />
             </div>
 
             <!-- Actions -->
-            <div class="mt-6 flex justify-end gap-3">
+            <div class="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-4">
                 <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'product-form-modal' })">
                     {{ __('Cancel') }}
                 </x-secondary-button>
 
-                <x-primary-button type="submit">
-                    <x-heroicon-o-check class="w-4 h-4 mr-2" />
+                <x-primary-button type="submit" wire:loading.attr="disabled">
+                    <svg wire:loading wire:target="save" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <x-heroicon-o-check wire:loading.remove wire:target="save" class="w-4 h-4 mr-2" />
                     {{ $isEditing ? __('Save Changes') : __('Create Product') }}
                 </x-primary-button>
             </div>

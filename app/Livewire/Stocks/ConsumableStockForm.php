@@ -7,9 +7,6 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Locked;
 use Illuminate\Validation\Rule;
 use App\Models\ConsumableStock;
-use App\Models\Product;
-use App\Models\Location;
-use App\Enums\ProductType;
 use App\DTOs\ConsumableStockData;
 use App\Services\ConsumableStockService;
 use App\Exceptions\ConsumableStockException;
@@ -33,7 +30,7 @@ class ConsumableStockForm extends Component
 
     public function mount()
     {
-        $this->loadInitialOptions();
+        // Options are loaded via AJAX
     }
 
     #[On('create-stock')]
@@ -45,22 +42,8 @@ class ConsumableStockForm extends Component
         $this->dispatch('open-modal', name: 'consumable-stock-form-modal');
     }
 
-    private function loadInitialOptions()
-    {
-        $this->productOptions = Product::where('type', ProductType::Consumable)
-            ->orderBy('name')
-            ->limit(20)
-            ->get()
-            ->map(fn($p) => ['value' => $p->id, 'text' => $p->name])
-            ->toArray();
-
-        $this->locationOptions = Location::orderBy('site')
-            ->orderBy('name')
-            ->limit(20)
-            ->get()
-            ->map(fn($l) => ['value' => $l->id, 'text' => "{$l->site->getLabel()} - {$l->name}"])
-            ->toArray();
-    }
+    // Initial options are empty for AJAX search
+    // private function loadInitialOptions() { ... }
 
     #[On('edit-stock')]
     public function edit(ConsumableStock $stock)
@@ -77,7 +60,7 @@ class ConsumableStockForm extends Component
         ];
 
         $this->locationOptions = [
-            ['value' => $stock->location->id, 'text' => $stock->location->name . ' (' . $stock->location->code . ')']
+            ['value' => $stock->location->id, 'text' => $stock->location->code . ' | ' . $stock->location->site->getLabel() . ' - ' . $stock->location->name]
         ];
 
         $this->isEditing = true;
@@ -108,6 +91,13 @@ class ConsumableStockForm extends Component
             'quantity' => ['required', 'integer', 'min:0'],
             'min_quantity' => ['required', 'integer', 'min:0'],
         ];
+
+        // Security: Prevent modification of Product/Location during Edit
+        if ($this->isEditing) {
+            $originalStock = ConsumableStock::findOrFail($this->stockId);
+            $this->product_id = $originalStock->product_id;
+            $this->location_id = $originalStock->location_id;
+        }
 
         $this->validate($rules, [], $this->validationAttributes());
 

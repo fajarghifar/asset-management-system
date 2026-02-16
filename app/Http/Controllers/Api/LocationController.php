@@ -10,7 +10,7 @@ class LocationController extends Controller
 {
     public function search(Request $request)
     {
-        $search = $request->query('q');
+        $search = $request->input('q') ?? $request->input('search') ?? $request->input('term');
 
         return Location::query()
             ->when($search, function ($query, $search) {
@@ -28,7 +28,7 @@ class LocationController extends Controller
                 $siteLabel = $location->site->getLabel();
                 return [
                     'value' => $location->id,
-                    'text' => "{$siteLabel} - {$location->name}",
+                    'text' => "{$location->code} | {$siteLabel} - {$location->name}",
                 ];
             });
     }

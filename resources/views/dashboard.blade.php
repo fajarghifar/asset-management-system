@@ -163,7 +163,7 @@
                 <!-- Low Stock Items -->
                 <div class="bg-card text-card-foreground rounded-lg shadow-sm border border-border overflow-hidden">
                     <div class="p-6 border-b border-border flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-red-600 dark:text-red-400">{{ __('Low Stock Alerts') }}</h3>
+                        <h3 class="text-lg font-semibold text-red-600">{{ __('Low Stock Alerts') }}</h3>
                         @if($stats['low_stock_count'] > 0)
                             <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ $stats['low_stock_count'] }} {{ __('Items') }}</span>
                         @endif

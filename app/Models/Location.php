@@ -24,7 +24,7 @@ class Location extends Model
 
     public function getFullNameAttribute(): string
     {
-        return "{$this->site->getLabel()} - {$this->name}";
+        return "{$this->code} | {$this->site->getLabel()} - {$this->name}";
     }
 
     public function assets(): HasMany

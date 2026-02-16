@@ -48,17 +48,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/kits/{kit}/resolve', [KitController::class, 'resolve'])->name('kits.resolve');
 
     // AJAX Search Routes
-    Route::prefix('categories')->name('api.categories.')->group(function () {
-        Route::get('/search', [CategoryController::class, 'search'])->name('search');
+    Route::prefix('ajax/categories')->name('ajax.categories.')->group(function () {
+        Route::post('/search', [CategoryController::class, 'search'])->name('search');
     });
-    Route::prefix('products')->name('api.products.')->group(function () {
-        Route::get('/search', [ProductController::class, 'search'])->name('search');
+    Route::prefix('ajax/products')->name('ajax.products.')->group(function () {
+        Route::post('/search', [ProductController::class, 'search'])->name('search');
+        Route::post('/search/assets', [ProductController::class, 'searchAssets'])->name('assets.search');
+        Route::post('/search/consumables', [ProductController::class, 'searchConsumables'])->name('consumables.search');
     });
-    Route::prefix('locations')->name('api.locations.')->group(function () {
-        Route::get('/search', [LocationController::class, 'search'])->name('search');
+    Route::prefix('ajax/locations')->name('ajax.locations.')->group(function () {
+        Route::post('/search', [LocationController::class, 'search'])->name('search');
     });
-
-    Route::get('/loans/items/search', LoanItemSearchController::class)->name('api.loans.items.search');
+    Route::post('/ajax/loans/items/search', LoanItemSearchController::class)->name('ajax.loans.items.search');
 });
 
 require __DIR__.'/auth.php';

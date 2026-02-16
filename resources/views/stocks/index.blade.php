@@ -25,4 +25,5 @@
 
     <livewire:stocks.consumable-stock-form />
     <livewire:stocks.consumable-stock-detail />
+    <livewire:stocks.move-consumable-stock />
 </x-app-layout>

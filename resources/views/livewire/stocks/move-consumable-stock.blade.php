@@ -1,12 +1,12 @@
-<x-modal name="move-asset-modal" :title="''">
+<x-modal name="move-stock-modal" :title="''">
     <div class="p-6">
-        @if($asset)
+        @if($stock)
             <div class="mb-6 space-y-1.5 text-center sm:text-left border-b border-gray-200 pb-4">
                 <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                    {{ __('Move Asset') }}
+                    {{ __('Move Stock') }}
                 </h3>
                 <p class="text-sm text-muted-foreground">
-                    {{ __('Transfer') }} <strong>{{ $asset->asset_tag }} | {{ $asset->product->name }}</strong> {{ __('to a new location.') }}
+                    {{ __('Transfer') }} <strong>{{ $stock->product->name }} ({{ $stock->quantity }})</strong> {{ __('to a new location.') }}
                 </p>
             </div>
 
@@ -16,53 +16,36 @@
                 <div class="space-y-1">
                     <x-input-label value="{{ __('Current Location') }}" />
                     <div class="p-2 border border-border bg-muted rounded-md text-sm text-muted-foreground">
-                        {{ $asset->location->full_name }}
+                        {{ $stock->location->code }} | {{ $stock->location->site->getLabel() }} - {{ $stock->location->name }}
                     </div>
                 </div>
 
                 <!-- New Location -->
                 <div>
-                    <x-input-label for="move_location_id" value="{{ __('New Location') }}" required />
+                    <x-input-label for="move_stock_location_id" value="{{ __('New Location') }}" required />
                     <x-tom-select
-                        id="move_location_id"
+                        id="move_stock_location_id"
                         wire:model="location_id"
+                        :options="$locationOptions"
                         :url="route('ajax.locations.search')"
                         method="POST"
-                        :options="$locationOptions"
                         placeholder="{{ __('Select Destination...') }}"
                         class="mt-1"
+                        required
                     />
                     <x-input-error :messages="$errors->get('location_id')" class="mt-2" />
                 </div>
 
-                <!-- Recipient -->
-                <div>
-                    <x-form-input
-                        name="recipient_name"
-                        label="{{ __('Recipient / PIC Name') }}"
-                        wire:model="recipient_name"
-                        placeholder="{{ __('Who is receiving this?') }}"
-                        required
-                    />
-                </div>
-
-                <!-- Notes -->
-                <div>
-                    <x-input-label for="move_notes" value="{{ __('Notes') }}" />
-                    <textarea id="move_notes" wire:model="notes" rows="3" class="mt-1 block w-full border-input bg-background focus:ring-ring focus:border-ring rounded-md shadow-sm sm:text-sm" placeholder="{{ __('Reason for movement...') }}"></textarea>
-                    <x-input-error :messages="$errors->get('notes')" class="mt-2" />
-                </div>
-
                 <!-- Actions -->
                 <div class="mt-6 flex justify-end gap-3">
-                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'move-asset-modal' })" wire:loading.attr="disabled">
+                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'move-stock-modal' })" wire:loading.attr="disabled">
                         {{ __('Cancel') }}
                     </x-secondary-button>
 
                     <x-primary-button type="submit" wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="save" class="flex items-center">
                             <x-heroicon-o-arrow-right-start-on-rectangle class="w-4 h-4 mr-2" />
-                            {{ __('Move Asset') }}
+                            {{ __('Move Stock') }}
                         </span>
                         <span wire:loading.flex wire:target="save" class="items-center">
                             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -2,20 +2,18 @@
 
 namespace App\Livewire\Assets;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Locked;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 use App\Models\Asset;
-use App\Models\Product;
-use App\Models\Location;
-use App\Enums\AssetStatus;
-use App\Enums\ProductType;
 use App\DTOs\AssetData;
+use Livewire\Component;
+use App\Enums\AssetStatus;
+use Livewire\Attributes\On;
+use Livewire\WithFileUploads;
 use App\Services\AssetService;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use App\Exceptions\AssetException;
+use Illuminate\Support\Facades\Storage;
 
 class AssetForm extends Component
 {
@@ -42,36 +40,50 @@ class AssetForm extends Component
     public array $locationOptions = [];
     public array $statusOptions = [];
 
-    public function mount()
+    public function mount(?Asset $asset = null)
     {
-        $this->statusOptions = array_map(fn($case) => [
-            'value' => $case->value,
-            'label' => $case->getLabel(),
-        ], AssetStatus::cases());
+        $this->statusOptions = [];
+        foreach (AssetStatus::cases() as $case) {
+            // Only show 'Loaned' if the asset is currently Loaned
+            if ($case === AssetStatus::Loaned) {
+                if (!($asset && $asset->status === AssetStatus::Loaned)) {
+                    continue;
+                }
+            }
+            $this->statusOptions[] = [
+                'value' => $case->value,
+                'label' => $case->getLabel(),
+            ];
+        }
 
-        $this->status = AssetStatus::InStock->value; // Default
+        if ($asset && $asset->exists) {
+            $this->assetId = $asset->id;
+            $this->product_id = $asset->product_id;
+            $this->location_id = $asset->location_id;
+            $this->asset_tag = $asset->asset_tag;
+            $this->serial_number = $asset->serial_number ?? '';
+            $this->status = $asset->status->value;
+            $this->purchase_date = $asset->purchase_date ? Carbon::parse($asset->purchase_date)->format('Y-m-d') : null;
+            $this->notes = $asset->notes ?? '';
+            $this->image_path = $asset->image_path;
+            $this->isEditing = true;
 
-        $this->loadInitialOptions();
+            // Preload options for selected items
+            $this->productOptions = [
+                ['value' => $asset->product->id, 'text' => $asset->product->name]
+            ];
+
+            $this->locationOptions = [
+                ['value' => $asset->location->id, 'text' => $asset->location->full_name]
+            ];
+        } else {
+            $this->status = AssetStatus::InStock->value; // Default
+            // Options are loaded via AJAX
+        }
     }
 
-    private function loadInitialOptions()
-    {
-        // Preload top 20 Assets products
-        $this->productOptions = Product::where('type', ProductType::Asset)
-            ->orderBy('name')
-            ->limit(20)
-            ->get()
-            ->map(fn($p) => ['value' => $p->id, 'text' => $p->name])
-            ->toArray();
-
-        // Preload locations
-        $this->locationOptions = Location::orderBy('site')
-            ->orderBy('name')
-            ->limit(20)
-            ->get()
-            ->map(fn($l) => ['value' => $l->id, 'text' => "{$l->site->getLabel()} - {$l->name}"])
-            ->toArray();
-    }
+    // Initial options are empty for AJAX search
+    // private function loadInitialOptions() { ... }
 
     #[On('create-asset')]
     public function create()
@@ -92,7 +104,7 @@ class AssetForm extends Component
         $this->asset_tag = $asset->asset_tag;
         $this->serial_number = $asset->serial_number ?? '';
         $this->status = $asset->status->value;
-        $this->purchase_date = $asset->purchase_date?->format('Y-m-d');
+        $this->purchase_date = $asset->purchase_date ? Carbon::parse($asset->purchase_date)->format('Y-m-d') : null;
         $this->notes = $asset->notes ?? '';
         $this->image_path = $asset->image_path;
         $this->isEditing = true;
@@ -103,7 +115,7 @@ class AssetForm extends Component
         ];
 
         $this->locationOptions = [
-            ['value' => $asset->location->id, 'text' => $asset->location->name . ' (' . $asset->location->code . ')']
+            ['value' => $asset->location->id, 'text' => $asset->location->full_name]
         ];
 
         $this->dispatch('open-modal', name: 'asset-form-modal');
@@ -147,6 +159,13 @@ class AssetForm extends Component
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
 
+        // Security: Prevent modification of Product/Location during Edit
+        if ($this->isEditing) {
+            $originalAsset = Asset::findOrFail($this->assetId);
+            $this->product_id = $originalAsset->product_id;
+            $this->location_id = $originalAsset->location_id;
+        }
+
         $this->validate($rules, [], $this->validationAttributes());
 
         try {
@@ -166,7 +185,7 @@ class AssetForm extends Component
                 asset_tag: $this->asset_tag,
                 serial_number: $this->serial_number ?: null,
                 status: AssetStatus::from($this->status),
-                purchase_date: $this->purchase_date ? \Carbon\Carbon::parse($this->purchase_date) : null,
+                purchase_date: $this->purchase_date ? Carbon::parse($this->purchase_date) : null,
                 image_path: $imagePath,
                 notes: $this->notes ?: null,
             );
@@ -175,12 +194,12 @@ class AssetForm extends Component
                 $asset = Asset::findOrFail($this->assetId);
                 $service->updateAsset($asset, $data);
                 $message = __('Asset updated successfully.');
+                return redirect()->route('assets.show', $asset)->with('success', $message);
             } else {
                 $service->createAsset($data);
                 $message = __('Asset created successfully.');
+                return redirect()->route('assets.index')->with('success', $message);
             }
-
-            return redirect()->route('assets.index')->with('success', $message);
 
         } catch (AssetException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');

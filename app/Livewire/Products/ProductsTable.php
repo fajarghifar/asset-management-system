@@ -3,7 +3,6 @@
 namespace App\Livewire\Products;
 
 use App\Models\Product;
-use App\Models\Category;
 use App\Enums\ProductType;
 use App\Services\ProductService;
 use App\Exceptions\ProductException;
@@ -48,7 +47,9 @@ final class ProductsTable extends PowerGridComponent
 
     public function datasource(): Builder
     {
-        return Product::query()->with('category');
+        return Product::query()
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select('products.*', 'categories.name as category_name');
     }
 
     public function relationSearch(): array
@@ -63,15 +64,15 @@ final class ProductsTable extends PowerGridComponent
             ->add('name')
             ->add('code')
             ->add('description')
-            ->add('category_name', fn ($product) => $product->category->name)
+            ->add('category_name')
             ->add('type_label', function ($product) {
                 // ... (color logic remains same)
                 $color = match ($product->type->getColor()) {
-                    'primary' => 'bg-blue-100 text-blue-800',
-                    'warning' => 'bg-amber-100 text-amber-800',
-                    default => 'bg-gray-100 text-gray-800',
+                    'primary' => 'bg-blue-100 text-blue-800 border-blue-200',
+                    'warning' => 'bg-amber-100 text-amber-800 border-amber-200',
+                    default => 'bg-gray-100 text-gray-800 border-gray-200',
                 };
-                return '<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ' . $color . '">' . $product->type->getLabel() . '</span>';
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ' . $color . '">' . $product->type->getLabel() . '</span>';
             })
             ->add('can_be_loaned_label', function ($product) {
                 return $product->can_be_loaned
@@ -80,6 +81,7 @@ final class ProductsTable extends PowerGridComponent
             })
             // Export Fields
             ->add('type_export', fn($product) => $product->type->getLabel())
+            ->add('category_export', fn($product) => $product->category_name)
             ->add('loanable_export', fn($product) => $product->can_be_loaned ? __('Yes') : __('No'))
             ->add('created_at');
     }
@@ -97,13 +99,16 @@ final class ProductsTable extends PowerGridComponent
                 ->sortable()
                 ->searchable(),
 
-            Column::make(__('Category'), 'category_name', 'category_id')
+            Column::make(__('Category'), 'category_name')
+                ->sortable()
                 ->visibleInExport(false),
 
             Column::make(__('Type'), 'type_label', 'type')
+                ->sortable()
                 ->visibleInExport(false),
 
-            Column::make(__('Loanable'), 'can_be_loaned_label')
+            Column::make(__('Loanable'), 'can_be_loaned_label', 'can_be_loaned')
+                ->sortable()
                 ->visibleInExport(false),
 
             // Export Columns
@@ -111,7 +116,7 @@ final class ProductsTable extends PowerGridComponent
                 ->hidden()
                 ->visibleInExport(true),
 
-            Column::make(__('Category'), 'category_name', 'category_id')
+            Column::make(__('Category'), 'category_export')
                 ->hidden()
                 ->visibleInExport(true),
 
@@ -130,10 +135,11 @@ final class ProductsTable extends PowerGridComponent
     public function filters(): array
     {
         return [
-            Filter::multiSelect('category_name', 'category_id')
-                ->dataSource(Category::all())
-                ->optionLabel('name')
-                ->optionValue('id'),
+            Filter::multiSelectAsync('category_name', 'category_id')
+                ->url(route('ajax.categories.search'))
+                ->method('POST')
+                ->optionValue('value')
+                ->optionLabel('text'),
 
             Filter::select('type_label', 'type')
                 ->dataSource(collect(ProductType::cases())->map(fn($type) => [

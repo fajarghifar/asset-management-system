@@ -30,16 +30,6 @@
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
   }
-
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
 }
 
 /* Custom Tom Select overrides for Tailwind */
@@ -68,7 +58,7 @@
 /* Dropdown Container */
 .ts-dropdown {
     @apply bg-white border border-gray-200 shadow-lg rounded-md mt-1 overflow-hidden;
-    z-index: 50 !important;
+    z-index: 9999 !important;
 }
 
 /* Dropdown Options */

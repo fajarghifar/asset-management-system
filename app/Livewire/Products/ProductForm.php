@@ -2,10 +2,9 @@
 
 namespace App\Livewire\Products;
 
-use App\DTOs\ProductData;
 use App\Models\Product;
 use Livewire\Component;
-use App\Models\Category;
+use App\DTOs\ProductData;
 use App\Enums\ProductType;
 use Livewire\Attributes\On;
 use Illuminate\Validation\Rule;
@@ -32,9 +31,7 @@ class ProductForm extends Component
 
     public function mount()
     {
-        $this->categoryOptions = Category::orderBy('name')->get()->map(function($c) {
-            return ['value' => $c->id, 'text' => $c->name];
-        })->toArray();
+        // $this->categoryOptions is empty initially for AJAX search
 
         foreach (ProductType::cases() as $type) {
             $this->typeOptions[] = [
@@ -53,7 +50,8 @@ class ProductForm extends Component
     #[On('create-product')]
     public function create(): void
     {
-        $this->reset(['name', 'code', 'description', 'type', 'category_id', 'can_be_loaned', 'product', 'isEditing']);
+        // Reset categoryOptions to avoid stale data
+        $this->reset(['name', 'code', 'description', 'type', 'category_id', 'can_be_loaned', 'product', 'isEditing', 'categoryOptions']);
         $this->type = ProductType::Asset->value;
         $this->can_be_loaned = true;
         $this->dispatch('open-modal', name: 'product-form-modal');
@@ -69,6 +67,13 @@ class ProductForm extends Component
         $this->type = $product->type->value;
         $this->category_id = $product->category_id;
         $this->can_be_loaned = $product->can_be_loaned;
+
+        // Populate categoryOptions for the selected item
+        if ($product->category) {
+            $this->categoryOptions = [
+                ['value' => $product->category->id, 'text' => $product->category->name]
+            ];
+        }
 
         $this->isEditing = true;
         $this->dispatch('open-modal', name: 'product-form-modal');

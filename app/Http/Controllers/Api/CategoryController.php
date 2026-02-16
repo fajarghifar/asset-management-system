@@ -10,7 +10,7 @@ class CategoryController extends Controller
 {
     public function search(Request $request)
     {
-        $search = $request->query('q');
+        $search = $request->input('q') ?? $request->input('search') ?? $request->input('term');
 
         return Category::query()
             ->when($search, function ($query, $search) {

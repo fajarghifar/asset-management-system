@@ -1,4 +1,4 @@
-@props(['options' => [], 'placeholder' => 'Select option...', 'url' => null])
+@props(['options' => [], 'placeholder' => 'Select option...', 'url' => null, 'method' => 'GET'])
 
 <div wire:ignore class="w-full">
     <select
@@ -28,6 +28,7 @@
                         labelField: 'text',
                         searchField: ['text'],
                         preload: 'focus',
+                        dropdownParent: 'body',
                         plugins: ['clear_button'],
                         create: false,
                         sortField: {
@@ -63,15 +64,18 @@
 
                     if ('{{ $url }}') {
                         config.load = (query, callback) => {
-                            let url = '{{ $url }}' + ( '{{ $url }}'.includes('?') ? '&' : '?' ) + 'q=' + encodeURIComponent(query);
+                            const method = '{{ $method }}'.toUpperCase();
+                            let url = '{{ $url }}';
 
-                            // Check for dynamic params
+                            // Prepare parameters
+                            let params = { q: query };
+
+                            // Merge dynamic params
                             const dataParams = this.$el.getAttribute('data-params');
                             if (dataParams) {
                                 try {
-                                    const params = JSON.parse(dataParams);
-                                    const queryString = new URLSearchParams(params).toString();
-                                    url += '&' + queryString;
+                                    const parsedDetails = JSON.parse(dataParams);
+                                    params = { ...params, ...parsedDetails };
                                 } catch (e) {
                                     console.error('Invalid data-params JSON', e);
                                 }
@@ -83,14 +87,26 @@
                                 .find(row => row.startsWith('XSRF-TOKEN='))
                                 ?.split('=')[1];
 
-                            fetch(url, {
+                            let fetchOptions = {
                                 credentials: 'include',
                                 headers: {
                                     'Accept': 'application/json',
                                     'X-Requested-With': 'XMLHttpRequest',
                                     'X-XSRF-TOKEN': decodeURIComponent(csrfToken || '')
                                 }
-                            })
+                            };
+
+                            if (method === 'POST') {
+                                fetchOptions.method = 'POST';
+                                fetchOptions.headers['Content-Type'] = 'application/json';
+                                fetchOptions.body = JSON.stringify(params);
+                            } else {
+                                fetchOptions.method = 'GET';
+                                const queryString = new URLSearchParams(params).toString();
+                                url += (url.includes('?') ? '&' : '?') + queryString;
+                            }
+
+                            fetch(url, fetchOptions)
                                 .then(response => {
                                     if (!response.ok) throw new Error('Network response was not ok');
                                     return response.json();
