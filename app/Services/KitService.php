@@ -82,7 +82,7 @@ class KitService
     public function resolveKitToLoanItems(Kit $kit, ?int $preferredLocationId = null): array
     {
         $resolvedItems = [];
-        $kit->load('items.product');
+        $kit->loadMissing('items.product');
 
         foreach ($kit->items as $item) {
             $product = $item->product;
@@ -245,7 +245,7 @@ class KitService
      */
     public function getKitAvailability(Kit $kit, ?int $preferredLocationId = null): array
     {
-        $kit->load(['items.product', 'items.location']);
+        $kit->loadMissing(['items.product', 'items.location']);
         $details = [];
         $isFullyAvailable = true;
 
@@ -258,7 +258,12 @@ class KitService
             $locationName = 'Any Location';
 
             if ($targetLocationId) {
-                $location = \App\Models\Location::find($targetLocationId);
+                // Optimization: Check if the location is already loaded on the item
+                if ($item->location_id === $targetLocationId && $item->relationLoaded('location')) {
+                    $location = $item->location;
+                } else {
+                    $location = \App\Models\Location::find($targetLocationId);
+                }
 
                 if ($location) {
                     $siteLabel = $location->site instanceof \App\Enums\LocationSite

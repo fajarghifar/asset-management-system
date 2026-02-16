@@ -18,18 +18,18 @@ class AssetSeeder extends Seeder
     public function run(): void
     {
         // Data Mapping
-        $itemNameToCode = $this->getItemMappings();
+        $itemNameToProductName = $this->getItemMappings();
         $locationAliasToSite = [
             'TGS' => LocationSite::TGS,
             'BT Store' => LocationSite::BT,
             'JMP' => LocationSite::JMP2,
         ];
 
-        // Fetch Dependencies
-        $products = Product::whereIn('code', array_unique($itemNameToCode))
+        // Fetch Dependencies by Name
+        $products = Product::whereIn('name', array_unique($itemNameToProductName))
             ->where('type', ProductType::Asset)
             ->get()
-            ->keyBy('code');
+            ->keyBy(fn($item) => strtoupper($item->name)); // Key by uppercase name for easier lookup
 
         if ($products->isEmpty()) {
             $this->command->error('No Asset products found. Run ProductSeeder first.');
@@ -48,10 +48,17 @@ class AssetSeeder extends Seeder
 
         foreach ($rawData as $row) {
             $itemName = trim($row['item']);
-            $productCode = $itemNameToCode[$itemName] ?? null;
+            $targetProductName = $itemNameToProductName[$itemName] ?? null;
 
-            if (!$productCode || !$products->has($productCode)) {
-                continue; // Skip invalid products
+            if (!$targetProductName) {
+                continue;
+            }
+
+            // Lookup product by uppercase name
+            $product = $products->get(strtoupper($targetProductName));
+
+            if (!$product) {
+                continue;
             }
 
             $location = $locationLookup[$row['location']] ?? null;
@@ -59,7 +66,6 @@ class AssetSeeder extends Seeder
                 continue; // Skip invalid locations
             }
 
-            $product = $products->get($productCode);
             $qty = (int) $row['qty'];
 
             for ($i = 0; $i < $qty; $i++) {
@@ -106,47 +112,47 @@ class AssetSeeder extends Seeder
     private function getItemMappings(): array
     {
         return [
-            'TANG POTONG' => 'TANGPT',
-            'TANG LANCIP' => 'TANGLC',
-            'TANG BIASA' => 'TANGBS',
-            'TANG POTONG KECIL' => 'TPKCL',
-            'TANG LANCIP KECIL' => 'TLKCL',
-            'TANG BIASA KECIL' => 'TBKCL',
-            'TANG CRIMPING' => 'CRIMP',
-            'GUNTING BESAR' => 'GNTBS',
-            'GUNTING' => 'GNTBS',
-            'GUNTING KECIL' => 'GNTKC',
-            'PISAU CUTTER' => 'CUTTER',
-            'KATER' => 'CUTTER',
-            'GERGAJI KECIL' => 'GERGAJ',
-            'OBENG SET LAPTOP' => 'OBLPT',
-            'OBENG SET 115' => 'OB115',
-            'OBENG KUNING' => 'OBKNG',
-            'OBENG' => 'OBSTD',
-            'OBENG STANDAR' => 'OBSTD',
-            'TOOLKIT SATU SET' => 'TOOLKT',
-            '1 SET TOOLKIT OBENG PALU Dll' => 'TKPALU',
-            'ALAT LEM TEMBAK' => 'GLUEGN',
-            'BLOWER' => 'BLOWER',
-            'SUNTIKAN BESAR' => 'SUNTIK',
-            'LAN TESTER' => 'LANTST',
-            'TESTER LAN' => 'LANTST',
-            'MULTI METER DIGITAL' => 'MULTI',
-            'OPTICAL POWER METER (OPM)' => 'OPM',
-            'POWER SUPPLY TESTER' => 'PSTEST',
-            'MATHERPAS' => 'WTRPAS',
-            'UPS' => 'UPS',
-            'HT' => 'HT',
-            'STB' => 'STB',
-            'FANVIL' => 'IPPHON',
-            'POE' => 'POE',
-            'HARDISK EXTERNAL' => 'HDDEXT',
-            'HARDIKS WD 500GB' => 'WD500',
-            'HARDIKS SEAGATE 500GB' => 'SGT500',
-            'HARDIKS WD 320GB' => 'WD320',
-            'HARDIKS SEAGATE 1 TB' => 'SGT1TB',
-            'SEAGATE 250GB' => 'SGT250',
-            'HARDIKS LAPTOP' => 'HDDLAP',
+            'TANG POTONG' => 'Tang Potong',
+            'TANG LANCIP' => 'Tang Lancip',
+            'TANG BIASA' => 'Tang Biasa',
+            'TANG POTONG KECIL' => 'Tang Potong Kecil',
+            'TANG LANCIP KECIL' => 'Tang Lancip Kecil',
+            'TANG BIASA KECIL' => 'Tang Biasa Kecil',
+            'TANG CRIMPING' => 'Tang Crimping',
+            'GUNTING BESAR' => 'Gunting Besar',
+            'GUNTING' => 'Gunting Besar',
+            'GUNTING KECIL' => 'Gunting Kecil',
+            'PISAU CUTTER' => 'Pisau Cutter',
+            'KATER' => 'Pisau Cutter',
+            'GERGAJI KECIL' => 'Gergaji Kecil',
+            'OBENG SET LAPTOP' => 'Obeng Set Laptop',
+            'OBENG SET 115' => 'Obeng Set 115 in 1',
+            'OBENG KUNING' => 'Obeng Kuning',
+            'OBENG' => 'Obeng Standar',
+            'OBENG STANDAR' => 'Obeng Standar',
+            'TOOLKIT SATU SET' => 'Toolkit Satu Set',
+            '1 SET TOOLKIT OBENG PALU Dll' => 'Toolkit Set Lengkap',
+            'ALAT LEM TEMBAK' => 'Alat Lem Tembak (Glue Gun)',
+            'BLOWER' => 'Blower / Heat Gun',
+            'SUNTIKAN BESAR' => 'Suntikan Besar (Refill)',
+            'LAN TESTER' => 'LAN Tester',
+            'TESTER LAN' => 'LAN Tester',
+            'MULTI METER DIGITAL' => 'Multi Meter Digital',
+            'OPTICAL POWER METER (OPM)' => 'Optical Power Meter (OPM)',
+            'POWER SUPPLY TESTER' => 'Power Supply Tester',
+            'MATHERPAS' => 'Waterpass',
+            'UPS' => 'UPS 600VA',
+            'HT' => 'Handy Talky (HT)',
+            'STB' => 'STB (Set Top Box)',
+            'FANVIL' => 'Fanvil (IP Phone)',
+            'POE' => 'POE Injector',
+            'HARDISK EXTERNAL' => 'Harddisk External',
+            'HARDIKS WD 500GB' => 'Harddisk WD 500GB',
+            'HARDIKS SEAGATE 500GB' => 'Harddisk Seagate 500GB',
+            'HARDIKS WD 320GB' => 'Harddisk WD 320GB',
+            'HARDIKS SEAGATE 1 TB' => 'Harddisk Seagate 1TB',
+            'SEAGATE 250GB' => 'Harddisk Seagate 250GB',
+            'HARDIKS LAPTOP' => 'Harddisk Laptop (General)',
         ];
     }
 

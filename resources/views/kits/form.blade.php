@@ -16,10 +16,7 @@
         foreach($kit->items as $item) {
             $locLabel = '';
             if ($item->location) {
-                $siteLabel = $item->location->site instanceof \App\Enums\LocationSite
-                    ? $item->location->site->getLabel()
-                    : $item->location->site;
-                $locLabel = "{$siteLabel} - {$item->location->name}";
+                $locLabel = $item->location->full_name;
             }
 
             $initialData['items'][] = [
@@ -49,9 +46,8 @@
             $locLabel = '';
             if (!empty($oldItem['location_id'])) {
                 $l = \App\Models\Location::find($oldItem['location_id']);
-                 if ($l) {
-                     $siteLabel = $l->site instanceof \App\Enums\LocationSite ? $l->site->getLabel() : $l->site;
-                     $locLabel = "{$siteLabel} - {$l->name}";
+                if ($l) {
+                     $locLabel = $l->full_name;
                 }
             }
 
@@ -76,6 +72,7 @@
     x-data="kitForm({
         initialData: @js($initialData)
     })"
+    x-on:submit.prevent="submitForm"
 >
     @csrf
     @method($method)
@@ -145,15 +142,15 @@
 
     <!-- Items -->
     <div class="space-y-4">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h3 class="text-lg font-medium text-foreground">{{ __('Kit Items') }}</h3>
-            <x-secondary-button @click="addItem()" type="button">
+            <x-secondary-button @click="addItem()" type="button" class="w-full sm:w-auto justify-center">
                 <x-heroicon-o-plus class="w-4 h-4 mr-2" />
                 {{ __('Add Product') }}
             </x-secondary-button>
         </div>
 
-        <div class="overflow-visible border rounded-md">
+        <div class="overflow-x-auto border rounded-md">
             <table class="w-full text-sm text-left">
                 <thead class="bg-muted text-muted-foreground uppercase text-xs">
                     <tr>
@@ -172,7 +169,8 @@
 
                             <td class="px-4 py-3 align-top">
                                 <x-tom-select
-                                    :url="route('api.products.search') . '?type=all'"
+                                    :url="route('ajax.products.search') . '?type=all'"
+                                    method="POST"
                                     placeholder="{{ __('Search Product...') }}"
                                     x-model="item.product_id"
                                     class="w-full"
@@ -183,7 +181,8 @@
 
                             <td class="px-4 py-3 align-top">
                                 <x-tom-select
-                                    :url="route('api.locations.search')"
+                                    :url="route('ajax.locations.search')"
+                                    method="POST"
                                     placeholder="{{ __('Select Location') }}"
                                     x-model="item.location_id"
                                     class="w-full"
@@ -235,12 +234,20 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center justify-end gap-4 pt-4 border-t border-border">
-        <x-secondary-button tag="a" href="{{ route('kits.index') }}">
+    <div class="flex flex-col sm:flex-row items-center justify-end gap-4 pt-4 border-t border-border">
+        <x-secondary-button tag="a" href="{{ route('kits.index') }}" class="w-full sm:w-auto justify-center">
             {{ __('Cancel') }}
         </x-secondary-button>
-        <x-primary-button type="submit">
-            <x-heroicon-o-check class="w-4 h-4 mr-2" />
+        <x-primary-button type="submit" x-bind:disabled="isSubmitting" class="w-full sm:w-auto justify-center">
+            <template x-if="isSubmitting">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </template>
+            <template x-if="!isSubmitting">
+                <x-heroicon-o-check class="w-4 h-4 mr-2" />
+            </template>
             {{ $isEdit ? __('Update Kit') : __('Create Kit') }}
         </x-primary-button>
     </div>
@@ -255,6 +262,7 @@
                 is_active: true,
                 items: []
             },
+            isSubmitting: false,
 
             init() {
                 this.form = { ...this.form, ...initialData };
@@ -281,12 +289,17 @@
                 const item = this.form.items[index];
                 item.product_id = details.value;
                 item.product_label = details.item.text;
-                item.product_type = details.item.type; // Set type from search result
+                item.product_type = details.item.type;
 
-                // Handle Asset Quantity Lock
+                // Reset quantity for Assets
                 if (item.product_type === 'asset') {
                     item.quantity = 1;
                 }
+            },
+
+            submitForm() {
+                this.isSubmitting = true;
+                this.$el.submit();
             }
         }));
     });

@@ -1,22 +1,23 @@
 <x-app-layout title="Loan Details">
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
                 {{ __('Loan Details') }}: {{ $loan->code }}
             </h2>
-            <div class="flex items-center gap-2" x-data>
-                <x-secondary-button href="{{ route('loans.index') }}" tag="a">
+            <div class="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto" x-data>
+                <x-secondary-button href="{{ route('loans.index') }}" tag="a" class="w-full sm:w-auto justify-center">
                     <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                     {{ __('Back to List') }}
                 </x-secondary-button>
 
                 @if($loan->status === \App\Enums\LoanStatus::Pending)
-                    <x-primary-button href="{{ route('loans.edit', $loan) }}" tag="a">
+                    <x-primary-button href="{{ route('loans.edit', $loan) }}" tag="a" class="w-full sm:w-auto justify-center">
                         <x-heroicon-o-pencil class="w-4 h-4 mr-2" />
                         {{ __('Edit Loan') }}
                     </x-primary-button>
 
                     <x-danger-button
+                        class="w-full sm:w-auto justify-center"
                         x-on:click="$dispatch('loan-action', {
                             action: 'reject',
                             url: '{{ route('loans.reject', $loan) }}',
@@ -32,7 +33,7 @@
                     </x-danger-button>
 
                     <x-primary-button
-                        class="!bg-green-600 hover:!bg-green-700 focus:!ring-green-500"
+                        class="!bg-green-600 hover:!bg-green-700 focus:!ring-green-500 w-full sm:w-auto justify-center"
                         x-on:click="$dispatch('loan-action', {
                             action: 'approve',
                             url: '{{ route('loans.approve', $loan) }}',
@@ -50,7 +51,7 @@
 
                 @if($loan->status === \App\Enums\LoanStatus::Rejected)
                     <x-primary-button
-                        class="bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500"
+                        class="bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500 w-full sm:w-auto justify-center"
                         x-on:click="$dispatch('loan-action', {
                             action: 'restore',
                             url: '{{ route('loans.restore', $loan) }}',
@@ -84,11 +85,12 @@
         modalTitle: '',
         modalDescription: '',
         confirmButtonText: '',
-        confirmButtonClass: ''
+        confirmButtonClass: '',
+        submitting: false
     }"
     @loan-action.window="openConfirmModal($event.detail)"
     >
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Loan Info Card -->
             <div class="bg-card text-card-foreground shadow-sm rounded-lg p-6 border border-border">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -187,7 +189,7 @@
                    <h3 class="text-lg font-medium mb-4">{{ __('Loan Items') }}</h3>
 
                    @if($loan->status === \App\Enums\LoanStatus::Approved || $loan->status === \App\Enums\LoanStatus::Overdue)
-                   <form action="{{ route('loans.return', $loan) }}" method="POST">
+                   <form action="{{ route('loans.return', $loan) }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
                        @csrf
                    @endif
 
@@ -213,7 +215,7 @@
                                    </td>
                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                                        @if($item->type === \App\Enums\LoanItemType::Asset)
-                                           {{ $item->asset->product->name ?? __('Unknown Asset') }} <span class="text-muted-foreground font-normal">({{ $item->asset->asset_tag ?? '-' }})</span>
+                                           {{ $item->asset->asset_tag ?? '-' }} | {{ $item->asset->product->name ?? __('Unknown Asset') }}
                                        @else
                                            {{ $item->consumableStock->product->name ?? __('Unknown Stock') }}
                                        @endif
@@ -225,7 +227,7 @@
                                                : $item->consumableStock?->location;
                                        @endphp
                                        @if($loc)
-                                           {{ $loc->name }} <span class="text-muted-foreground">({{ $loc->site->getLabel() }})</span>
+                                           {{ $loc->code }} | {{ $loc->site->getLabel() }} - {{ $loc->name }}
                                        @else
                                            <span class="text-muted-foreground">-</span>
                                        @endif
@@ -273,7 +275,13 @@
 
                    @if(($loan->status === \App\Enums\LoanStatus::Approved || $loan->status === \App\Enums\LoanStatus::Overdue))
                    <div class="mt-4 flex justify-end">
-                       <x-primary-button>
+                       <x-primary-button x-bind:disabled="submitting">
+                           <template x-if="submitting">
+                               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                               </svg>
+                           </template>
                            {{ __('Process Returns') }}
                        </x-primary-button>
                    </div>
@@ -281,9 +289,9 @@
                    @endif
                 </div>
 
-        </div>
+            </div>
     <x-modal name="confirm-loan-action" :maxWidth="'md'">
-        <form method="POST" :action="actionUrl" class="bg-card px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+        <form method="POST" :action="actionUrl" class="bg-card px-4 pb-4 pt-5 sm:p-6 sm:pb-4" @submit="submitting = true">
             @csrf
             <input type="hidden" name="_method" :value="actionMethod">
 
@@ -297,8 +305,16 @@
             </div>
 
             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                <button type="submit" :class="`inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${confirmButtonClass}`" x-text="confirmButtonText"></button>
-                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-inset ring-border hover:bg-accent hover:text-accent-foreground sm:mt-0 sm:w-auto transition-colors" x-on:click="$dispatch('close-modal', { name: 'confirm-loan-action' })">
+                <button type="submit" :class="`inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${confirmButtonClass}`" :disabled="submitting">
+                    <template x-if="submitting">
+                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </template>
+                    <span x-text="confirmButtonText"></span>
+                </button>
+                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-inset ring-border hover:bg-accent hover:text-accent-foreground sm:mt-0 sm:w-auto transition-colors" x-on:click="$dispatch('close-modal', { name: 'confirm-loan-action' })" :disabled="submitting">
                     {{ __('Cancel') }}
                 </button>
             </div>

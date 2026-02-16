@@ -38,7 +38,7 @@ final class KitsTable extends PowerGridComponent
 
     public function datasource(): Builder
     {
-        return Kit::query();
+        return Kit::query()->withCount('items');
     }
 
     public function fields(): PowerGridFields
@@ -48,16 +48,16 @@ final class KitsTable extends PowerGridComponent
             ->add('name')
             ->add('description', fn (Kit $model) => str($model->description)->limit(50))
             ->add('is_active_label', fn (Kit $model) => $model->is_active
-                ? '<span class="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold">Active</span>'
-                : '<span class="px-2 py-1 rounded bg-red-100 text-red-800 text-xs font-semibold">Inactive</span>')
-            ->add('items_count', fn (Kit $model) => $model->items()->count() . ' Items')
+                ? '<span class="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold">' . __('Active') . '</span>'
+                : '<span class="px-2 py-1 rounded bg-red-100 text-red-800 text-xs font-semibold">' . __('Inactive') . '</span>')
+            ->add('items_count', fn(Kit $model) => $model->items_count . ' ' . __('Items'))
             ->add('created_at_formatted', fn (Kit $model) => $model->created_at->format('d/m/Y H:i'));
     }
 
     public function columns(): array
     {
         return [
-            Column::make(__('ID'), 'id'),
+            Column::make(__('ID'), 'id')->hidden(),
 
             Column::make(__('Name'), 'name')
                 ->sortable()
@@ -115,9 +115,9 @@ final class KitsTable extends PowerGridComponent
             try {
                 $service->deleteKit($kit);
                 $this->dispatch('pg:eventRefresh-kits-table');
-                $this->dispatch('toast', ['message' => "Kit deleted successfully.", 'type' => 'success']);
+                $this->dispatch('toast', ['message' => __('Kit deleted successfully.'), 'type' => 'success']);
             } catch (\Exception $e) {
-                $this->dispatch('toast', ['message' => 'Failed to delete kit: ' . $e->getMessage(), 'type' => 'error']);
+                $this->dispatch('toast', ['message' => __('Failed to delete kit: ') . $e->getMessage(), 'type' => 'error']);
             }
         }
     }

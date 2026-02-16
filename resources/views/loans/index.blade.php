@@ -1,4 +1,4 @@
-<x-app-layout title="Loan Management">
+<x-app-layout title="{{ __('Loan Management') }}">
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-foreground leading-tight">

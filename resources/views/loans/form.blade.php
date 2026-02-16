@@ -5,7 +5,7 @@
     $action = $isEdit ? route('loans.update', $loan) : route('loans.store');
     $method = $isEdit ? 'PUT' : 'POST';
 
-    // Initial Data Setup
+    // Initial Data
     $initialData = [
         'borrower_name' => old('borrower_name', $loan?->borrower_name ?? ''),
         'loan_date' => old('loan_date', $loan?->loan_date?->format('Y-m-d') ?? now()->format('Y-m-d')),
@@ -17,7 +17,6 @@
 
     if ($isEdit && empty(old('items'))) {
         foreach($loan->items as $item) {
-             // ... existing edit logic ...
             $isAsset = $item->type === \App\Enums\LoanItemType::Asset;
             $productName = $isAsset
                 ? ($item->asset?->product?->name ?? __('Unknown'))
@@ -51,34 +50,42 @@
     } elseif (!empty(old('items'))) {
         // Restore items from validation failure
         $oldItems = old('items');
-        foreach($oldItems as $oldItem) {
+        foreach($oldItems as $index => $oldItem) {
              // We need to fetch label information since it's not in the POST data
+            $type = $oldItem['type'] ?? 'asset';
+            $assetId = $oldItem['asset_id'] ?? null;
+            $stockId = $oldItem['consumable_stock_id'] ?? null;
+            $qty = $oldItem['quantity_borrowed'] ?? 1;
+
             $unifiedValue = null;
             $unifiedLabel = '';
-            $type = $oldItem['type'] ?? 'asset';
 
-            if ($type === 'asset' && !empty($oldItem['asset_id'])) {
-                $unifiedValue = 'asset_' . $oldItem['asset_id'];
-                $asset = \App\Models\Asset::with('product', 'location')->find($oldItem['asset_id']);
+            if ($type === 'asset' && $assetId) {
+                $unifiedValue = 'asset_' . $assetId;
+                $asset = \App\Models\Asset::with('product', 'location')->find($assetId);
                 if($asset) {
-                    $loc = $asset->location ? "({$asset->location->full_name})" : '';
-                    $unifiedLabel = "{$asset->product->name} {$loc}";
+                    $loc = $asset->location ? "({$asset->location->site->getLabel()} - {$asset->location->name})" : '';
+                    $unifiedLabel = "{$asset->asset_tag} | {$asset->product->name} {$loc}";
+                } else {
+                     $unifiedLabel = __('Unknown Asset');
                 }
-            } elseif ($type === 'consumable' && !empty($oldItem['consumable_stock_id'])) {
-                $unifiedValue = 'stock_' . $oldItem['consumable_stock_id'];
-                $stock = \App\Models\ConsumableStock::with('product', 'location')->find($oldItem['consumable_stock_id']);
+            } elseif ($type === 'consumable' && $stockId) {
+                $unifiedValue = 'stock_' . $stockId;
+                $stock = \App\Models\ConsumableStock::with('product', 'location')->find($stockId);
                 if($stock) {
-                    $loc = $stock->location ? "({$stock->location->full_name})" : '';
-                    $unifiedLabel = "{$stock->product->name} {$loc}";
+                    $loc = $stock->location ? "({$stock->location->site->getLabel()} - {$stock->location->name})" : '';
+                    $unifiedLabel = "{$stock->product->name} (Stock: {$stock->quantity}) {$loc}";
+                } else {
+                    $unifiedLabel = __('Unknown Stock');
                 }
             }
 
             $initialData['items'][] = [
                 '_key' => (string) \Illuminate\Support\Str::uuid(),
                 'type' => $type,
-                'asset_id' => $oldItem['asset_id'] ?? null,
-                'consumable_stock_id' => $oldItem['consumable_stock_id'] ?? null,
-                'quantity_borrowed' => $oldItem['quantity_borrowed'] ?? 1,
+                'asset_id' => $assetId,
+                'consumable_stock_id' => $stockId,
+                'quantity_borrowed' => $qty,
                 'unified_value' => $unifiedValue,
                 'unified_label' => $unifiedLabel,
             ];
@@ -216,41 +223,42 @@
 
     <!-- Items -->
     <div class="space-y-4">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h3 class="text-lg font-medium text-foreground">{{ __('Loan Items') }}</h3>
-            <div class="flex gap-2">
-                 <!-- KIT LOADING SECTION -->
-                <div class="flex items-center gap-2" x-data="{ kitId: '', locId: '' }">
-                    <select x-model="kitId" class="flex h-9 w-64 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                 <!-- Kit Loading -->
+                <div class="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto" x-data="{ kitId: '', locId: '' }">
+                    <select x-model="kitId" class="flex h-9 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                         <option value="">{{ __('Select Kit...') }}</option>
                         @foreach(\App\Models\Kit::where('is_active', true)->get() as $kit)
                             <option value="{{ $kit->id }}">{{ $kit->name }}</option>
                         @endforeach
                     </select>
 
-                    <div class="w-64">
-                         <x-tom-select
-                            :url="route('api.locations.search')"
+                    <div class="w-full sm:w-64">
+                        <x-tom-select
+                            :url="route('ajax.locations.search')"
+                            method="POST"
                             placeholder="{{ __('Priority Loc (Opt)...') }}"
                             x-model="locId"
                             @option-selected="locId = $event.detail.value"
                         />
                     </div>
 
-                    <x-secondary-button @click.prevent="loadKit(kitId, locId)" x-bind:disabled="!kitId" type="button">
+                    <x-secondary-button @click.prevent="loadKit(kitId, locId)" x-bind:disabled="!kitId" type="button" class="w-full sm:w-auto justify-center">
                         <x-heroicon-o-archive-box-arrow-down class="w-4 h-4 mr-2" />
                         {{ __('Load Kit') }}
                     </x-secondary-button>
                 </div>
 
-                <x-secondary-button @click="addItem()" type="button">
+                <x-secondary-button @click="addItem()" type="button" class="w-full sm:w-auto justify-center">
                     <x-heroicon-o-plus class="w-4 h-4 mr-2" />
                     {{ __('Add Item') }}
                 </x-secondary-button>
             </div>
         </div>
 
-        <div class="overflow-visible border rounded-md">
+        <div class="overflow-x-auto border rounded-md">
             <table class="w-full text-sm text-left">
                 <thead class="bg-muted text-muted-foreground uppercase text-xs">
                     <tr>
@@ -284,7 +292,8 @@
                             <td class="px-4 py-3 align-top">
                                 <div class="w-full">
                                     <x-tom-select
-                                        :url="route('api.loans.items.search')"
+                                        :url="route('ajax.loans.items.search')"
+                                        method="POST"
                                         x-bind:data-params="JSON.stringify({ type: item.type })"
                                         x-bind:placeholder="!item.unified_value ? item.unified_label : '{{ __('Search Asset or Consumable...') }}'"
                                         x-model="item.unified_value"
@@ -326,13 +335,21 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center justify-end gap-4 pt-4 border-t border-border">
-        <x-secondary-button tag="a" href="{{ route('loans.index') }}">
+    <div class="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-border">
+        <x-secondary-button type="button" x-on:click="window.history.back()" class="w-full sm:w-auto justify-center">
             <x-heroicon-o-x-mark class="w-4 h-4 mr-2" />
             {{ __('Cancel') }}
         </x-secondary-button>
-        <x-primary-button type="submit">
-            <x-heroicon-o-check class="w-4 h-4 mr-2" />
+        <x-primary-button type="submit" x-bind:disabled="isSubmitting" class="w-full sm:w-auto justify-center">
+            <template x-if="isSubmitting">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </template>
+            <template x-if="!isSubmitting">
+                <x-heroicon-o-check class="w-4 h-4 mr-2" />
+            </template>
             {{ $isEdit ? __('Update Loan') : __('Create Loan') }}
         </x-primary-button>
     </div>
@@ -350,9 +367,9 @@
                 items: []
             },
             isEdit: isEdit,
+            isSubmitting: false,
 
             init() {
-                // Initialize form
                 this.form = { ...this.form, ...initialData };
 
                 // Handle Draft Restoration for Create Mode
@@ -418,7 +435,7 @@
             addItem() {
                 this.form.items.push({
                     _key: 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2),
-                    type: 'asset', // Default
+                    type: 'asset',
                     asset_id: null,
                     consumable_stock_id: null,
                     quantity_borrowed: 1,
@@ -435,14 +452,15 @@
                 const data = eventDetail.item;
                 const item = this.form.items[index];
 
-                // item.type is already set by the select input, but we might want to double check logic
-                // unified search returns type, so we can ensure consistency
+                const item = this.form.items[index];
+
+                // Ensure type consistency
                 if (data.type) {
                      item.type = data.type;
                 }
 
                 item.unified_value = eventDetail.value;
-                item.unified_label = data.text; // Label now contains location (was .label, now .text)
+                item.unified_label = data.text;
 
                 if (data.type === 'asset') {
                     item.asset_id = data.id;
@@ -455,6 +473,7 @@
             },
 
             submitForm() {
+                this.isSubmitting = true;
                 if(!this.isEdit) localStorage.removeItem('loan_create_draft_v2');
                 this.$el.submit();
             }

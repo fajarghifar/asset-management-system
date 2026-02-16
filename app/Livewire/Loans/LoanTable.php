@@ -48,7 +48,14 @@ final class LoanTable extends PowerGridComponent
 
     public function datasource(): Builder
     {
-        return Loan::query()->with(['user']);
+        return Loan::query()
+            ->withCount('items')
+            ->leftJoin('users', 'loans.user_id', '=', 'users.id')
+            ->select([
+                'loans.*',
+                'users.name as user_name',
+                \Illuminate\Support\Facades\DB::raw('COALESCE(users.name, loans.borrower_name) as borrower_display_name')
+            ]);
     }
 
     public function fields(): PowerGridFields
@@ -56,14 +63,15 @@ final class LoanTable extends PowerGridComponent
         return PowerGrid::fields()
             ->add('id')
             ->add('code')
-            ->add('borrower_display', fn ($loan) => $loan->user ? $loan->user->name : $loan->borrower_name)
+            ->add('items_count')
+            ->add('borrower_display_name')
             ->add('loan_date_formatted', fn ($loan) => $loan->loan_date->format('d/m/Y'))
             ->add('due_date_formatted', fn ($loan) => $loan->due_date->format('d/m/Y'))
             ->add('returned_date_formatted', fn ($loan) => $loan->returned_date ? $loan->returned_date->format('d/m/Y') : '-')
             ->add('status_label', function ($loan) {
                 $status = $loan->status;
-                $color = $status->getColor();
                 $label = $status->getLabel();
+                $color = $status->getColor();
 
                 $colorClasses = match ($color) {
                     'success' => 'bg-green-100 text-green-800 border-green-200',
@@ -73,10 +81,10 @@ final class LoanTable extends PowerGridComponent
                     default => 'bg-gray-100 text-gray-800 border-gray-200',
                 };
 
-                return Blade::render(
-                    '<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ' . $colorClasses . '">
-                        ' . $label . '
-                    </div>'
+                return sprintf(
+                    '<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border %s">%s</div>',
+                    $colorClasses,
+                    $label
                 );
             });
     }
@@ -84,22 +92,25 @@ final class LoanTable extends PowerGridComponent
     public function columns(): array
     {
         return [
-            Column::make('ID', 'id')->hidden(),
+            Column::make(__('ID'), 'id')->hidden(),
 
-            Column::make('Code', 'code')
+            Column::make(__('Code'), 'code')
                 ->sortable()
                 ->searchable(),
 
-            Column::make('Borrower', 'borrower_display', 'borrower_name')
+            Column::make(__('Borrower'), 'borrower_display_name', 'COALESCE(users.name, loans.borrower_name)')
+                ->sortable()
                 ->searchable(),
 
-            Column::make('Loan Date', 'loan_date_formatted', 'loan_date')
+            Column::make(__('Items'), 'items_count'),
+
+            Column::make(__('Loan Date'), 'loan_date_formatted', 'loan_date')
                 ->sortable(),
 
-            Column::make('Due Date', 'due_date_formatted', 'due_date')
+            Column::make(__('Due Date'), 'due_date_formatted', 'due_date')
                 ->sortable(),
 
-            Column::make('Returned', 'returned_date_formatted', 'returned_date')
+            Column::make(__('Returned'), 'returned_date_formatted', 'returned_date')
                 ->sortable(),
 
             Column::make(__('Status'), 'status_label', 'status')
@@ -128,7 +139,7 @@ final class LoanTable extends PowerGridComponent
 
     public function actions(Loan $row): array
     {
-        $borrowerName = $row->user ? $row->user->name : $row->borrower_name;
+        $borrowerName = $row->user_name ?: $row->borrower_name;
 
         $actions = [
             Button::add('view')
@@ -137,6 +148,20 @@ final class LoanTable extends PowerGridComponent
                 ->route('loans.show', ['loan' => $row->id])
                 ->tooltip(__('View Details')),
         ];
+
+        $deleteButton = Button::add('delete')
+            ->slot('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>')
+            ->class('bg-red-500 hover:bg-red-600 text-white p-2 rounded-md flex items-center justify-center')
+            ->dispatch('open-delete-modal', [
+                'component' => 'loans.loan-table',
+                'method' => 'delete-loan',
+                'params' => ['rowId' => $row->id],
+                'title' => __('Delete Loan?'),
+                'description' => __("Are you sure you want to delete Loan #:code for :name? This action cannot be undone.", ['code' => $row->code, 'name' => $borrowerName]),
+                'confirmButtonText' => __('Delete'),
+                'confirmButtonClass' => 'bg-red-600 hover:bg-red-700 text-white',
+            ])
+            ->tooltip(__('Delete Loan'));
 
         if ($row->status === LoanStatus::Pending) {
             $actions[] = Button::add('edit')
@@ -173,19 +198,7 @@ final class LoanTable extends PowerGridComponent
                 ])
                 ->tooltip(__('Reject Loan'));
 
-            $actions[] = Button::add('delete')
-                ->slot('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>')
-                ->class('bg-red-500 hover:bg-red-600 text-white p-2 rounded-md flex items-center justify-center')
-                ->dispatch('open-delete-modal', [
-                    'component' => 'loans.loan-table',
-                    'method' => 'delete-loan',
-                    'params' => ['rowId' => $row->id],
-                    'title' => __('Delete Loan?'),
-                    'description' => __("Are you sure you want to delete Loan #:code for :name? This action cannot be undone.", ['code' => $row->code, 'name' => $borrowerName]),
-                    'confirmButtonText' => __('Delete'),
-                    'confirmButtonClass' => 'bg-red-600 hover:bg-red-700 text-white',
-                ])
-                ->tooltip(__('Delete Loan'));
+            $actions[] = $deleteButton;
         } elseif ($row->status === LoanStatus::Rejected) {
             $actions[] = Button::add('restore')
                 ->slot('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>')
@@ -201,20 +214,10 @@ final class LoanTable extends PowerGridComponent
                 ])
                 ->tooltip(__('Restore Loan'));
 
-            $actions[] = Button::add('delete')
-                ->slot('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>')
-                ->class('bg-red-500 hover:bg-red-600 text-white p-2 rounded-md flex items-center justify-center')
-                ->dispatch('open-delete-modal', [
-                    'component' => 'loans.loan-table',
-                    'method' => 'delete-loan',
-                    'params' => ['rowId' => $row->id],
-                    'title' => __('Delete Loan?'),
-                    'description' => __("Are you sure you want to delete Loan #:code for :name? This action cannot be undone.", ['code' => $row->code, 'name' => $borrowerName]),
-                    'confirmButtonText' => __('Delete'),
-                    'confirmButtonClass' => 'bg-red-600 hover:bg-red-700 text-white',
-                ])
-                ->tooltip(__('Delete Loan'));
+            $actions[] = $deleteButton;
         }
+
+        return $actions;
 
         return $actions;
     }
@@ -227,9 +230,9 @@ final class LoanTable extends PowerGridComponent
             try {
                 $service->approveLoan($loan);
                 $this->dispatch('pg:eventRefresh-loan-table');
-                $this->dispatch('toast', message: "Loan approved successfully.", type: 'success');
+                $this->dispatch('toast', message: __("Loan approved successfully."), type: 'success');
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Failed to approve loan: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: __('Failed to approve loan: ') . $e->getMessage(), type: 'error');
             }
         }
     }
@@ -242,9 +245,9 @@ final class LoanTable extends PowerGridComponent
             try {
                 $service->rejectLoan($loan);
                 $this->dispatch('pg:eventRefresh-loan-table');
-                $this->dispatch('toast', message: "Loan rejected.", type: 'success');
+                $this->dispatch('toast', message: __("Loan rejected."), type: 'success');
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Failed to reject loan: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: __('Failed to reject loan: ') . $e->getMessage(), type: 'error');
             }
         }
     }
@@ -257,9 +260,9 @@ final class LoanTable extends PowerGridComponent
             try {
                 $service->restoreLoan($loan);
                 $this->dispatch('pg:eventRefresh-loan-table');
-                $this->dispatch('toast', message: "Loan restored to pending.", type: 'success');
+                $this->dispatch('toast', message: __("Loan restored to pending."), type: 'success');
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Failed to restore loan: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: __('Failed to restore loan: ') . $e->getMessage(), type: 'error');
             }
         }
     }
@@ -272,9 +275,9 @@ final class LoanTable extends PowerGridComponent
             try {
                 $service->deleteLoan($loan);
                 $this->dispatch('pg:eventRefresh-loan-table');
-                $this->dispatch('toast', message: "Loan deleted successfully.", type: 'success');
+                $this->dispatch('toast', message: __("Loan deleted successfully."), type: 'success');
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Failed to delete loan: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: __('Failed to delete loan: ') . $e->getMessage(), type: 'error');
             }
         }
     }

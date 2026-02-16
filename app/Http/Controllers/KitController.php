@@ -36,14 +36,13 @@ class KitController extends Controller
 
     public function show(Kit $kit)
     {
-        $kit->load(['items.product', 'items.location']);
         $availability = $this->kitService->getKitAvailability($kit);
         return view('kits.show', compact('kit', 'availability'));
     }
 
     public function edit(Kit $kit)
     {
-        $kit->load('items.product');
+        $kit->load(['items.product', 'items.location']);
         return view('kits.edit', compact('kit'));
     }
 
@@ -78,8 +77,8 @@ class KitController extends Controller
         return response()->json([
             'items' => $resolvedItems,
             'message' => count($resolvedItems) > 0
-                ? 'Kit loaded successfully.'
-                : 'No available items found for this kit in the selected location.',
+                ? __('Kit loaded successfully.')
+                : __('No available items found for this kit in the selected location.'),
         ]);
     }
 }

@@ -32,4 +32,23 @@ class StoreKitRequest extends FormRequest
             'items.*.notes' => ['nullable', 'string'],
         ];
     }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'description' => __('Description'),
+            'is_active' => __('Status'),
+            'items' => __('Kit Items'),
+            'items.*.product_id' => __('Product'),
+            'items.*.location_id' => __('Location'),
+            'items.*.quantity' => __('Quantity'),
+            'items.*.notes' => __('Notes'),
+        ];
+    }
 }

@@ -30,7 +30,7 @@ class LoanService
     {
         return DB::transaction(function () use ($data) {
             try {
-                // Pre-validate availability
+                // Validate availability
                 foreach ($data->items as $item) {
                     if ($item->type === LoanItemType::Asset) {
                         $this->validateAssetAvailability($item->asset_id);
@@ -79,7 +79,7 @@ class LoanService
             }
 
             try {
-                // Re-validate availability
+                // Validate availability
                 foreach ($data->items as $item) {
                     if ($item->type === LoanItemType::Asset) {
                         $this->validateAssetAvailability($item->asset_id);
@@ -89,7 +89,6 @@ class LoanService
                 }
 
                 $updateData = [
-                    'user_id' => Auth::id(), // Updater
                     'borrower_name' => $data->borrower_name,
                     'purpose' => $data->purpose,
                     'loan_date' => $data->loan_date,

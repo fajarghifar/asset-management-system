@@ -35,8 +35,6 @@ class LoanController extends Controller
     {
         try {
             $data = $request->validated();
-
-            // Prepare data for DTO
             $data['user_id'] = Auth::id();
             $data['code'] = $this->loanService->generateTransactionCode();
 
@@ -60,7 +58,7 @@ class LoanController extends Controller
 
     public function show(Loan $loan)
     {
-        $loan->load('items.asset.product', 'items.asset.location', 'items.consumableStock.product', 'items.consumableStock.location', 'user');
+        $this->eagerLoadRelations($loan, includeUser: true);
         return view('loans.show', compact('loan'));
     }
 
@@ -123,12 +121,7 @@ class LoanController extends Controller
                 ->with('error', __('Only pending loans can be edited.'));
         }
 
-        $loan->load([
-            'items.asset.product',
-            'items.asset.location',
-            'items.consumableStock.product',
-            'items.consumableStock.location'
-        ]);
+        $this->eagerLoadRelations($loan);
 
         return view('loans.edit', compact('loan'));
     }
@@ -141,7 +134,7 @@ class LoanController extends Controller
 
         try {
             $data = $request->validated();
-            $data['user_id'] = Auth::id(); // Update the user to the editor? Or keep original requester? Usually editor logs are separate. But for simplicity.
+            // $data['user_id'] = Auth::id(); // Keep original borrower
 
             // Keep code same
             $data['code'] = $loan->code;
@@ -163,6 +156,42 @@ class LoanController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         } catch (Throwable $e) {
             return back()->withInput()->with('error', __('Failed to update loan: :message', ['message' => $e->getMessage()]));
+        }
+    }
+    private function eagerLoadRelations(Loan $loan, bool $includeUser = false): void
+    {
+        $relations = [
+            'items.asset.product',
+            'items.consumableStock.product',
+        ];
+
+        if ($includeUser) {
+            $relations[] = 'user';
+        }
+
+        $loan->load($relations);
+
+        // Manually load locations to prevent duplicate queries across Asset/Consumable paths
+        $locationIds = $loan->items->flatMap(function ($item) {
+            return [
+                $item->asset?->location_id,
+                $item->consumableStock?->location_id
+            ];
+        })->filter()->unique();
+
+        if ($locationIds->isNotEmpty()) {
+            $locations = \App\Models\Location::findMany($locationIds);
+            // Actually 'site' is an enum/column, so we just need the model.
+            // Wait, Location::getFullNameAttribute uses site->getLabel(). Site is an enum. Safe.
+
+            $loan->items->each(function ($item) use ($locations) {
+                if ($item->asset && $item->asset->location_id) {
+                    $item->asset->setRelation('location', $locations->find($item->asset->location_id));
+                }
+                if ($item->consumableStock && $item->consumableStock->location_id) {
+                    $item->consumableStock->setRelation('location', $locations->find($item->consumableStock->location_id));
+                }
+            });
         }
     }
 }
