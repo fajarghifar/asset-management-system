@@ -151,10 +151,30 @@ Access the application at `http://localhost:8000`.
 
 ---
 
-## 📄 License
+## 🤝 Contributing
 
-This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
 ---
 
-**Made with ❤️ by Fajar Ghifari Nugroho**
+## 💖 Support
+
+If you find this project helpful, please consider giving it a ⭐️ star on GitHub or buying me a coffee!
+
+<a href="https://buymeacoffee.com/fajarghifar" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+---
+
+## 📄 License
+
+Licensed under the [MIT License](LICENSE).
+
+---
+
+> Find me on [GitHub](https://github.com/fajarghifar) &nbsp;&middot;&nbsp; [YouTube](https://www.youtube.com/@fajarghifar) &nbsp;&middot;&nbsp; [Instagram](https://instagram.com/fajarghifar) &nbsp;&middot;&nbsp; [LinkedIn](https://www.linkedin.com/in/fajarghifar/)
