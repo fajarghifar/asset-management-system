@@ -21,6 +21,7 @@
                 {{ $slot }}
             </div>
         </div>
+        <x-toaster />
         @livewireScripts
     </body>
 </html>

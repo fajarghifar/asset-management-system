@@ -53,12 +53,12 @@
                 </x-primary-button>
             </div>
 
-            <div class="mt-4 text-center text-sm">
+            {{-- <div class="mt-4 text-center text-sm">
                 {{ __("Don't have an account?") }}
-                <a href="{{ route('register') }}" class="underline text-primary">
+                <a href="#" class="underline text-primary">
                     {{ __('Sign up') }}
                 </a>
-            </div>
+            </div> --}}
         </form>
     </div>
 </x-guest-layout>

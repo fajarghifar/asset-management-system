@@ -70,6 +70,16 @@ class UserForm extends Component
         $this->dispatch('open-modal', name: 'user-form-modal');
     }
 
+    public function validationAttributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'username' => __('Username'),
+            'email' => __('Email'),
+            'password' => __('Password'),
+        ];
+    }
+
     public function save(): void
     {
         $this->validate();
@@ -87,7 +97,7 @@ class UserForm extends Component
                 }
 
                 $this->user->update($data);
-                $message = 'User updated successfully.';
+                $message = __('User updated successfully.');
             } else {
                 User::create([
                     'name' => $this->name,
@@ -95,14 +105,14 @@ class UserForm extends Component
                     'email' => $this->email,
                     'password' => Hash::make($this->password),
                 ]);
-                $message = 'User created successfully.';
+                $message = __('User created successfully.');
             }
 
             $this->dispatch('close-modal', name: 'user-form-modal');
             $this->dispatch('pg:eventRefresh-users-table');
             $this->dispatch('toast', message: $message, type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'An unexpected error occurred: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: __('An unexpected error occurred.'), type: 'error');
         }
     }
 }
