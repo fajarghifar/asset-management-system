@@ -23,7 +23,7 @@ class LocationSeeder extends Seeder
 
             foreach ($targetSites as $site) {
                 // Ensure proper string conversion for value usage
-                $manualCode = "{$site->value}-{$codeSuffix}";
+                $manualCode = "{$site->value}.{$codeSuffix}";
 
                 $location = Location::firstOrCreate(
                     [

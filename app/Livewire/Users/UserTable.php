@@ -3,6 +3,7 @@
 namespace App\Livewire\Users;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 use PowerComponents\LivewirePowerGrid\Button;
 use PowerComponents\LivewirePowerGrid\Column;
@@ -127,7 +128,7 @@ final class UserTable extends PowerGridComponent
 
         if ($user) {
             try {
-                if ($user->id === auth()->id()) {
+                if ($user->id === Auth::id()) {
                     $this->dispatch('toast', message: 'You cannot delete your own account.', type: 'error');
                     return;
                 }

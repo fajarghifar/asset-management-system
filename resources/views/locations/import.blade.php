@@ -1,10 +1,10 @@
-<x-app-layout title="Import Assets">
+<x-app-layout title="Import Locations">
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-foreground leading-tight">
-                {{ __('Import Assets') }}
+                {{ __('Import Locations') }}
             </h2>
-            <x-secondary-button href="{{ route('assets.index') }}" tag="a" class="w-full sm:w-auto justify-center">
+            <x-secondary-button tag="a" href="{{ route('locations.index') }}" class="w-full sm:w-auto justify-center">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 {{ __('Back to List') }}
             </x-secondary-button>
@@ -21,21 +21,20 @@
                         <ul class="list-disc list-inside mt-2 text-sm text-muted-foreground">
                             <li>{{ __('File must be an Excel file (.xlsx, .xls).') }}</li>
                             <li>{{ __('First row should be the header row.') }}</li>
-                            <li>{!! __('Columns order: <strong>Asset Tag (Auto), Product (Code | Name), Location (Code | Site - Name), Serial Number, Status (Select), Purchase Date, Purchase Price, Notes</strong>.') !!}</li>
-                            <li>{!! __('<strong>Asset Tag (Auto)</strong>: Leave empty to create new Asset (auto-generated). Fill to update existing Asset.') !!}</li>
-                            <li>{!! __('<strong>Product</strong> and <strong>Location</strong>: Select from dropdown. Code is required.') !!}</li>
-                            <li>{!! __('<strong>Status</strong> can be: In Stock, Loaned, Installed, Maintenance, Broken, Lost, Disposed. (Empty defaults to In Stock).') !!}</li>
+                            <li>{!! __('Columns order: <strong>Code, Name, Site (Select), Description</strong>.') !!}</li>
+                            <li>{{ __('Code must be unique. If Code exists, the location will be updated.') }}</li>
+                            <li>{{ __('Site must be selected from the dropdown.') }}</li>
                         </ul>
                     </div>
 
                     <div class="mb-6">
-                        <a href="{{ route('assets.import.template') }}" class="text-sm text-primary hover:underline flex items-center gap-1">
+                        <a href="{{ route('locations.import.template') }}" class="text-sm text-primary hover:underline flex items-center gap-1">
                             <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
                             {{ __('Download Excel Template') }}
                         </a>
                     </div>
 
-                    <form action="{{ route('assets.import.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
+                    <form action="{{ route('locations.import.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
                         @csrf
 
                         <div>
@@ -50,7 +49,7 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-4 pt-4 border-t border-border">
-                            <x-secondary-button tag="a" href="{{ route('assets.index') }}">
+                            <x-secondary-button tag="a" href="{{ route('locations.index') }}">
                                 {{ __('Cancel') }}
                             </x-secondary-button>
                             <x-primary-button class="gap-2" ::disabled="submitting">
@@ -59,7 +58,6 @@
                             </x-primary-button>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>

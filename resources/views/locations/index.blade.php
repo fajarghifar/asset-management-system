@@ -4,10 +4,16 @@
             <h2 class="font-semibold text-xl text-foreground leading-tight">
                 {{ __('Locations') }}
             </h2>
-            <x-primary-button x-data x-on:click="$dispatch('create-location')" class="w-full sm:w-auto justify-center">
-                <x-heroicon-o-plus class="w-4 h-4 mr-2" />
-                {{ __('Create Location') }}
-            </x-primary-button>
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <x-secondary-button href="{{ route('locations.import') }}" tag="a" class="w-full sm:w-auto justify-center">
+                    <x-heroicon-o-arrow-up-tray class="w-4 h-4 mr-2" />
+                    {{ __('Import') }}
+                </x-secondary-button>
+                <x-primary-button x-data x-on:click="$dispatch('create-location')" class="w-full sm:w-auto justify-center">
+                    <x-heroicon-o-plus class="w-4 h-4 mr-2" />
+                    {{ __('Create Location') }}
+                </x-primary-button>
+            </div>
         </div>
     </x-slot>
 

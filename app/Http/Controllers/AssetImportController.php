@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\Asset;
+use App\DTOs\AssetData;
 use App\Models\Product;
 use App\Models\Location;
 use App\Enums\AssetStatus;
-use App\DTOs\AssetData;
-use App\Services\AssetService;
 use Illuminate\Http\Request;
-use OpenSpout\Reader\XLSX\Reader;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
+use App\Services\AssetService;
 use Illuminate\Validation\Rule;
-use Carbon\Carbon;
+use OpenSpout\Reader\XLSX\Reader;
+use Illuminate\Support\Facades\Log;
+use App\Exports\AssetTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class AssetImportController extends Controller
 {
@@ -24,6 +26,11 @@ class AssetImportController extends Controller
     public function create()
     {
         return view('assets.import');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new AssetTemplateExport, 'assets_template.xlsx');
     }
 
     public function store(Request $request)
@@ -48,11 +55,7 @@ class AssetImportController extends Controller
             'errors' => [],
         ];
 
-        // DB Transaction handled by Service for individual creates, but we might want one big transaction or individual?
-        // Usually imports are better as "All or Nothing" or "Best Effort".
-        // The Service handles transaction per asset. Let's wrap the whole loop to be safe if requested,
-        // BUT strict "All or Nothing" is annoying for large files.
-        // I will do "Best Effort" (commit success, log fail) akin to other imports.
+        // Best Effort Commit: Import valid rows, valid assets. Log failed rows.
 
         try {
             foreach ($reader->getSheetIterator() as $sheet) {
@@ -65,61 +68,73 @@ class AssetImportController extends Controller
                         $data[] = $cell->getValue();
                     }
 
-                    // Expected Columns:
-                    // 0: Asset Tag, 1: Product Code, 2: Product Name, 3: Location Code
-                    // 4: Location Name, 5: Site, 6: Serial Number, 7: Status, 8: Purchase Date, 9: Notes
+                    // Columns:
+                    // 0: Asset Tag
+                    // 1: Product (Code | Name)
+                    // 2: Location (Code | Name)
+                    // 3: Serial Number
+                    // 4: Status
+                    // 5: Purchase Date
+                    // 6: Purchase Price
+                    // 7: Notes
 
                     $assetTag = $data[0] ?? null;
-                    $productCode = $data[1] ?? null;
-                    $locationCode = $data[3] ?? null;
+                    // Parse "Code | Name" -> take Code
+                    $productCodeRaw = $data[1] ?? null;
+                    $locationCodeRaw = $data[2] ?? null;
 
-                    // Skip empty rows if essential data is missing
-                    if (empty($assetTag) && (empty($data[1]) || empty($data[3]))) {
+                    $productCode = $productCodeRaw ? trim(explode('|', $productCodeRaw)[0]) : null;
+                    $locationCode = $locationCodeRaw ? trim(explode('|', $locationCodeRaw)[0]) : null;
+
+                    // Skip empty rows
+                    if (empty($assetTag) && (empty($productCode) || empty($locationCode))) {
                         continue;
                     }
 
                     // Map Status
-                    $statusString = !empty($data[7]) ? $data[7] : 'In Stock';
+                    $statusString = !empty($data[4]) ? $data[4] : 'In Stock';
                     $status = $this->mapStatus($statusString);
 
                     // Parse Date
                     $purchaseDate = null;
-                    if (!empty($data[8])) {
-                        if ($data[8] instanceof \DateTime) {
-                            $purchaseDate = $data[8];
+                    if (!empty($data[5])) {
+                        if ($data[5] instanceof \DateTime) {
+                            $purchaseDate = $data[5];
                         } else {
                             try {
-                                $purchaseDate = Carbon::parse($data[8]);
+                                $purchaseDate = Carbon::parse($data[5]);
                             } catch (\Exception $e) {
                                 $purchaseDate = null;
                             }
                         }
                     }
 
+                    // Purchase Price
+                    $purchasePrice = isset($data[6]) ? (float) $data[6] : 0;
+                    $notes = isset($data[7]) && trim($data[7]) !== '' ? trim($data[7]) : null;
+                    $serialNumber = isset($data[3]) && trim($data[3]) !== '' ? trim($data[3]) : null;
+
                     $rowData = [
                         'asset_tag' => $assetTag,
-                        'product_code' => $data[1] ?? null,
-                        'location_code' => $data[3] ?? null,
-                        'serial_number' => $data[6] ?? null,
+                        'product_code' => $productCode,
+                        'location_code' => $locationCode,
+                        'serial_number' => $serialNumber,
                         'status' => $status,
                         'purchase_date' => $purchaseDate,
-                        'notes' => $data[9] ?? null,
+                        'purchase_price' => $purchasePrice, // Pass to DTO
+                        'notes' => $notes,
                     ];
 
-                    // Validate
-                    $rules = [
-                        'serial_number' => ['nullable', 'string'],
+                    $validator = Validator::make($rowData, [
+                        'asset_tag' => ['nullable', 'string'], // Nullable for auto-gen
+                        'product_code' => ['required', 'string', 'exists:products,code'],
+                        'location_code' => ['required', 'string', 'exists:locations,code'],
                         'status' => ['required', Rule::enum(AssetStatus::class)],
+                        'serial_number' => ['nullable', 'string'],
                         'purchase_date' => ['nullable', 'date'],
+                        'purchase_price' => ['nullable', 'numeric', 'min:0'],
                         'notes' => ['nullable', 'string'],
-                    ];
-
-                    if (empty($rowData['asset_tag'])) {
-                        $rules['product_code'] = ['required', 'string'];
-                        $rules['location_code'] = ['required', 'string'];
-                    }
-
-                    $validator = Validator::make($rowData, $rules);
+                    ]);
 
                     if ($validator->fails()) {
                         $stats['failed']++;
@@ -127,88 +142,68 @@ class AssetImportController extends Controller
                         continue;
                     }
 
-                    // Resolve Product and Location
-                    $product = null;
-                    if (!empty($rowData['product_code'])) {
-                        $product = Product::where('code', $rowData['product_code'])->first();
-                        if (!$product) {
-                            $stats['failed']++;
-                            $stats['errors'][] = "Row {$rowIndex}: Product code '{$rowData['product_code']}' not found.";
-                            continue;
-                        }
-                    }
+                    // Resolve IDs
+                    $product = Product::where('code', $rowData['product_code'])->first();
+                    $location = Location::where('code', $rowData['location_code'])->first();
 
-                    $location = null;
-                    if (!empty($rowData['location_code'])) {
-                        $location = Location::where('code', $rowData['location_code'])->first();
-                        if (!$location) {
-                            $stats['failed']++;
-                            $stats['errors'][] = "Row {$rowIndex}: Location code '{$rowData['location_code']}' not found.";
-                            continue;
-                        }
-                    }
 
+
+                    // Update or Create
                     try {
                         if (!empty($rowData['asset_tag'])) {
-                            // UPDATE MATCHING ASSET
-                            $asset = \App\Models\Asset::where('asset_tag', $rowData['asset_tag'])->first();
-
+                            // Update logic
+                            $asset = Asset::where('asset_tag', $rowData['asset_tag'])->first();
                             if ($asset) {
-                                // Prepare data for update
-                                // Use current values if Excel columns are empty/null? Or overwrite?
-                                // Usually overwrite if column is present.
-
-                                // DTO expects IDs. Use existing if not provided.
-                                $productId = $product ? $product->id : $asset->product_id;
-                                $locationId = $location ? $location->id : $asset->location_id;
-
                                 $assetData = new AssetData(
-                                    product_id: $productId,
-                                    location_id: $locationId,
-                                    serial_number: $rowData['serial_number'] ?? $asset->serial_number,
-                                    status: $rowData['status'], // Enum is resolved, defaults to InStock
-                                    purchase_date: $rowData['purchase_date'] ? Carbon::instance($rowData['purchase_date']) : ($asset->purchase_date ? Carbon::parse($asset->purchase_date)->format('Y-m-d') : null),
-                                    notes: $rowData['notes'] ?? $asset->notes,
-                                    asset_tag: $asset->asset_tag, // Keep same tag
-                                    image_path: $asset->image_path,
+                                    product_id: $product->id,
+                                    location_id: $location->id,
+                                    asset_tag: $rowData['asset_tag'],
+                                    serial_number: $rowData['serial_number'],
+                                    status: $rowData['status'], // Enum is resolved
+                                    purchase_date: $rowData['purchase_date'] ? Carbon::instance($rowData['purchase_date'])->format('Y-m-d') : null,
+                                    notes: $rowData['notes'],
+                                    image_path: $asset->image_path, // Keep existing
                                     history_notes: "Bulk Import Update"
                                 );
-
                                 $this->assetService->updateAsset($asset, $assetData);
-                                $stats['imported']++; // Count as success (maybe track updated separately?)
+                                $stats['imported']++;
                             } else {
-                                $stats['failed']++;
-                                $stats['errors'][] = "Row {$rowIndex}: Asset Tag '{$rowData['asset_tag']}' not found for update.";
+                                // Tag provided but not found -> Create with that tag
+                                $assetData = new AssetData(
+                                    product_id: $product->id,
+                                    location_id: $location->id,
+                                    asset_tag: $rowData['asset_tag'],
+                                    serial_number: $rowData['serial_number'],
+                                    status: $rowData['status'],
+                                    purchase_date: $rowData['purchase_date'] ? Carbon::instance($rowData['purchase_date'])->format('Y-m-d') : null,
+                                    notes: $rowData['notes'],
+                                    image_path: null,
+                                    history_notes: "Initial Import (with provided tag)"
+                                );
+                                $this->assetService->createAsset($assetData);
+                                $stats['imported']++;
                             }
 
                         } else {
-                            // CREATE NEW ASSET
-                            if (!$product || !$location) {
-                                // Should be caught by validation or earlier checks, but being safe
-                                $stats['failed']++;
-                                $stats['errors'][] = "Row {$rowIndex}: Product and Location required for new assets.";
-                                continue;
-                            }
-
+                            // Create (Auto Tag)
                             $assetData = new AssetData(
                                 product_id: $product->id,
                                 location_id: $location->id,
+                                asset_tag: null, // Service handles generation
                                 serial_number: $rowData['serial_number'],
                                 status: $rowData['status'],
-                                purchase_date: $rowData['purchase_date'] ? Carbon::instance($rowData['purchase_date']) : null,
+                                purchase_date: $rowData['purchase_date'] ? Carbon::instance($rowData['purchase_date'])->format('Y-m-d') : null,
                                 notes: $rowData['notes'],
-                                asset_tag: null, // Auto-generated
                                 image_path: null,
-                                history_notes: "Initial Import"
+                                history_notes: "Initial Import (Auto Tag)"
                             );
-
                             $this->assetService->createAsset($assetData);
                             $stats['imported']++;
                         }
-
                     } catch (\Exception $e) {
                         $stats['failed']++;
-                        $stats['errors'][] = "Row {$rowIndex}: Action failed - " . $e->getMessage();
+                        $stats['errors'][] = "Row {$rowIndex}: " . $e->getMessage();
+                        Log::error($e);
                     }
                 }
                 break;

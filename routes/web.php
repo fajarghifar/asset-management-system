@@ -11,6 +11,7 @@ use App\Http\Controllers\AssetImportController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\ProductImportController;
+use App\Http\Controllers\LocationImportController;
 use App\Http\Controllers\Api\LoanItemSearchController;
 use App\Http\Controllers\ConsumableStockImportController;
 
@@ -23,18 +24,39 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // --- DASHBOARD & PROFILE ---
     Route::view('locations', 'locations.index')->name('locations.index');
     Route::view('users', 'users.index')->name('users.index');
     Route::view('categories', 'categories.index')->name('categories.index');
     Route::view('products', 'products.index')->name('products.index');
-    Route::get('/products/import/template', [ProductImportController::class, 'downloadTemplate'])->name('products.import.template');
-    Route::get('/products/import', [ProductImportController::class, 'create'])->name('products.import');
-    Route::post('/products/import', [ProductImportController::class, 'store'])->name('products.import.store');
     Route::view('stocks', 'stocks.index')->name('stocks.index');
-    Route::get('/stocks/import', [ConsumableStockImportController::class, 'create'])->name('stocks.import');
-    Route::post('/stocks/import', [ConsumableStockImportController::class, 'store'])->name('stocks.import.store');
-    Route::get('/assets/import', [AssetImportController::class, 'create'])->name('assets.import');
-    Route::post('/assets/import', [AssetImportController::class, 'store'])->name('assets.import.store');
+
+    // --- IMPORTS ---
+    Route::prefix('locations/import')->name('locations.import')->group(function () {
+        Route::get('/template', [LocationImportController::class, 'downloadTemplate'])->name('.template');
+        Route::get('/', [LocationImportController::class, 'create']);
+        Route::post('/', [LocationImportController::class, 'store'])->name('.store');
+    });
+
+    Route::prefix('products/import')->name('products.import')->group(function () {
+        Route::get('/template', [ProductImportController::class, 'downloadTemplate'])->name('.template');
+        Route::get('/', [ProductImportController::class, 'create']);
+        Route::post('/', [ProductImportController::class, 'store'])->name('.store');
+    });
+
+    Route::prefix('stocks/import')->name('stocks.import')->group(function () {
+        Route::get('/template', [ConsumableStockImportController::class, 'downloadTemplate'])->name('.template');
+        Route::get('/', [ConsumableStockImportController::class, 'create']);
+        Route::post('/', [ConsumableStockImportController::class, 'store'])->name('.store');
+    });
+
+    Route::prefix('assets/import')->name('assets.import')->group(function () {
+        Route::get('/template', [AssetImportController::class, 'downloadTemplate'])->name('.template');
+        Route::get('/', [AssetImportController::class, 'create']);
+        Route::post('/', [AssetImportController::class, 'store'])->name('.store');
+    });
+
+    // --- MODULES ---
     Route::resource('assets', AssetController::class);
 
     // Loan Management
@@ -48,19 +70,21 @@ Route::middleware('auth')->group(function () {
     Route::resource('kits', KitController::class);
     Route::get('/kits/{kit}/resolve', [KitController::class, 'resolve'])->name('kits.resolve');
 
-    // AJAX Search Routes
-    Route::prefix('ajax/categories')->name('ajax.categories.')->group(function () {
-        Route::post('/search', [CategoryController::class, 'search'])->name('search');
+    // --- AJAX ---
+    Route::prefix('ajax')->group(function () {
+        Route::prefix('categories')->name('ajax.categories.')->group(function () {
+            Route::post('/search', [CategoryController::class, 'search'])->name('search');
+        });
+        Route::prefix('products')->name('ajax.products.')->group(function () {
+            Route::post('/search', [ProductController::class, 'search'])->name('search');
+            Route::post('/search/assets', [ProductController::class, 'searchAssets'])->name('assets.search');
+            Route::post('/search/consumables', [ProductController::class, 'searchConsumables'])->name('consumables.search');
+        });
+        Route::prefix('locations')->name('ajax.locations.')->group(function () {
+            Route::post('/search', [LocationController::class, 'search'])->name('search');
+        });
+        Route::post('/loans/items/search', LoanItemSearchController::class)->name('ajax.loans.items.search');
     });
-    Route::prefix('ajax/products')->name('ajax.products.')->group(function () {
-        Route::post('/search', [ProductController::class, 'search'])->name('search');
-        Route::post('/search/assets', [ProductController::class, 'searchAssets'])->name('assets.search');
-        Route::post('/search/consumables', [ProductController::class, 'searchConsumables'])->name('consumables.search');
-    });
-    Route::prefix('ajax/locations')->name('ajax.locations.')->group(function () {
-        Route::post('/search', [LocationController::class, 'search'])->name('search');
-    });
-    Route::post('/ajax/loans/items/search', LoanItemSearchController::class)->name('ajax.loans.items.search');
 });
 
 require __DIR__.'/auth.php';

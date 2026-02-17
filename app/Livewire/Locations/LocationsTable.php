@@ -69,6 +69,7 @@ final class LocationsTable extends PowerGridComponent
             ->add('description', function ($location) {
                 return $location->description ? Str::limit($location->description, 50) : '-';
             })
+            ->add('description_export', fn($location) => $location->description)
             ->add('created_at');
     }
 
@@ -89,7 +90,12 @@ final class LocationsTable extends PowerGridComponent
                 ->sortable()
                 ->searchable(),
 
-            Column::make(__('Description'), 'description'),
+            Column::make(__('Description'), 'description')
+                ->visibleInExport(false),
+
+            Column::make(__('Description'), 'description_export')
+                ->hidden()
+                ->visibleInExport(true),
 
             Column::action(__('Action')),
         ];

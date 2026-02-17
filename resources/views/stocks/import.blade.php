@@ -5,6 +5,7 @@
                 {{ __('Import Consumable Stocks') }}
             </h2>
             <x-secondary-button tag="a" href="{{ route('stocks.index') }}" class="w-full sm:w-auto justify-center">
+                <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 {{ __('Back to List') }}
             </x-secondary-button>
         </div>
@@ -16,24 +17,24 @@
                 <div class="p-6 text-card-foreground">
 
                     <div class="mb-6">
-                        <h3 class="text-lg font-medium">Instructions</h3>
+                        <h3 class="text-lg font-medium">{{ __('Instructions') }}</h3>
                         <ul class="list-disc list-inside mt-2 text-sm text-muted-foreground">
-                            <li>File must be an Excel file (.xlsx, .xls).</li>
-                            <li>First row should be the header row.</li>
-                            <li>Columns order: <strong>Code Product, Name Product, Code Location, Name Location, Quantity, Min Qty</strong>.</li>
-                            <li>If stock (Product + Location) exists, quantity and min quantity will be updated (overwritten).</li>
-                            <li>If stock does not exist, it will be created.</li>
+                            <li>{{ __('File must be an Excel file (.xlsx, .xls).') }}</li>
+                            <li>{{ __('First row should be the header row.') }}</li>
+                            <li>{!! __('Columns order: <strong>Product (Code | Name), Location (Code | Site - Name), Quantity, Min Quantity</strong>.') !!}</li>
+                            <li>{{ __('If stock (Product + Location) exists, quantity and min quantity will be updated (overwritten).') }}</li>
+                            <li>{{ __('If stock does not exist, it will be created.') }}</li>
                         </ul>
                     </div>
 
                     <div class="mb-6">
-                        <a href="{{ asset('templates/stocks_template.xlsx') }}" download class="text-sm text-primary hover:underline flex items-center gap-1">
+                        <a href="{{ route('stocks.import.template') }}" class="text-sm text-primary hover:underline flex items-center gap-1">
                             <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
-                            Download Excel Template
+                            {{ __('Download Excel Template') }}
                         </a>
                     </div>
 
-                    <form action="{{ route('stocks.import.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <form action="{{ route('stocks.import.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
                         @csrf
 
                         <div>
@@ -51,8 +52,9 @@
                             <x-secondary-button tag="a" href="{{ route('stocks.index') }}">
                                 {{ __('Cancel') }}
                             </x-secondary-button>
-                            <x-primary-button>
-                                {{ __('Import Data') }}
+                            <x-primary-button class="gap-2" ::disabled="submitting">
+                                <x-heroicon-o-arrow-path class="w-4 h-4 animate-spin" x-show="submitting" />
+                                <span>{{ __('Import Data') }}</span>
                             </x-primary-button>
                         </div>
                     </form>

@@ -5,6 +5,7 @@
                 {{ __('Import Products') }}
             </h2>
             <x-secondary-button tag="a" href="{{ route('products.index') }}" class="w-full sm:w-auto justify-center">
+                <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 {{ __('Back to List') }}
             </x-secondary-button>
         </div>
@@ -34,7 +35,7 @@
                         </a>
                     </div>
 
-                    <form action="{{ route('products.import.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <form action="{{ route('products.import.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
                         @csrf
 
                         <div>
@@ -52,8 +53,9 @@
                             <x-secondary-button tag="a" href="{{ route('products.index') }}">
                                 {{ __('Cancel') }}
                             </x-secondary-button>
-                            <x-primary-button>
-                                {{ __('Import Data') }}
+                            <x-primary-button class="gap-2" ::disabled="submitting">
+                                <x-heroicon-o-arrow-path class="w-4 h-4 animate-spin" x-show="submitting" />
+                                <span>{{ __('Import Data') }}</span>
                             </x-primary-button>
                         </div>
                     </form>

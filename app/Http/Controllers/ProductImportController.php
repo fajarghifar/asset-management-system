@@ -6,17 +6,24 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Enums\ProductType;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use OpenSpout\Reader\XLSX\Reader;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ProductTemplateExport;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class ProductImportController extends Controller
 {
     public function create()
     {
         return view('products.import');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new ProductTemplateExport, 'products_template.xlsx');
     }
 
     public function store(Request $request)
@@ -41,6 +48,22 @@ class ProductImportController extends Controller
         DB::beginTransaction();
 
         try {
+            // Pre-fetch latest code sequence to minimize DB queries
+            $year = date('Y');
+            $prefix = "PRD.{$year}.";
+
+            $latestProduct = Product::where('code', 'like', "{$prefix}%")
+                ->orderByRaw('LENGTH(code) DESC')
+                ->orderBy('code', 'desc')
+                ->first();
+
+            $nextNumber = 1;
+            if ($latestProduct) {
+                $lastCode = $latestProduct->code;
+                $lastNumber = (int) str_replace($prefix, '', $lastCode);
+                $nextNumber = $lastNumber + 1;
+            }
+
             foreach ($reader->getSheetIterator() as $sheet) {
                 // Only process the first sheet
                 foreach ($sheet->getRowIterator() as $rowIndex => $row) {
@@ -54,8 +77,17 @@ class ProductImportController extends Controller
                     }
 
                     // Columns: Code, Name, Type, Category, Loanable, Description
-                    if (empty($data[0]) || empty($data[1])) {
+                    // If Name is empty, skip. Code can be empty now.
+                    if (empty($data[1])) {
                         continue;
+                    }
+
+                    $code = $data[0] ?? null;
+
+                    // Auto-generate code if empty
+                    if (empty($code)) {
+                        $code = "{$prefix}" . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+                        $nextNumber++;
                     }
 
                     $canBeLoaned = $data[4] ?? 1;
@@ -69,7 +101,7 @@ class ProductImportController extends Controller
                     }
 
                     $rowData = [
-                        'code' => $data[0] ?? null,
+                        'code' => $code,
                         'name' => $data[1] ?? null,
                         'type' => $type,
                         'category_name' => $data[3] ?? null,
@@ -92,7 +124,7 @@ class ProductImportController extends Controller
                         continue;
                     }
 
-                    // Check if code exists
+                    // Check if code exists (double check, though we auto-generated unique ones, manual ones might conflict)
                     if (Product::where('code', $rowData['code'])->exists()) {
                         $stats['skipped']++;
                         continue;

@@ -136,7 +136,7 @@ final class ConsumableStocksTable extends PowerGridComponent
             Column::make(__('Quantity'), 'quantity')
                 ->sortable(),
 
-            Column::make(__('Min Qty'), 'min_quantity')
+            Column::make(__('Min Quantity'), 'min_quantity')
                 ->sortable(),
 
             Column::make(__('Status'), 'status_label')
