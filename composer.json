@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "fajarghifar/asset-management-system",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Enterprise-grade Asset Management System built with Laravel 12 & Livewire 3.",
+    "keywords": ["laravel", "asset-management", "tall-stack", "livewire", "inventory"],
     "license": "MIT",
     "require": {
         "php": "^8.2",
