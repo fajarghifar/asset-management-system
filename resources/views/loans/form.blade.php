@@ -375,7 +375,7 @@
                 // Handle Draft Restoration for Create Mode
                 const hasOldInput = oldInput && Object.keys(oldInput).length > 0;
                 if (!this.isEdit && !hasOldInput) {
-                    const draft = localStorage.getItem('loan_create_draft_v2');
+                    const draft = localStorage.getItem('loan_create_draft');
                     if (draft) {
                         try {
                             this.form = { ...this.form, ...JSON.parse(draft) };
@@ -388,7 +388,7 @@
                 // Handle Autosave
                 this.$watch('form', (val) => {
                     if (!this.isEdit) {
-                        localStorage.setItem('loan_create_draft_v2', JSON.stringify(val));
+                        localStorage.setItem('loan_create_draft', JSON.stringify(val));
                     }
                 }, { deep: true });
             },
@@ -452,8 +452,6 @@
                 const data = eventDetail.item;
                 const item = this.form.items[index];
 
-                const item = this.form.items[index];
-
                 // Ensure type consistency
                 if (data.type) {
                      item.type = data.type;
@@ -462,7 +460,7 @@
                 item.unified_value = eventDetail.value;
                 item.unified_label = data.text;
 
-                if (data.type === 'asset') {
+                if (item.type === 'asset' || data.type === 'asset') {
                     item.asset_id = data.id;
                     item.consumable_stock_id = null;
                     item.quantity_borrowed = 1;
@@ -474,7 +472,7 @@
 
             submitForm() {
                 this.isSubmitting = true;
-                if(!this.isEdit) localStorage.removeItem('loan_create_draft_v2');
+                if(!this.isEdit) localStorage.removeItem('loan_create_draft');
                 this.$el.submit();
             }
         }));
